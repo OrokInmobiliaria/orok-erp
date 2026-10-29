@@ -1,0 +1,23 @@
+LOLA · PRUEBA REAL POSTGRESQL Y BORRADOR · 24/10/2026
+
+RESULTADO: memoria PostgreSQL comprobada en el servidor y borrador guardado en el CRM. No se envió por Messenger.
+
+Flujo vigente: cug2qcwguB6mYfnO, 84 nodos, versión 67.6.10 PG Y GEMINI CORREGIDO.
+Ejecución: 58902, 24/10/2026 12:06:14 Lima, Succeeded en 7.995 s.
+https://n8n-n8n.kvrq8w.easypanel.host/workflow/cug2qcwguB6mYfnO/executions/58902
+
+Se solicitó UNA sugerencia en el chat de ensayo de Facebook personal 25505909242384087. El usuario autorizó expresamente el consumo de OpenAI para un borrador. La solicitud quedó queued; como no había ejecuciones nuevas de n8n desde 01:32, se ejecutó UNA vez el disparador Consultar cola manualmente. No se publicó ni activó ninguna programación.
+
+Recuperar memoria e historial · PostgreSQL: Success en 39 ms. Salida: ok=true, memory.storage=postgresql, short_term.turns=1, history contiene el mensaje entrante LOLA MEMORIA MESSENGER 24OCT, recibido el 24/10/2026 a la 01:06:14 Lima. Job autorizado con ID ffde6c4c47889c79dd0e2e11324e66bfe2e97ff40f249f198e4454ec2f2d0802. Aplicar memoria a la conversación y el recorrido posterior finalizaron correctamente. No se expusieron claves ni lease_token.
+
+CRM: Lola: complete; Borrador de Lola visible. Modo Sugerencias de Lola. No se pulsó Enviar por Messenger; la caja de respuesta quedó vacía y el botón estaba deshabilitado. Automatización global conservada apagada.
+
+Modelo: principal y formateador usaron OpenAI gpt-4.1-mini, tal como fue autorizado. Panel de n8n indicó 12,624 tokens totales. Esto NO equivale a créditos de Codex ni a un importe monetario verificado. Gemini no se invocó: el mensaje corto no cumple su condición de apoyo complejo. Gemini está configurado; su ejecución real y cuota gratuita no quedan probadas por esta prueba.
+
+HALLAZGO DIFERENTE, AÚN PENDIENTE: el agente devolvió «¡Hola! Soy Lola, encantada de ayudarte 😊 ¿Qué tipo de departamento estás buscando?», pero Formatear ficha comercial lo reescribió a una consulta sobre acabados con dos preguntas y dos acabados. Esa salida se guardó como borrador con evidencia drive:0:76. La transformación contradice la instrucción del propio formateador de máximo un acabado y una pregunta. No se considera validada la calidad de ese texto. No se volvió a invocar el modelo ni se modificó el formateador durante esta prueba.
+
+Borrador guardado: «¿Buscas un departamento con acabado de piso laminado y paredes con pintura oleo blanca? Podemos contarte más sobre los tipos de departamentos y áreas comunes. ¿Qué dormitorio prefieres?»
+
+CONSERVACIÓN: outputs/LOLA-N8N-VIGENTE-20261024.json es copia exacta del último archivo del usuario; SHA256 C0CBDA6E14C18207298E83888425A85E67C2CFE40A9ACC3594BDF09EAFB25CA9. Mantiene 84 nodos y active=true tal como se exportó; NO es una exportación preparada para activar automáticamente. Original Downloads intacto. No hubo cambios de código servidor, reinicios, despliegues, credenciales ni producción.
+
+Pendiente separado: corregir la reescritura del formateador si se continúa con calidad conversacional; comprobar Gemini solo con una consulta que cumpla su condición; Instagram real sigue abierto, no confundirlo con Messenger ya recibido. No repetir las pruebas aprobadas de PostgreSQL ni la cola vacía.

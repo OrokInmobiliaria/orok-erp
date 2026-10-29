@@ -1,0 +1,97 @@
+﻿Nodo original ENSAYO1,Tipo original,Familia / destino funcional,Estado histórico
+Actualizar cita Calendar 05,n8n-nodes-base.googleCalendar,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Avisar ventas por correo 06,n8n-nodes-base.gmail,Avisar ventas por correo / tarea CRM,Entrega de correo real pendiente
+Cancelacion valida 05,n8n-nodes-base.if,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Cancelar cita CRM 06,n8n-nodes-base.httpRequest,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Caracteristicas_comerciales_Supabase1,@n8n/n8n-nodes-langchain.vectorStoreSupabase,"Lola Comercial, catálogo Sheets/Supabase y perfil revisable",Configuración de credenciales reales pendiente
+Catalogo_comercial_Sheets1,n8n-nodes-base.googleSheetsTool,"Lola Comercial, catálogo Sheets/Supabase y perfil revisable",Configuración de credenciales reales pendiente
+Confirmar decision cancelacion 05,n8n-nodes-base.telegram,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Confirmar horario pulsado 04,n8n-nodes-base.telegram,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Confirmar horario reprogramacion 05,n8n-nodes-base.telegram,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Confirmar pulsacion Telegram1,n8n-nodes-base.telegram,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+Crear cita Calendar 04,n8n-nodes-base.googleCalendar,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Decision cancelacion 05,n8n-nodes-base.switch,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Descargar audio Telegram ENSAYO1,n8n-nodes-base.telegram,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+Embeddings comercial ENSAYO1,@n8n/n8n-nodes-langchain.embeddingsOpenAi,"Lola Comercial, catálogo Sheets/Supabase y perfil revisable",Configuración de credenciales reales pendiente
+Enviar botones asesor1,n8n-nodes-base.telegram,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+Enviar cancelacion final 05,n8n-nodes-base.telegram,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Enviar cita conservada 05,n8n-nodes-base.telegram,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Enviar confirmacion cancelacion 05,n8n-nodes-base.telegram,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Enviar confirmacion cita 04,n8n-nodes-base.telegram,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Enviar confirmacion reprogramacion 05,n8n-nodes-base.telegram,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Enviar horario ocupado 05,n8n-nodes-base.telegram,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Enviar horario vencido 05,n8n-nodes-base.telegram,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Enviar horarios disponibles 04,n8n-nodes-base.telegram,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Enviar oferta preparada1,n8n-nodes-base.if,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+Enviar opciones reprogramacion 05,n8n-nodes-base.telegram,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Enviar sin cita activa 05,n8n-nodes-base.telegram,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Es audio ENSAYO1,n8n-nodes-base.if,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+Es horario seleccionado 04,n8n-nodes-base.if,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Es seleccion de boton1,n8n-nodes-base.if,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+Esperar 24 horas respuesta 06,n8n-nodes-base.wait,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+Existe cita activa 05,n8n-nodes-base.if,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Formatear ficha Lola1,@n8n/n8n-nodes-langchain.chainLlm,"Lola Comercial, catálogo Sheets/Supabase y perfil revisable",Configuración de credenciales reales pendiente
+Generar horarios cita 04,n8n-nodes-base.code,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Generar horarios reprogramacion 05,n8n-nodes-base.code,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Gestionar cita existente 05,n8n-nodes-base.if,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Get availability in a calendar,n8n-nodes-base.googleCalendar,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Guardar ficha de prueba1,n8n-nodes-base.postgres,"Estado, deduplicación, perfil y eventos en CRM / agenda compartida; SQL de origen preservado",Datos SQL reales pendientes de conciliación
+Guardar ingreso ENSAYO1,n8n-nodes-base.postgres,"Estado, deduplicación, perfil y eventos en CRM / agenda compartida; SQL de origen preservado",Datos SQL reales pendientes de conciliación
+Horario elegido vigente 04,n8n-nodes-base.if,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Horario sigue disponible 04,n8n-nodes-base.if,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Identificar evento ENSAYO1,n8n-nodes-base.code,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+Iniciar plazo real 24 horas1,n8n-nodes-base.postgres,"Estado, deduplicación, perfil y eventos en CRM / agenda compartida; SQL de origen preservado",Datos SQL reales pendientes de conciliación
+Leer cita activa 05,n8n-nodes-base.postgres,"Estado, deduplicación, perfil y eventos en CRM / agenda compartida; SQL de origen preservado",Datos SQL reales pendientes de conciliación
+Leer ficha para cita 04,n8n-nodes-base.postgres,"Estado, deduplicación, perfil y eventos en CRM / agenda compartida; SQL de origen preservado",Datos SQL reales pendientes de conciliación
+Lola Telegram ENSAYO1,@n8n/n8n-nodes-langchain.agent,"Lola Comercial, catálogo Sheets/Supabase y perfil revisable",Configuración de credenciales reales pendiente
+Memoria aislada ENSAYO1,@n8n/n8n-nodes-langchain.memoryPostgresChat,Mensajes por canal/lead en Firestore del CRM,Memoria SQL histórica pendiente de importación
+Modelo Lola ENSAYO1,@n8n/n8n-nodes-langchain.lmChatOpenAi,"Lola Comercial, catálogo Sheets/Supabase y perfil revisable",Configuración de credenciales reales pendiente
+Normalizar Telegram ENSAYO1,n8n-nodes-base.code,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+Nuevo horario disponible 05,n8n-nodes-base.if,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Nuevo horario vigente 05,n8n-nodes-base.if,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Ofrecer botones asesor1,n8n-nodes-base.if,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+Preparar audio ENSAYO1,n8n-nodes-base.code,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+Preparar botones horarios 04,n8n-nodes-base.code,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Preparar botones reprogramacion 05,n8n-nodes-base.code,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Preparar cita activa 05,n8n-nodes-base.code,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Preparar cita conservada 05,n8n-nodes-base.code,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Preparar confirmacion cancelacion final 05,n8n-nodes-base.code,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Preparar confirmacion reprogramacion 05,n8n-nodes-base.code,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Preparar evento Calendar 04,n8n-nodes-base.code,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+Preparar horario elegido 04,n8n-nodes-base.code,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Preparar horario ocupado 05,n8n-nodes-base.code,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Preparar horario vencido 05,n8n-nodes-base.code,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Preparar nuevo horario 05,n8n-nodes-base.code,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Preparar oferta asesor1,n8n-nodes-base.postgres,"Estado, deduplicación, perfil y eventos en CRM / agenda compartida; SQL de origen preservado",Datos SQL reales pendientes de conciliación
+Preparar sin cita activa 05,n8n-nodes-base.code,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Preparar solicitud cancelacion 05,n8n-nodes-base.code,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Puede responder Lola1,n8n-nodes-base.if,"Lola Comercial, catálogo Sheets/Supabase y perfil revisable",Configuración de credenciales reales pendiente
+Registrar cancelacion 05,n8n-nodes-base.postgres,"Estado, deduplicación, perfil y eventos en CRM / agenda compartida; SQL de origen preservado",Datos SQL reales pendientes de conciliación
+Registrar cita CRM 06,n8n-nodes-base.httpRequest,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Registrar cita confirmada 04,n8n-nodes-base.postgres,"Estado, deduplicación, perfil y eventos en CRM / agenda compartida; SQL de origen preservado",Datos SQL reales pendientes de conciliación
+Registrar lead CRM 06,n8n-nodes-base.httpRequest,API privada del mismo CRM / registro idempotente,Ver comparación funcional y pruebas de protocolo
+Registrar reprogramacion 05,n8n-nodes-base.postgres,"Estado, deduplicación, perfil y eventos en CRM / agenda compartida; SQL de origen preservado",Datos SQL reales pendientes de conciliación
+Reprogramar cita CRM 06,n8n-nodes-base.httpRequest,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Resolver seleccion asesor1,n8n-nodes-base.postgres,"Estado, deduplicación, perfil y eventos en CRM / agenda compartida; SQL de origen preservado",Datos SQL reales pendientes de conciliación
+Responder Telegram ENSAYO1,n8n-nodes-base.telegram,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+Responder seleccion asesor1,n8n-nodes-base.telegram,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+Respuesta a seleccion1,n8n-nodes-base.code,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+Restaurar contexto ENSAYO1,n8n-nodes-base.code,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+Restaurar ficha guardada1,n8n-nodes-base.code,"Lola Comercial, catálogo Sheets/Supabase y perfil revisable",Configuración de credenciales reales pendiente
+Restaurar respuesta sin oferta1,n8n-nodes-base.code,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+Revisar disponibilidad elegida 04,n8n-nodes-base.googleCalendar,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Revisar disponibilidad reprogramacion 05,n8n-nodes-base.googleCalendar,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Revisar horarios reprogramacion 05,n8n-nodes-base.googleCalendar,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Seguimiento sin respuesta CRM 06,n8n-nodes-base.httpRequest,API privada del mismo CRM / registro idempotente,Ver comparación funcional y pruebas de protocolo
+Sigue sin respuesta 06,n8n-nodes-base.if,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+Solicitar asesor CRM 06,n8n-nodes-base.httpRequest,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Structured Output Parser1,@n8n/n8n-nodes-langchain.outputParserStructured,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+Telegram ENSAYO1,n8n-nodes-base.telegramTrigger,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+Tipo de selección 04,n8n-nodes-base.switch,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+Tipo gestion cita 05,n8n-nodes-base.switch,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Transcribir audio ENSAYO1,@n8n/n8n-nodes-langchain.openAi,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+Validar cancelacion 05,n8n-nodes-base.code,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado
+Validar ficha ENSAYO1,n8n-nodes-base.code,"Lola Comercial, catálogo Sheets/Supabase y perfil revisable",Configuración de credenciales reales pendiente
+Vencer oferta tras 24 horas 06,n8n-nodes-base.postgres,"Estado, deduplicación, perfil y eventos en CRM / agenda compartida; SQL de origen preservado",Datos SQL reales pendientes de conciliación
+confirmacion Telegram 04,n8n-nodes-base.code,Adaptador de canal y motor común: business/whatsappService.js / whatsappAgenda.js,Correspondencia por familia; consultar matriz funcional
+liminar cita Calendar 05,n8n-nodes-base.googleCalendar,business/whatsappAgenda.js + operaciones Calendar explícitas + CrmLolaPanel,Casos de agenda locales probados con proveedor simulado

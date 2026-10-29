@@ -1,0 +1,47 @@
+{
+  "version": "67.6.11-r28",
+  "generated_at": "2026-10-24T00:00:00-05:00",
+  "live_deployed": false,
+  "live_database_touched": false,
+  "production_build": {
+    "ok": true,
+    "tool": "Vite 7.3.6",
+    "warning": "El bundle principal supera 500 kB; no impide la compilación."
+  },
+  "directed_tests": {
+    "ok": true,
+    "passed": 30,
+    "failed": 0,
+    "scope": [
+      "embudo",
+      "evaluación GNB",
+      "separación",
+      "minuta",
+      "cierre documental",
+      "analítica",
+      "puerta de respaldo"
+    ]
+  },
+  "server_syntax": {
+    "ok": true
+  },
+  "n8n": {
+    "file": "n8n/LOLA-ENSAYO-67.6.11-r28-PG-GEMINI-INACTIVO.json",
+    "nodes": 84,
+    "active": false,
+    "postgres_json_parameter": true,
+    "gemini_model_present": true,
+    "gnb_context_present": true
+  },
+  "predeployment_backup": {
+    "required": true,
+    "executed": false,
+    "reason": "La subida oficial no fue autorizada ni realizada.",
+    "command": "npm run backup-before-update"
+  },
+  "data_preservation": {
+    "postgresql_authoritative": true,
+    "kanban_order_backed_up": true,
+    "destructive_initialization_forbidden": true
+  }
+}

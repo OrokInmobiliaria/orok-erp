@@ -1,0 +1,11 @@
+{
+  "_nota": "Mapa para actualizar el servicio CRM existente. Los IDs referencian credenciales, no contienen claves. No autoriza activación. Pendientes en ESTADO-CONEXIONES.txt.",
+  "hosts": {},
+  "credenciales": {
+    "M.O.R.A ENSAYO - Anthropic API": {
+      "nombre": "M.O.R.A. · Anthropic API",
+      "id": "ElhGTnrym9YW7GB6"
+    }
+  },
+  "nuevos_webhook_ids": false
+}

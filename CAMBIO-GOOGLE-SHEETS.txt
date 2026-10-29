@@ -1,0 +1,14 @@
+ANTECEDENTE DE PRUEBAS: la conexión permanente ya quedó validada. Prevalece VALIDACION-CLARA-PERMANENTE.txt.
+
+C.L.A.R.A · Actualización 2026-10-28
+Guardar compilado en Drive crea Google Sheets nativo, una pestaña por sección.
+Empresa seleccionada BMG, MZA o MAAS: Contabilidad / 06 Reportes / YYYY-MM.
+No se guarda el consolidado de las tres empresas dentro de una empresa.
+Se mantienen los 69 nodos originales y se agregan 13 para Google Sheets (82).
+Los dos disparadores manuales adicionales se convierten a webhooks autenticados por compatibilidad n8n 2.1.4. No se retiran las ramas PDF, lectura ni ordenación.
+OAuth existente: Google Drive account, mmontezuma@orok.com.pe.
+Prueba técnica Sheets correcta en 4.151 segundos. Botón completo comprobado correctamente tras despliegue persistente del ensayo; ver VALIDACION-SHEETS-R41.txt.
+El flujo permanece INACTIVO. El ERP de ensayo usa URL webhook-test temporal; falta publicar de forma controlada y reemplazarla por /webhook/clara-drive-guardar para operación continua.
+No instalar sobre producción sin respaldo verificado y comparación de datos.
+La base, los volúmenes privados, variables, credenciales, links, historial y posiciones del Kanban se conservan.
+Pruebas: compilación y sintaxis correctas; transformación de datos y ruta correctas; 13 pruebas originales Drive correctas. Siete pruebas HTTP locales bloqueadas por EACCES del entorno, no se declaran aprobadas.

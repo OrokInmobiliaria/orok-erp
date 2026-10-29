@@ -1,0 +1,8 @@
+ 'use strict';
+const {test}=require('node:test'),assert=require('node:assert/strict');
+const {validateOutput}=require('../business/whatsappService');
+const profile=Object.fromEntries(['name','phone','email','interest','purchase_method','initial_payment'].map(k=>[k,null]));
+const out=(tool,data)=>({reply:'El tablero es de cuarzo.',profile,handoff:false,opt_out:false,commercial_answer:true,commercial_evidence:[{tool,data}]});
+test('JSON strings from a tool retain their original quotes during evidence verification',()=>{const text=JSON.stringify([{Tipo:'Flat 2D',Area:53.79}]);assert.equal(validateOutput({output:out('Catalogo_comercial_Sheets',text),observed_evidence:[{tool:'Catalogo_comercial_Sheets',data:text}]},{text:'información'}).commercial_answer,true);});
+test('Drive quotations containing quotes and line breaks match the verified source text',()=>{const text='Tablero cocina | Plancha de cuarzo "Blanco Estelar"\nAcabado aprobado';assert.equal(validateOutput({output:out('Carpeta_autorizada_GDrive',text),observed_evidence:[{tool:'Carpeta_autorizada_GDrive',data:'Ficha\n'+text}]},{text:'acabados'}).commercial_answer,true);});
+test('object observations remain supported without trusting invented evidence or another tool',()=>{assert.equal(validateOutput({output:out('Catalogo_comercial_Sheets','2D'),observed_evidence:[{tool:'Catalogo_comercial_Sheets',data:[{Tipo:'2D'}]}]},{text:'información'}).commercial_answer,true);for(const observed of [[],[{tool:'Catalogo_comercial_Sheets',data:'1D'}],[{tool:'Carpeta_autorizada_GDrive',data:'2D'}]])assert.throws(()=>validateOutput({output:out('Catalogo_comercial_Sheets','2D'),observed_evidence:observed},{text:'información'}),/evidencia/);});

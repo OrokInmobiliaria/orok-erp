@@ -1,0 +1,3 @@
+'use strict';
+const {config}=require('../config.cjs'),{createPool,assertReady}=require('../postgres-project.cjs'),{PostgresDocuments}=require('../postgres-documents.cjs');
+(async()=>{const c=config(),pool=createPool(c);try{const db=new PostgresDocuments(pool,{project:c.project});await assertReady(db);const {rows}=await pool.query('SELECT count(*)::integer AS pending FROM lola_unified.firebase_outbox WHERE project_id=$1',[c.project]);console.log(JSON.stringify({ok:true,project:c.project,storage:'postgresql',firebase_pending:rows[0].pending}));}finally{await pool.end();}})().catch(()=>{console.error('PostgreSQL no está listo. No se ha habilitado una memoria alternativa en Firebase.');process.exitCode=1;});

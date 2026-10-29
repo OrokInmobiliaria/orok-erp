@@ -1,0 +1,12 @@
+CIERRE DE CONEXIONES R41 — 28/10/2026 (Lima)
+Conservar este ensayo para mejoras. No se ha actualizado el CRM vivo.
+C.L.A.R.A: publicada y verificada para SOLO GUARDADO en Google Sheets dentro de Contabilidad de cada empresa. Lectura, inventario y ordenación automáticos apagados.
+M.O.R.A: publicada, versión activa verificada. Consulta manual integral 97664 y segunda consulta automática desde ERP respondida. 40 nodos. Semanal y mercado automáticos apagados.
+L.O.L.A interna: funciona con Claude.
+L.O.L.A comercial: 110 nodos conservados; Claude principal y Gemini apoyo. PostgreSQL del ensayo y HTTP R41. 24 pruebas aprobadas y ejecución 97874 correcta en 6.473 segundos, con respuesta comercial interna visible sin envío al cliente. PUBLICADA: versión activa verificada y consulta automática posterior 98008 aprobada, respuesta visible sin ejecución manual. Solo sondeo de consultas 10 segundos activo; otros horarios y webhook apagados.
+Los tres JSON de n8n/conexion-final se exportan inactivos, sin ID y sin claves. Son el estado de entrega actual, no los JSON históricos de la raíz n8n.
+No importar versiones antiguas ni activar todas las ramas. No ejecutar los conectores de voz/publicación .invalid. No se probaron esas ramas ni todas las funciones comerciales con Claude.
+No se habilitaron canales sociales en R41. La prueba comercial utilizó Gestión y seguimiento > conversación interna de Oroktest; ninguna salida al cliente, correo o Calendar.
+Al ajustar el sondeo de L.O.L.A se eliminó un nodo por error, se restauró desde copia y luego se verificó en la base de n8n: 110 nodos, conexiones iguales a las originales e historial válido. El resultado de la prueba interna se conserva.
+La versión viva debe conservar íntegramente PostgreSQL, leads, conversaciones, historial, posiciones Kanban, archivos privados, variables y vínculos. Antes de producción repetir inventario, respaldo verificado y comparación de conteos. No reemplazar la base por una vacía ni copiar claves a este ZIP.
+Revisar actas VALIDACION-CLARA-PERMANENTE.txt, VALIDACION-MORA-R41-20261028.txt y VALIDACION-LOLA-CLAUDE-R41-20261028.txt. Los documentos históricos del paquete describen etapas previas; prevalece esta nota para el estado de conexión de las tres IAs.

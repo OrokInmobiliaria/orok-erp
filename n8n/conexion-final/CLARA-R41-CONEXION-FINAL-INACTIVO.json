@@ -1,0 +1,2988 @@
+{
+  "name": "ERP R41 · C.L.A.R.A · DRIVE PERMANENTE · SOLO GUARDADO",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# C.L.A.R.A · Drive contable · ENSAYO\nImportar como copia nueva e INACTIVA. No toca los flujos de L.O.L.A ni de M.O.R.A.\n\n1. Crear la credencial **C.L.A.R.A - Google Drive (cuenta de contabilidad)** (Google Drive OAuth2) con la cuenta dueña de las carpetas. Nada de claves en el JSON.\n2. R35: las reglas y los ID de carpeta salen de la skill **erp-orok-contabilidad** del CRM (nodos «Reglas · …», acción `clara_reglas_get`); si el CRM no responde, se usan los valores de los nodos. Las carpetas Contabilidad de BMG, MZA y MAAS ya están configuradas (nodos «Carpetas · …» y «Validar archivo del CRM»). Solo se usa información desde **enero de 2025**; lo anterior no se usa ni se lee: se archiva ordenado por año en «08 Histórico (antes de 2025)», sin borrar nada.\n3. Ejecutar primero «Inventario de carpetas»: escribe CLARA-INVENTARIO.json en cada Contabilidad sin mover nada, para decidir cómo encajan las carpetas que ya existen. Recién después ejecutar «Preparar carpetas (ejecutar una vez)», que crea solo las subcarpetas 01 … 07 que falten, sin borrar nada.\n4. Vincular **M.O.R.A ENSAYO - Anthropic API** (lectura de facturas y vouchers) y la PostgreSQL de ensayo; aplicar `migrations/003-clara-postgres.sql`.\n5. Rama 04 (CRM → Drive): crear **C.L.A.R.A - Webhook CRM** (Header Auth, nombre `X-Clara-Secret`, valor de 32+ caracteres) y poner la URL del webhook y ese mismo valor en `clara.json` del directorio privado del CRM. La rama 03 también envía las lecturas al CRM con la credencial CRM de ensayo (acción `clara_bandeja_put`).\n6. Zona horaria America/Lima. Probar con un archivo de prueba antes de activar.",
+        "height": 330,
+        "width": 1500,
+        "color": 3
+      },
+      "id": "3a10cc2d-df1e-4e58-99b9-513851fe6b43",
+      "name": "C.L.A.R.A · 00 · ENSAYO: CONFIGURAR ANTES DE ACTIVAR",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        1648
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 01 · Preparar carpetas\nCrea solo las subcarpetas que faltan (01 Entrada … 08 Histórico). Se puede repetir sin duplicar.",
+        "height": 200,
+        "width": 1500,
+        "color": 7
+      },
+      "id": "c0c53fed-7efb-4c9f-b38b-f1d66e0b9ebd",
+      "name": "C.L.A.R.A · 01 · PREPARAR CARPETAS",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        2016
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "79714ae6-399e-47b0-ae08-31206d870c7a",
+      "name": "Preparar carpetas (ejecutar una vez)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        2128,
+        2112
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMPRESAS = [\n  { empresa: 'BMG',  razon: 'BMG DESARROLLADORA INMOBILIARIA S.A.C.', ruc: '20615227685', contabilidad: '1RqRBLFGervdPIjOHGfbA2kWUeFRHUjKY' },\n  { empresa: 'MZA',  razon: 'MONTEZUMA ARQUITECTOS GERENCIA Y CONSTRUCCION E.I.R.L.', ruc: '20602354785', contabilidad: '1eOPFAhtYW6L-lkSRrnOruhBrAED3VEJ0' },\n  { empresa: 'MAAS', razon: 'MAAS CONSTRUCTORA S.A.C.', ruc: '20616628144', contabilidad: '17Kb4z3EmySjkiBvBpMLkxlFrlFvj4HY6' },\n];\nconst CARPETAS = ['01 Entrada', '02 Comprobantes de proveedores', '03 Órdenes OC-OS', '04 Pagos y vouchers', '05 Bancos', '06 Reportes', '07 Procesados por C.L.A.R.A', '08 Histórico (antes de 2025)'];\nconst DESDE = '2025-01-01'; // Regla de Gerencia: solo se usa información desde enero de 2025.\nconst configurada = (e) => /^[A-Za-z0-9_-]{15,}$/.test(e.contabilidad || '') && !String(e.contabilidad).startsWith('CONFIGURAR');\n// Solo trabaja con las empresas cuya carpeta «Contabilidad» ya fue configurada (ID de la carpeta de Drive).\nreturn EMPRESAS.filter(configurada).map((e) => ({ json: { ...e, carpetas: CARPETAS } }));\n"
+      },
+      "id": "7fa7a5da-3028-46f6-9b73-d56d6311f860",
+      "name": "Carpetas · preparar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2352,
+        2112
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().flatMap((it) => it.json.carpetas.map((nombre) => ({ json: { empresa: it.json.empresa, parent: it.json.contabilidad, nombre } })));"
+      },
+      "id": "bd03956d-5369-491c-ba71-5c7aee366572",
+      "name": "Carpetas requeridas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2560,
+        2112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "includeItemsFromAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "corpora",
+              "value": "allDrives"
+            },
+            {
+              "name": "q",
+              "value": "={{ \"name = '\" + $json.nombre + \"' and '\" + $json.parent + \"' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false\" }}"
+            },
+            {
+              "name": "fields",
+              "value": "files(id,name)"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "d046c8f6-c980-44c9-8de4-a3ec0c59c0ea",
+      "name": "Buscar subcarpeta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2784,
+        2112
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const out = [];\n$input.all().forEach((it, i) => { if (!(it.json.files || []).length) out.push({ json: $('Carpetas requeridas').itemMatching(i).json }); });\nreturn out;"
+      },
+      "id": "e6b9338c-dcb3-4c1a-900f-f82128780862",
+      "name": "Subcarpetas faltantes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3008,
+        2112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: $json.nombre, mimeType: 'application/vnd.google-apps.folder', parents: [$json.parent] }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "ad0883b8-ea1e-4228-a4c7-a03bc63b5090",
+      "name": "Crear subcarpeta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3232,
+        2112
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 02 · Guardar y ordenar\nLa app C.L.A.R.A (y el CRM) dejan los archivos en la raíz de Contabilidad con nombre estándar. Cada 10 minutos se mueven a su carpeta y mes: OC/OS → 03, Voucher → 04, Factura/Recibo/Boleta → 02, Estado de cuenta → 05, CLARA *.xlsx → 06. Lo que no se reconoce va a 01 Entrada para que C.L.A.R.A lo lea. Lo anterior a 2025 va a 08 Histórico / AAAA, sin leerse ni borrarse.",
+        "height": 220,
+        "width": 1500,
+        "color": 7
+      },
+      "id": "1e8e860a-96e4-4dd7-9ffd-6ad4c7313086",
+      "name": "C.L.A.R.A · 02 · GUARDAR Y ORDENAR LO QUE SUBE LA APP",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        2272
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 10
+            }
+          ]
+        }
+      },
+      "id": "d1fd1ca8-eb03-41d3-8d17-905b77cb877b",
+      "name": "Ordenar cada 10 minutos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        2128,
+        2368
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://lola-pruebas-crm.kvrq8w.easypanel.host/api/integrations/lola",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ action: 'clara_reglas_get' }) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "50d408fb-f9c5-48e0-9d0c-967e387b1a45",
+      "name": "Reglas · ordenar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2240,
+        2528
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "QOZ8TLw3xEwtpAyz",
+          "name": "LOLA ENSAYO 955318057 - CRM"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMPRESAS = [\n  { empresa: 'BMG',  razon: 'BMG DESARROLLADORA INMOBILIARIA S.A.C.', ruc: '20615227685', contabilidad: '1RqRBLFGervdPIjOHGfbA2kWUeFRHUjKY' },\n  { empresa: 'MZA',  razon: 'MONTEZUMA ARQUITECTOS GERENCIA Y CONSTRUCCION E.I.R.L.', ruc: '20602354785', contabilidad: '1eOPFAhtYW6L-lkSRrnOruhBrAED3VEJ0' },\n  { empresa: 'MAAS', razon: 'MAAS CONSTRUCTORA S.A.C.', ruc: '20616628144', contabilidad: '17Kb4z3EmySjkiBvBpMLkxlFrlFvj4HY6' },\n];\nconst CARPETAS = ['01 Entrada', '02 Comprobantes de proveedores', '03 Órdenes OC-OS', '04 Pagos y vouchers', '05 Bancos', '06 Reportes', '07 Procesados por C.L.A.R.A', '08 Histórico (antes de 2025)'];\nconst DESDE = '2025-01-01'; // Regla de Gerencia: solo se usa información desde enero de 2025.\nconst configurada = (e) => /^[A-Za-z0-9_-]{15,}$/.test(e.contabilidad || '') && !String(e.contabilidad).startsWith('CONFIGURAR');\n// R35 · Reglas y carpetas desde la skill erp-orok-contabilidad (vía CRM). Si el CRM no responde, se usan los valores de este nodo.\nlet R = null; try { R = $('Reglas · ordenar').first().json.value || null; } catch (e) { R = null; }\nif (R && R.params && R.params.empresas) for (const e of EMPRESAS) { const x = R.params.empresas[e.empresa]; if (x) { e.razon = x.razon || e.razon; e.ruc = x.ruc || e.ruc; if (x.drive_folder) e.contabilidad = x.drive_folder; } }\nconst desde = (R && R.params && /^\\d{4}-\\d{2}-\\d{2}$/.test(R.params.desde || '')) ? R.params.desde : DESDE;\nreturn EMPRESAS.filter(configurada).map((e) => ({ json: { ...e, carpetas: CARPETAS, desde, reglas_version: R?.version || 'nodo' } }));\n"
+      },
+      "id": "e6c104c9-2587-431e-baa2-93a50656ac8f",
+      "name": "Carpetas · ordenar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2352,
+        2368
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "includeItemsFromAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "corpora",
+              "value": "allDrives"
+            },
+            {
+              "name": "q",
+              "value": "={{ \"'\" + $json.contabilidad + \"' in parents and mimeType != 'application/vnd.google-apps.folder' and trashed = false\" }}"
+            },
+            {
+              "name": "fields",
+              "value": "files(id,name,mimeType,size,createdTime,modifiedTime,parents,webViewLink)"
+            },
+            {
+              "name": "pageSize",
+              "value": "200"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "9974e1a7-f974-436c-9fd6-02f65c97cbd5",
+      "name": "Listar archivos sueltos en Contabilidad",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2560,
+        2368
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMPRESAS = [\n  { empresa: 'BMG',  razon: 'BMG DESARROLLADORA INMOBILIARIA S.A.C.', ruc: '20615227685', contabilidad: '1RqRBLFGervdPIjOHGfbA2kWUeFRHUjKY' },\n  { empresa: 'MZA',  razon: 'MONTEZUMA ARQUITECTOS GERENCIA Y CONSTRUCCION E.I.R.L.', ruc: '20602354785', contabilidad: '1eOPFAhtYW6L-lkSRrnOruhBrAED3VEJ0' },\n  { empresa: 'MAAS', razon: 'MAAS CONSTRUCTORA S.A.C.', ruc: '20616628144', contabilidad: '17Kb4z3EmySjkiBvBpMLkxlFrlFvj4HY6' },\n];\nconst CARPETAS = ['01 Entrada', '02 Comprobantes de proveedores', '03 Órdenes OC-OS', '04 Pagos y vouchers', '05 Bancos', '06 Reportes', '07 Procesados por C.L.A.R.A', '08 Histórico (antes de 2025)'];\nconst DESDE = '2025-01-01'; // Regla de Gerencia: solo se usa información desde enero de 2025.\nconst configurada = (e) => /^[A-Za-z0-9_-]{15,}$/.test(e.contabilidad || '') && !String(e.contabilidad).startsWith('CONFIGURAR');\n// Agrupa por empresa y carpeta destino; una sola búsqueda/creación por carpeta en cada ejecución.\nconst REGLAS = [\n  [/^(OC|OS)-/i, '03 Órdenes OC-OS'],\n  [/^voucher/i, '04 Pagos y vouchers'],\n  [/^(factura|recibo|boleta|nota de cr)/i, '02 Comprobantes de proveedores'],\n  [/^estado de cuenta/i, '05 Bancos'],\n  [/^CLARA .*\\.xlsx$/i, '06 Reportes'],\n];\nconst mesLima = (t) => new Date(Date.parse(t || new Date().toISOString()) - 5 * 3600e3).toISOString().slice(0, 7);\nconst grupos = {};\n$input.all().forEach((it, i) => {\n  const emp = $('Carpetas · ordenar').itemMatching(i).json;\n  for (const f of it.json.files || []) {\n    if (/^CLARA-(BANDEJA|INVENTARIO)/i.test(f.name) || /^LEEME/i.test(f.name)) continue;\n    // Anterior a 2025: no se usa ni se lee; se archiva ordenado por año en 08 Histórico (nunca se borra).\n    const fd = (f.name.match(/(20\\d{2})-(\\d{2})-(\\d{2})/) || [])[0] || null; // fecha del documento puesta por C.L.A.R.A en el nombre\n    const D0 = emp.desde || DESDE;\n    const viejo = fd ? fd < D0 : String(f.createdTime || '') < D0 && String(f.modifiedTime || '') < D0;\n    const regla = REGLAS.find(([re]) => re.test(f.name));\n    const categoria = viejo ? '08 Histórico (antes de 2025)' : regla ? regla[1] : '01 Entrada';\n    const k = emp.empresa + '|' + categoria;\n    grupos[k] = grupos[k] || { empresa: emp.empresa, contabilidad: emp.contabilidad, categoria, porMes: categoria !== '01 Entrada', files: [] };\n    grupos[k].files.push({ id: f.id, name: f.name, mes: viejo ? (fd || String(f.modifiedTime || f.createdTime || '')).slice(0, 4) || 'sin-fecha' : fd ? fd.slice(0, 7) : mesLima(f.createdTime) });\n  }\n});\nreturn Object.values(grupos).map((g) => ({ json: g }));"
+      },
+      "id": "ee38e6b3-cfda-49e8-b706-0eb7988c4a54",
+      "name": "Clasificar por carpeta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2784,
+        2368
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "includeItemsFromAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "corpora",
+              "value": "allDrives"
+            },
+            {
+              "name": "q",
+              "value": "={{ \"name = '\" + $json.categoria + \"' and '\" + $json.contabilidad + \"' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false\" }}"
+            },
+            {
+              "name": "fields",
+              "value": "files(id,name)"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "a11213de-f6a4-4bdb-8cdc-29f055a1f543",
+      "name": "Buscar carpeta de destino",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3008,
+        2368
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sin la carpeta de destino no se mueve nada: ejecutar «Preparar carpetas».\nconst out = [];\n$input.all().forEach((it, i) => {\n  const g = $('Clasificar por carpeta').itemMatching(i).json;\n  const destino = (it.json.files || [])[0]?.id;\n  if (!destino) return;\n  if (!g.porMes) { for (const f of g.files) out.push({ json: { mover: true, fileId: f.id, nombre: f.name, destino, origen: g.contabilidad, empresa: g.empresa } }); return; }\n  const meses = {};\n  for (const f of g.files) (meses[f.mes] = meses[f.mes] || []).push(f);\n  for (const [mes, files] of Object.entries(meses)) out.push({ json: { mover: false, empresa: g.empresa, origen: g.contabilidad, categoriaId: destino, mes, files } });\n});\nreturn out;"
+      },
+      "id": "804fbcd6-903c-422f-bb3c-ed8d50af134a",
+      "name": "Resolver carpeta y meses",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3232,
+        2368
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a8f6502f-4cdf-f379-9e9c-3ce6ba3c1f04",
+              "leftValue": "={{ $json.mover === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "329016af-d382-4d27-ae62-5cd5bb6f31f1",
+      "name": "Ya tiene destino final",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3440,
+        2368
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "includeItemsFromAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "corpora",
+              "value": "allDrives"
+            },
+            {
+              "name": "q",
+              "value": "={{ \"name = '\" + $json.mes + \"' and '\" + $json.categoriaId + \"' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false\" }}"
+            },
+            {
+              "name": "fields",
+              "value": "files(id,name)"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "745945f2-487d-4380-a892-565ae0c7226f",
+      "name": "Buscar carpeta del mes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3664,
+        2496
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const out = [];\n$input.all().forEach((it, i) => {\n  const g = $('Resolver carpeta y meses').itemMatching(i).json;\n  const id = (it.json.files || [])[0]?.id;\n  if (id) for (const f of g.files) out.push({ json: { crear: false, fileId: f.id, nombre: f.name, destino: id, origen: g.origen, empresa: g.empresa } });\n  else out.push({ json: { crear: true, ...g } });\n});\nreturn out;"
+      },
+      "id": "7db5718b-99af-49bb-a014-3d76f95f904b",
+      "name": "Resolver carpeta del mes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3888,
+        2496
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8e4555d3-0b44-f7bd-c847-366c6efb3202",
+              "leftValue": "={{ $json.crear === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1a65a9b2-70c1-426e-a4b6-1b2dc6db8557",
+      "name": "Falta la carpeta del mes",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4112,
+        2496
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: $json.mes, mimeType: 'application/vnd.google-apps.folder', parents: [$json.categoriaId] }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "4778d100-9344-493f-a205-aa5bed8a8de6",
+      "name": "Crear carpeta del mes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4320,
+        2416
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const out = [];\n$input.all().forEach((it, i) => {\n  const g = $('Resolver carpeta del mes').itemMatching(i).json;\n  if (!it.json.id) return;\n  for (const f of g.files) out.push({ json: { fileId: f.id, nombre: f.name, destino: it.json.id, origen: g.origen, empresa: g.empresa } });\n});\nreturn out;"
+      },
+      "id": "02bb282d-d0f8-4136-8662-5b4eb7fdfe89",
+      "name": "Archivos del mes nuevo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4544,
+        2416
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ 'https://www.googleapis.com/drive/v3/files/' + $json.fileId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "addParents",
+              "value": "={{ $json.destino }}"
+            },
+            {
+              "name": "removeParents",
+              "value": "={{ $json.origen }}"
+            },
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "fields",
+              "value": "id,name,parents,webViewLink"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "bf61bd03-302e-413f-b74d-edeee34ec3d9",
+      "name": "Mover a su carpeta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4768,
+        2368
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO clara.drive_log (file_id, nombre, accion, detalle)\nSELECT x->>'id', x->>'name', 'ordenado', x\nFROM jsonb_array_elements($1::jsonb) AS x\nON CONFLICT DO NOTHING;",
+        "options": {
+          "queryReplacement": "={{ JSON.stringify($input.all().map(i => i.json)) }}"
+        }
+      },
+      "id": "3ca1d191-dfcd-43fb-a0cb-74ad978fc598",
+      "name": "Bitácora de archivos · PostgreSQL",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        4992,
+        2368
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "LUvGNJCqttq6q3Xy",
+          "name": "LOLA ENSAYO 955318057 - PostgreSQL"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "## 03 · Alimentar desde Drive\nCada 15 minutos lee lo que se deja en **01 Entrada** de cada empresa: facturas, recibos, vouchers (PDF o foto) con Claude, y estados de cuenta (Excel, CSV o Google Sheets). Escribe el resultado en **CLARA-BANDEJA.json** (raíz de Contabilidad), que la app C.L.A.R.A muestra en «Bandeja de Drive» para que una persona lo registre. Nada se registra solo. Además C.L.A.R.A mantiene el orden: renombra lo leído con nombre estándar (tipo, serie, emisor, fecha) y la rama 02 lo archiva por tipo y mes del documento; lo anterior a 2025 va a 08 Histórico; si falla, se queda en Entrada. Nunca borra ni cambia permisos.",
+        "height": 240,
+        "width": 1500,
+        "color": 7
+      },
+      "id": "00bcb9e6-e3df-42c9-9614-07ee64d70f0c",
+      "name": "C.L.A.R.A · 03 · ALIMENTAR DESDE 01 ENTRADA",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        2848
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "id": "c33f212b-29f1-43e1-af44-57d4ba7401e8",
+      "name": "Leer Entrada cada 15 minutos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        2128,
+        2976
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "clara-leer-entrada-manual",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "id": "998912ec-de3f-482d-bc1c-85e2a550fd4b",
+      "name": "Leer Entrada manualmente",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        2128,
+        3136
+      ],
+      "webhookId": "ebdddbaa-43ab-4fe6-9077-75cbc3b4b7cd",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "QOZ8TLw3xEwtpAyz",
+          "name": "LOLA ENSAYO 955318057 - CRM"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://lola-pruebas-crm.kvrq8w.easypanel.host/api/integrations/lola",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ action: 'clara_reglas_get' }) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "dd425ee8-c687-4d68-a907-b94b3a83cdf7",
+      "name": "Reglas · leer entrada",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2240,
+        3280
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "QOZ8TLw3xEwtpAyz",
+          "name": "LOLA ENSAYO 955318057 - CRM"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMPRESAS = [\n  { empresa: 'BMG',  razon: 'BMG DESARROLLADORA INMOBILIARIA S.A.C.', ruc: '20615227685', contabilidad: '1RqRBLFGervdPIjOHGfbA2kWUeFRHUjKY' },\n  { empresa: 'MZA',  razon: 'MONTEZUMA ARQUITECTOS GERENCIA Y CONSTRUCCION E.I.R.L.', ruc: '20602354785', contabilidad: '1eOPFAhtYW6L-lkSRrnOruhBrAED3VEJ0' },\n  { empresa: 'MAAS', razon: 'MAAS CONSTRUCTORA S.A.C.', ruc: '20616628144', contabilidad: '17Kb4z3EmySjkiBvBpMLkxlFrlFvj4HY6' },\n];\nconst CARPETAS = ['01 Entrada', '02 Comprobantes de proveedores', '03 Órdenes OC-OS', '04 Pagos y vouchers', '05 Bancos', '06 Reportes', '07 Procesados por C.L.A.R.A', '08 Histórico (antes de 2025)'];\nconst DESDE = '2025-01-01'; // Regla de Gerencia: solo se usa información desde enero de 2025.\nconst configurada = (e) => /^[A-Za-z0-9_-]{15,}$/.test(e.contabilidad || '') && !String(e.contabilidad).startsWith('CONFIGURAR');\n// R35 · Reglas y carpetas desde la skill erp-orok-contabilidad (vía CRM). Si el CRM no responde, se usan los valores de este nodo.\nlet R = null; try { R = $('Reglas · leer entrada').first().json.value || null; } catch (e) { R = null; }\nif (R && R.params && R.params.empresas) for (const e of EMPRESAS) { const x = R.params.empresas[e.empresa]; if (x) { e.razon = x.razon || e.razon; e.ruc = x.ruc || e.ruc; if (x.drive_folder) e.contabilidad = x.drive_folder; } }\nconst desde = (R && R.params && /^\\d{4}-\\d{2}-\\d{2}$/.test(R.params.desde || '')) ? R.params.desde : DESDE;\nreturn EMPRESAS.filter(configurada).map((e) => ({ json: { ...e, carpetas: CARPETAS, desde, reglas_version: R?.version || 'nodo' } }));\n"
+      },
+      "id": "0bd604b9-73e8-41f4-995a-089a953c0b7d",
+      "name": "Carpetas · leer entrada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2352,
+        2976
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "includeItemsFromAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "corpora",
+              "value": "allDrives"
+            },
+            {
+              "name": "q",
+              "value": "={{ \"(name = '01 Entrada' or name = '07 Procesados por C.L.A.R.A' or name = '08 Histórico (antes de 2025)') and '\" + $json.contabilidad + \"' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false\" }}"
+            },
+            {
+              "name": "fields",
+              "value": "files(id,name)"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "5b14a7c1-95b4-49ff-99a2-60c0bc4a656b",
+      "name": "Ubicar Entrada y Procesados",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2560,
+        2976
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const out = [];\n$input.all().forEach((it, i) => {\n  const e = $('Carpetas · leer entrada').itemMatching(i).json;\n  const f = it.json.files || [];\n  const entrada = f.find((x) => x.name === '01 Entrada')?.id, procesados = f.find((x) => x.name === '07 Procesados por C.L.A.R.A')?.id, historico = f.find((x) => x.name === '08 Histórico (antes de 2025)')?.id;\n  if (entrada && procesados) out.push({ json: { empresa: e.empresa, ruc: e.ruc, razon: e.razon, contabilidad: e.contabilidad, desde: e.desde, entrada, procesados, historico: historico || procesados } });\n});\nreturn out;"
+      },
+      "id": "8542b28a-ac6c-4fbc-944a-1519a0db6eca",
+      "name": "Empresas con Entrada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2784,
+        2976
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "includeItemsFromAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "corpora",
+              "value": "allDrives"
+            },
+            {
+              "name": "q",
+              "value": "={{ \"'\" + $json.entrada + \"' in parents and mimeType != 'application/vnd.google-apps.folder' and trashed = false\" }}"
+            },
+            {
+              "name": "fields",
+              "value": "files(id,name,mimeType,size,createdTime,modifiedTime,parents,webViewLink)"
+            },
+            {
+              "name": "orderBy",
+              "value": "createdTime"
+            },
+            {
+              "name": "pageSize",
+              "value": "30"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "ff910b4b-75e6-4dd5-b531-3a069a619e83",
+      "name": "Listar archivos de Entrada",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3008,
+        2976
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMPRESAS = [\n  { empresa: 'BMG',  razon: 'BMG DESARROLLADORA INMOBILIARIA S.A.C.', ruc: '20615227685', contabilidad: '1RqRBLFGervdPIjOHGfbA2kWUeFRHUjKY' },\n  { empresa: 'MZA',  razon: 'MONTEZUMA ARQUITECTOS GERENCIA Y CONSTRUCCION E.I.R.L.', ruc: '20602354785', contabilidad: '1eOPFAhtYW6L-lkSRrnOruhBrAED3VEJ0' },\n  { empresa: 'MAAS', razon: 'MAAS CONSTRUCTORA S.A.C.', ruc: '20616628144', contabilidad: '17Kb4z3EmySjkiBvBpMLkxlFrlFvj4HY6' },\n];\nconst CARPETAS = ['01 Entrada', '02 Comprobantes de proveedores', '03 Órdenes OC-OS', '04 Pagos y vouchers', '05 Bancos', '06 Reportes', '07 Procesados por C.L.A.R.A', '08 Histórico (antes de 2025)'];\nconst DESDE = '2025-01-01'; // Regla de Gerencia: solo se usa información desde enero de 2025.\nconst configurada = (e) => /^[A-Za-z0-9_-]{15,}$/.test(e.contabilidad || '') && !String(e.contabilidad).startsWith('CONFIGURAR');\n// Máximo 8 archivos por empresa en cada ejecución; hasta 10 MB.\nconst DOC = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif'];\nconst HOJA = { 'text/csv': 'csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx', 'application/vnd.google-apps.spreadsheet': 'csv' };\nconst out = [];\n$input.all().forEach((it, i) => {\n  const e = $('Empresas con Entrada').itemMatching(i).json;\n  let n = 0;\n  for (const f of it.json.files || []) {\n    if (n >= 8) break;\n    if (+f.size > 10 * 1024 * 1024) continue;\n    if (String(f.modifiedTime || f.createdTime || '') < (e.desde || DESDE)) continue; // anterior a la fecha de corte: no se usa\n    const esDoc = DOC.includes(f.mimeType), hoja = HOJA[f.mimeType];\n    if (!esDoc && !hoja) continue;\n    const url = f.mimeType === 'application/vnd.google-apps.spreadsheet'\n      ? 'https://www.googleapis.com/drive/v3/files/' + f.id + '/export?mimeType=text%2Fcsv'\n      : 'https://www.googleapis.com/drive/v3/files/' + f.id + '?alt=media&supportsAllDrives=true';\n    out.push({ json: { ...e, archivo: { id: f.id, nombre: f.name, mime: f.mimeType, link: f.webViewLink || '', creado: f.createdTime }, clase: esDoc ? 'documento' : 'hoja', formato: hoja || null, url } });\n    n++;\n  }\n});\nreturn out;"
+      },
+      "id": "6dff2e63-25e2-4820-9583-79c1f3b388c7",
+      "name": "Elegir archivos a leer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3232,
+        2976
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "id": "a6063357-cb67-443f-b9ce-9601a672da08",
+      "name": "Descargar archivo de Entrada",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3440,
+        2976
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "79078f8c-bd36-99f6-3fd9-bbb7dd230093",
+              "leftValue": "={{ $('Elegir archivos a leer').item.json.clase === 'hoja' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "69868446-8e09-4e04-8fdc-0cd32033c0d6",
+      "name": "Es hoja de cálculo",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3664,
+        2976
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d8b98f27-26af-3280-8bc5-ba0c3c01c35a",
+              "leftValue": "={{ $('Elegir archivos a leer').item.json.formato === 'xlsx' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e39a57d7-3336-4d28-a01d-baae7bcd6ca3",
+      "name": "Es Excel",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3888,
+        2896
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {}
+      },
+      "id": "5380c3b6-e1a1-4260-9fb1-fa3f62aad81b",
+      "name": "Leer Excel",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        4112,
+        2816
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "8c546f4f-1a4f-4852-bb26-682bd8ce21c7",
+      "name": "Leer CSV",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        4112,
+        2976
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Detecta columnas de fecha, descripción y monto (o cargo/abono) y agrupa las filas por archivo.\nconst norm = (s) => String(s ?? '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').trim();\nconst num = (v) => { if (typeof v === 'number') return v; let s = String(v ?? '').trim(); if (!s || s === '-') return 0; const neg = /^\\(.*\\)$/.test(s) || /^-/.test(s) || /-\\s*$/.test(s); s = s.replace(/[^\\d.,]/g, ''); if (/,\\d{1,2}$/.test(s) && !/\\.\\d{1,2}$/.test(s)) s = s.replace(/\\./g, '').replace(',', '.'); else s = s.replace(/,/g, ''); const n = parseFloat(s) || 0; return neg ? -n : n; };\nconst fecha = (v) => { if (typeof v === 'number' && v > 20000 && v < 80000) return new Date(Date.UTC(1899, 11, 30) + v * 864e5).toISOString().slice(0, 10); const s = String(v ?? '').trim(); let m; if ((m = s.match(/^(\\d{4})-(\\d{2})-(\\d{2})/))) return m[0]; if ((m = s.match(/^(\\d{1,2})[\\/\\-.](\\d{1,2})[\\/\\-.](\\d{2,4})/))) return `${m[3].length === 2 ? '20' + m[3] : m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`; return ''; };\nconst porArchivo = {};\n$input.all().forEach((it, i) => {\n  const src = $('Elegir archivos a leer').itemMatching(i).json;\n  const k = src.archivo.id;\n  porArchivo[k] = porArchivo[k] || { src, filas: [] };\n  porArchivo[k].filas.push(it.json);\n});\nreturn Object.values(porArchivo).map(({ src, filas }) => {\n  const keys = Object.keys(filas[0] || {});\n  const k = (re) => keys.find((x) => re.test(norm(x)));\n  const kF = k(/fecha/), kD = k(/descrip|concepto|detalle|glosa|referencia/), kM = k(/^monto|importe/), kC = k(/cargo|debe|retiro|egreso/), kA = k(/abono|haber|deposito|ingreso/);\n  const movimientos = filas.map((r) => ({ fecha: fecha(r[kF]), descripcion: String(r[kD] ?? '').slice(0, 200), monto: kM ? num(r[kM]) : (kA ? Math.abs(num(r[kA])) : 0) - (kC ? Math.abs(num(r[kC])) : 0) }))\n    .filter((m) => m.fecha && m.monto && m.fecha >= (src.desde || '2025-01-01')).map((m) => ({ ...m, monto: Math.round(m.monto * 100) / 100 }));\n  const ok = !!kF && movimientos.length > 0;\n  return { json: { empresa: src.empresa, contabilidad: src.contabilidad, entrada: src.entrada, procesados: src.procesados, historico: src.historico, entrada_bandeja: {\n    id: src.archivo.id, archivo: src.archivo, leido_en: new Date().toISOString(), tipo: 'estado_cuenta', estado: ok ? 'por_revisar' : 'error',\n    error: ok ? undefined : 'No se encontraron columnas de fecha y monto (o cargo/abono).', datos: { movimientos: movimientos.slice(0, 1500) } } } };\n});"
+      },
+      "id": "91da761a-700f-4e9e-9366-9ec19700e36b",
+      "name": "Movimientos desde hoja",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4320,
+        2896
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Envía el PDF o la foto a Claude y pide solo JSON. La clave vive en la credencial de n8n.\nconst PROMPT = `Eres contador en Perú. Lee el documento adjunto (factura, recibo por honorarios, boleta, nota de crédito, constancia de transferencia/voucher o estado de cuenta) y responde SOLO un objeto JSON:\n{\"tipo\":\"factura|recibo_honorarios|boleta|nota_credito|voucher|estado_cuenta|otro\",\"emisor\":{\"ruc\":\"\",\"razon\":\"\"},\"receptor\":{\"ruc\":\"\",\"razon\":\"\"},\"serie\":\"\",\"fecha\":\"AAAA-MM-DD\",\"vencimiento\":\"AAAA-MM-DD o null\",\"moneda\":\"PEN|USD\",\"subtotal\":0,\"igv\":0,\"total\":0,\"detraccion\":{\"aplica\":false,\"porcentaje\":null,\"monto\":null},\"retencion\":null,\"orden_referencia\":\"número OC/OS si aparece o null\",\"items\":[{\"descripcion\":\"\",\"cantidad\":0,\"precio_unitario\":0,\"total\":0}],\"pago\":{\"banco\":\"\",\"operacion\":\"\",\"fecha\":\"AAAA-MM-DD\",\"monto\":0,\"beneficiario\":\"\",\"cuenta_destino\":\"\"},\"movimientos\":[{\"fecha\":\"AAAA-MM-DD\",\"descripcion\":\"\",\"monto\":0}],\"confianza\":0.0,\"notas\":\"\"}\nUsa null cuando un dato no se vea. No inventes. En movimientos, cargos negativos y abonos positivos.`;\nlet R = null; try { R = $('Reglas · leer entrada').first().json.value || null; } catch (e) { R = null; }\nconst SYSTEM = R && R.texto ? 'Sigue estas reglas de la skill erp-orok-contabilidad (versión ' + R.version + '):\\n\\n' + String(R.texto).slice(0, 12000) : '';\nconst out = [];\nfor (let i = 0; i < $input.all().length; i++) {\n  const src = $('Elegir archivos a leer').itemMatching(i).json;\n  const buf = await this.helpers.getBinaryDataBuffer(i, 'data');\n  const b64 = buf.toString('base64');\n  const esPdf = src.archivo.mime === 'application/pdf';\n  const bloque = esPdf\n    ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } }\n    : { type: 'image', source: { type: 'base64', media_type: src.archivo.mime, data: b64 } };\n  out.push({ json: { payload: { model: 'claude-haiku-5-5', max_tokens: 3000, ...(SYSTEM ? { system: SYSTEM } : {}), messages: [{ role: 'user', content: [bloque, { type: 'text', text: PROMPT }] }] } } });\n}\nreturn out;"
+      },
+      "id": "4e0d5167-3ece-407d-863b-2e6a769c2102",
+      "name": "Preparar lectura con Claude",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3888,
+        3136
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.payload) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "timeout": 90000
+        }
+      },
+      "id": "22c4e250-b52c-4cb8-965e-47db2f61942d",
+      "name": "Claude · leer comprobante o voucher",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4112,
+        3136
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "ElhGTnrym9YW7GB6",
+          "name": "M.O.R.A. · Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Valida el JSON de Claude, decide a qué empresa pertenece por el RUC del receptor y deja todo «por revisar».\nconst RUCS = { '20615227685': 'BMG', '20602354785': 'MZA', '20616628144': 'MAAS' };\nconst n = (v) => (v === null || v === undefined || v === '' || isNaN(+v) ? null : Math.round(+v * 100) / 100);\nreturn $input.all().map((it, i) => {\n  const src = $('Elegir archivos a leer').itemMatching(i).json;\n  const base = { id: src.archivo.id, archivo: src.archivo, leido_en: new Date().toISOString() };\n  const r = it.json || {};\n  let d = null, error = null;\n  if (r.error || !Array.isArray(r.content)) error = 'Claude no respondió: ' + (r.error?.message || r.error?.type || 'sin contenido');\n  else {\n    const t = r.content.filter((c) => c.type === 'text').map((c) => c.text).join('').replace(/```(json)?/g, '');\n    const a = t.indexOf('{'), b = t.lastIndexOf('}');\n    try { d = JSON.parse(t.slice(a, b + 1)); } catch { error = 'La lectura no devolvió JSON válido'; }\n  }\n  if (d) {\n    const tipos = ['factura', 'recibo_honorarios', 'boleta', 'nota_credito', 'voucher', 'estado_cuenta', 'otro'];\n    d.tipo = tipos.includes(d.tipo) ? d.tipo : 'otro';\n    for (const k of ['subtotal', 'igv', 'total', 'retencion']) d[k] = n(d[k]);\n    if (d.pago) d.pago.monto = n(d.pago.monto);\n    d.movimientos = (Array.isArray(d.movimientos) ? d.movimientos : []).slice(0, 1500).map((m) => ({ fecha: String(m.fecha || '').slice(0, 10), descripcion: String(m.descripcion || '').slice(0, 200), monto: n(m.monto) })).filter((m) => m.fecha && m.monto);\n    d.items = (Array.isArray(d.items) ? d.items : []).slice(0, 60);\n  }\n  const D0 = src.desde || '2025-01-01';\n  if (d) d.movimientos = d.movimientos.filter((m) => m.fecha >= D0);\n  const anterior = !!(d && d.fecha && /^\\d{4}-\\d{2}-\\d{2}$/.test(d.fecha) && d.fecha < D0 && d.tipo !== 'estado_cuenta');\n  const receptor = String(d?.receptor?.ruc || '').replace(/\\D/g, '');\n  const empresaDetectada = RUCS[receptor] || null;\n  const avisos = [];\n  if (empresaDetectada && empresaDetectada !== src.empresa) avisos.push(`El receptor es ${empresaDetectada}, pero el archivo se dejó en la carpeta de ${src.empresa}.`);\n  if (d && ['factura', 'boleta', 'recibo_honorarios'].includes(d.tipo) && !receptor) avisos.push('No se pudo leer el RUC del receptor.');\n  return { json: { empresa: src.empresa, contabilidad: src.contabilidad, entrada: src.entrada, procesados: src.procesados, historico: src.historico, entrada_bandeja: {\n    ...base, tipo: d?.tipo || 'otro', estado: error ? 'error' : anterior ? 'omitido' : 'por_revisar', nota: anterior ? 'Documento anterior a ' + D0 + ': no se usa (regla de Gerencia).' : undefined, error: error || undefined, empresa_detectada: empresaDetectada, avisos, datos: d || {}, modelo: r.model || null } } };\n});"
+      },
+      "id": "26ad451a-18b4-4b3c-b70b-481ded1356aa",
+      "name": "Validar lectura",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4320,
+        3136
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const g = {};\nfor (const it of $input.all()) {\n  const j = it.json;\n  g[j.empresa] = g[j.empresa] || { empresa: j.empresa, contabilidad: j.contabilidad, entrada: j.entrada, procesados: j.procesados, historico: j.historico || j.procesados, entradas: [] };\n  g[j.empresa].entradas.push(j.entrada_bandeja);\n}\nreturn Object.values(g).map((x) => ({ json: x }));"
+      },
+      "id": "0975600d-bbcd-46d8-849a-f128fde59528",
+      "name": "Agrupar por empresa",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4544,
+        3008
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH a AS (SELECT $1::jsonb AS d)\nINSERT INTO clara.bandeja (file_id, empresa, tipo, estado, datos)\nSELECT x->>'id', a.d->>'empresa', x->>'tipo', x->>'estado', x\nFROM a, jsonb_array_elements(a.d->'entradas') AS x\nON CONFLICT (file_id) DO UPDATE SET datos = EXCLUDED.datos, estado = EXCLUDED.estado, leido_en = now();",
+        "options": {
+          "queryReplacement": "={{ JSON.stringify({ empresa: $json.empresa, entradas: $json.entradas }) }}"
+        }
+      },
+      "id": "f33719f2-6b00-40e6-a738-64fcdb49b858",
+      "name": "Guardar lecturas · PostgreSQL",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        4768,
+        3216
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "LUvGNJCqttq6q3Xy",
+          "name": "LOLA ENSAYO 955318057 - PostgreSQL"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://lola-pruebas-crm.kvrq8w.easypanel.host/api/integrations/lola",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ action: 'clara_bandeja_put', empresa: $json.empresa, entradas: $json.entradas }) }}",
+        "options": {
+          "timeout": 45000
+        }
+      },
+      "id": "42c5a723-84c9-4509-9954-0fbb138e02c9",
+      "name": "Enviar lecturas al CRM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4768,
+        3376
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "QOZ8TLw3xEwtpAyz",
+          "name": "LOLA ENSAYO 955318057 - CRM"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "includeItemsFromAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "corpora",
+              "value": "allDrives"
+            },
+            {
+              "name": "q",
+              "value": "={{ \"name = 'CLARA-BANDEJA.json' and '\" + $json.contabilidad + \"' in parents and trashed = false\" }}"
+            },
+            {
+              "name": "fields",
+              "value": "files(id,name)"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "4cc34222-2c82-4880-b135-c3db8a770055",
+      "name": "Buscar CLARA-BANDEJA.json",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4768,
+        3008
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map((it, i) => ({ json: { ...$('Agrupar por empresa').itemMatching(i).json, bandejaId: (it.json.files || [])[0]?.id || null } }));"
+      },
+      "id": "9a2ba8b6-3040-4ba5-bddb-b037d6852084",
+      "name": "Bandeja existente",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4992,
+        3008
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1539f97e-eefe-8ebe-f984-6b988880e632",
+              "leftValue": "={{ !!$json.bandejaId }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6e9ac47a-d981-4c56-b418-cdc64449243d",
+      "name": "Existe la bandeja",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        5200,
+        3008
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://www.googleapis.com/drive/v3/files/' + $json.bandejaId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "alt",
+              "value": "media"
+            },
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "e77c890d-2bd1-40b4-8845-176993452829",
+      "name": "Descargar bandeja",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5424,
+        2928
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Junta lo nuevo con lo que ya estaba (mismo archivo = se reemplaza) y conserva las 500 entradas más recientes.\nreturn $input.all().map((it, i) => {\n  const g = $('Bandeja existente').itemMatching(i).json;\n  let previa = it.json;\n  if (typeof previa === 'string') { try { previa = JSON.parse(previa); } catch { previa = {}; } }\n  const mapa = new Map((Array.isArray(previa?.entradas) ? previa.entradas : []).map((e) => [e.id, e]));\n  for (const e of g.entradas) mapa.set(e.id, e);\n  const entradas = [...mapa.values()].sort((a, b) => String(b.leido_en).localeCompare(String(a.leido_en))).slice(0, 500);\n  const doc = { formato: 'clara-bandeja-v1', empresa: g.empresa, actualizado: new Date().toISOString(), entradas };\n  return { json: { ...g, contenido: JSON.stringify(doc) } };\n});"
+      },
+      "id": "4c5577be-83e6-45ca-9c35-d36beb3c8770",
+      "name": "Fusionar bandeja",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5648,
+        2928
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ 'https://www.googleapis.com/upload/drive/v3/files/' + $json.bandejaId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "uploadType",
+              "value": "media"
+            },
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.contenido }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "05bd75ea-b033-46a4-8520-06ba8e69ddef",
+      "name": "Actualizar bandeja",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5872,
+        2928
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const B = 'clara_bandeja_b0undary';\nreturn $input.all().map((it) => {\n  const g = it.json;\n  const doc = { formato: 'clara-bandeja-v1', empresa: g.empresa, actualizado: new Date().toISOString(), entradas: g.entradas.slice(0, 500) };\n  const meta = { name: 'CLARA-BANDEJA.json', mimeType: 'application/json', parents: [g.contabilidad] };\n  const multipart = `--${B}\\r\\nContent-Type: application/json; charset=UTF-8\\r\\n\\r\\n${JSON.stringify(meta)}\\r\\n--${B}\\r\\nContent-Type: application/json\\r\\n\\r\\n${JSON.stringify(doc)}\\r\\n--${B}--`;\n  return { json: { ...g, multipart } };\n});"
+      },
+      "id": "eb34c5dc-5d31-4aea-8b47-2b151107f037",
+      "name": "Bandeja nueva",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5424,
+        3088
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/upload/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "uploadType",
+              "value": "multipart"
+            },
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "multipart/related; boundary=clara_bandeja_b0undary",
+        "body": "={{ $json.multipart }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "ddd0ecca-781f-4da3-b665-619c14c79d70",
+      "name": "Crear bandeja",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5648,
+        3088
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// C.L.A.R.A mantiene el orden dentro de sus márgenes: renombra con el nombre estándar y devuelve el archivo a la raíz\n// de Contabilidad para que la rama 02 lo archive por tipo y mes del documento. Lo anterior a 2025 va a 08 Histórico,\n// lo que no se pudo clasificar a 07 Procesados y lo que falló queda en Entrada. Nunca borra ni cambia permisos.\nconst PRE = { factura: 'Factura electrónica', recibo_honorarios: 'Recibo por honorarios', boleta: 'Boleta', nota_credito: 'Nota de crédito', voucher: 'Voucher', estado_cuenta: 'Estado de cuenta' };\nconst limpio = (t) => String(t || '').replace(/[\\\\/:*?\"<>|#%]+/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, 60);\nconst nombre = (e) => {\n  const d = e.datos || {}, pre = PRE[e.tipo];\n  if (!pre) return null;\n  const ext = (String(e.archivo?.nombre || '').match(/\\.[A-Za-z0-9]{2,5}$/) || [''])[0].toLowerCase();\n  const fecha = /^\\d{4}-\\d{2}-\\d{2}$/.test(d.pago?.fecha || '') && e.tipo === 'voucher' ? d.pago.fecha : /^\\d{4}-\\d{2}-\\d{2}$/.test(d.fecha || '') ? d.fecha : (e.tipo === 'estado_cuenta' && d.movimientos?.length ? d.movimientos[d.movimientos.length - 1].fecha : '');\n  const quien = e.tipo === 'voucher' ? d.pago?.beneficiario : e.tipo === 'estado_cuenta' ? (d.pago?.banco || '') : d.emisor?.razon;\n  const ref = e.tipo === 'voucher' ? (d.pago?.operacion ? 'op ' + d.pago.operacion : '') : d.serie;\n  return [pre, limpio(ref), limpio(quien), fecha].filter(Boolean).join(' ') + ext;\n};\nconst out = [];\n$input.all().forEach((it, i) => {\n  const g = $('Bandeja existente').itemMatching(i).json;\n  if (!it.json || !it.json.id) return;\n  for (const e of g.entradas) {\n    if (e.estado === 'error') continue;\n    if (e.estado === 'omitido') { out.push({ json: { fileId: e.id, destino: g.historico || g.procesados, origen: g.entrada, cambio: '{}' } }); continue; }\n    const n = nombre(e);\n    out.push({ json: n ? { fileId: e.id, destino: g.contabilidad, origen: g.entrada, nuevoNombre: n, cambio: JSON.stringify({ name: n }) } : { fileId: e.id, destino: g.procesados, origen: g.entrada, cambio: '{}' } });\n  }\n});\nreturn out;"
+      },
+      "id": "6e237116-112b-4302-8f11-7c7931982f8f",
+      "name": "Archivar lo leído",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6080,
+        3008
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ 'https://www.googleapis.com/drive/v3/files/' + $json.fileId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "addParents",
+              "value": "={{ $json.destino }}"
+            },
+            {
+              "name": "removeParents",
+              "value": "={{ $json.origen }}"
+            },
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "fields",
+              "value": "id,name,parents"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.cambio }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "2577c794-76b2-4801-a6c4-183e849ecb44",
+      "name": "Renombrar y archivar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        6304,
+        3008
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 01b · Inventario (solo lectura)\nLista las carpetas y archivos de cada Contabilidad (dos niveles) y escribe CLARA-INVENTARIO.json en su raíz. No mueve ni borra nada. Sirve para decidir cómo reorganizar las carpetas que ya existen antes de «Preparar carpetas».",
+        "height": 200,
+        "width": 1500,
+        "color": 7
+      },
+      "id": "8624d1d7-f02d-4425-bff7-57f17b3f4d81",
+      "name": "C.L.A.R.A · 01b · INVENTARIO DE CARPETAS",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3792,
+        1648
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "clara-inventario-manual",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "id": "3a8e1194-12dd-4fb3-aa8b-565ca79aaad9",
+      "name": "Inventario de carpetas",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        3824,
+        1808
+      ],
+      "webhookId": "28395001-86b9-4119-89d5-0ace4d37005e",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "QOZ8TLw3xEwtpAyz",
+          "name": "LOLA ENSAYO 955318057 - CRM"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMPRESAS = [\n  { empresa: 'BMG',  razon: 'BMG DESARROLLADORA INMOBILIARIA S.A.C.', ruc: '20615227685', contabilidad: '1RqRBLFGervdPIjOHGfbA2kWUeFRHUjKY' },\n  { empresa: 'MZA',  razon: 'MONTEZUMA ARQUITECTOS GERENCIA Y CONSTRUCCION E.I.R.L.', ruc: '20602354785', contabilidad: '1eOPFAhtYW6L-lkSRrnOruhBrAED3VEJ0' },\n  { empresa: 'MAAS', razon: 'MAAS CONSTRUCTORA S.A.C.', ruc: '20616628144', contabilidad: '17Kb4z3EmySjkiBvBpMLkxlFrlFvj4HY6' },\n];\nconst CARPETAS = ['01 Entrada', '02 Comprobantes de proveedores', '03 Órdenes OC-OS', '04 Pagos y vouchers', '05 Bancos', '06 Reportes', '07 Procesados por C.L.A.R.A', '08 Histórico (antes de 2025)'];\nconst DESDE = '2025-01-01'; // Regla de Gerencia: solo se usa información desde enero de 2025.\nconst configurada = (e) => /^[A-Za-z0-9_-]{15,}$/.test(e.contabilidad || '') && !String(e.contabilidad).startsWith('CONFIGURAR');\n// Solo trabaja con las empresas cuya carpeta «Contabilidad» ya fue configurada (ID de la carpeta de Drive).\nreturn EMPRESAS.filter(configurada).map((e) => ({ json: { ...e, carpetas: CARPETAS } }));\n"
+      },
+      "id": "02c779c2-d755-4428-ae00-be318ab00728",
+      "name": "Carpetas · inventario",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4048,
+        1808
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "includeItemsFromAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "corpora",
+              "value": "allDrives"
+            },
+            {
+              "name": "q",
+              "value": "={{ \"'\" + $json.contabilidad + \"' in parents and trashed = false\" }}"
+            },
+            {
+              "name": "fields",
+              "value": "files(id,name,mimeType,size,createdTime,modifiedTime,parents,webViewLink)"
+            },
+            {
+              "name": "pageSize",
+              "value": "500"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "0900238c-c9f6-4400-adc0-d723e791b67c",
+      "name": "Listar raíz de Contabilidad",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4272,
+        1808
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const out = [];\n$input.all().forEach((it, i) => {\n  const e = $('Carpetas · inventario').itemMatching(i).json;\n  const raiz = it.json.files || [];\n  const carpetas = raiz.filter((f) => f.mimeType === 'application/vnd.google-apps.folder');\n  if (!carpetas.length) out.push({ json: { empresa: e.empresa, contabilidad: e.contabilidad, raiz, carpeta: null } });\n  for (const c of carpetas) out.push({ json: { empresa: e.empresa, contabilidad: e.contabilidad, raiz, carpeta: { id: c.id, name: c.name } } });\n});\nreturn out;"
+      },
+      "id": "40cd35d5-5e03-4275-abb6-9d0cdb7640cf",
+      "name": "Subcarpetas a revisar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4480,
+        1808
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "includeItemsFromAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "corpora",
+              "value": "allDrives"
+            },
+            {
+              "name": "q",
+              "value": "={{ \"'\" + ($json.carpeta ? $json.carpeta.id : $json.contabilidad) + \"' in parents and trashed = false\" }}"
+            },
+            {
+              "name": "fields",
+              "value": "files(id,name,mimeType,size,createdTime,modifiedTime,parents,webViewLink)"
+            },
+            {
+              "name": "pageSize",
+              "value": "500"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "4ba724e5-e651-4919-a62f-93bb3b391a46",
+      "name": "Listar contenido de subcarpeta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4704,
+        1808
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Un archivo CLARA-INVENTARIO.json por empresa. Marca lo anterior a 2025 (no se usará).\nconst g = {};\n$input.all().forEach((it, i) => {\n  const src = $('Subcarpetas a revisar').itemMatching(i).json;\n  const e = (g[src.empresa] = g[src.empresa] || { empresa: src.empresa, contabilidad: src.contabilidad, raiz: src.raiz, sub: {} });\n  if (src.carpeta) e.sub[src.carpeta.id] = (it.json.files || []);\n});\nconst B = 'clara_inventario_b0undary';\nconst mini = (f) => ({ id: f.id, nombre: f.name, tipo: f.mimeType === 'application/vnd.google-apps.folder' ? 'carpeta' : f.mimeType, creado: f.createdTime, modificado: f.modifiedTime, anterior_2025: String(f.modifiedTime || f.createdTime || '') < '2025-01-01' });\nreturn Object.values(g).map((e) => {\n  const arbol = e.raiz.map((f) => ({ ...mini(f), contenido: e.sub[f.id] ? e.sub[f.id].map(mini) : undefined }));\n  const doc = { formato: 'clara-inventario-v1', empresa: e.empresa, generado: new Date().toISOString(), regla: 'Solo se usa información desde 2025-01-01', arbol };\n  const meta = { name: 'CLARA-INVENTARIO-' + new Date().toISOString().slice(0, 10) + '.json', mimeType: 'application/json', parents: [e.contabilidad] };\n  return { json: { empresa: e.empresa, multipart: `--${B}\\r\\nContent-Type: application/json; charset=UTF-8\\r\\n\\r\\n${JSON.stringify(meta)}\\r\\n--${B}\\r\\nContent-Type: application/json\\r\\n\\r\\n${JSON.stringify(doc)}\\r\\n--${B}--` } };\n});"
+      },
+      "id": "a232ac0e-c938-449b-9f3a-e722f5bae44e",
+      "name": "Armar inventario",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4928,
+        1808
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/upload/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "uploadType",
+              "value": "multipart"
+            },
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "multipart/related; boundary=clara_inventario_b0undary",
+        "body": "={{ $json.multipart }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "592e0420-6ff0-474b-9849-b51e71d194ad",
+      "name": "Guardar inventario en Contabilidad",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5152,
+        1808
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 04 · Guardar desde el CRM\nCuando el módulo viva dentro del CRM, el servidor envía aquí el archivo (base64) con su empresa. Se guarda en la raíz de Contabilidad con el nombre estándar y la rama 02 lo ordena. Responde con el enlace de Drive.",
+        "height": 200,
+        "width": 1500,
+        "color": 7
+      },
+      "id": "7322454d-d4b0-435e-97d9-3f9f9b8629fe",
+      "name": "C.L.A.R.A · 04 · GUARDAR DESDE EL CRM",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        3552
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "clara-drive-guardar",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "id": "814aa2e6-c3df-478a-a220-6ec3f5cffa34",
+      "name": "Recibir archivo del CRM",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        2128,
+        3680
+      ],
+      "webhookId": "5763f6c1-c723-27af-1ca6-a61b8488f79f",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "QOZ8TLw3xEwtpAyz",
+          "name": "LOLA ENSAYO 955318057 - CRM"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Version lista para publicar: pruebas BMG, MZA y MAAS verificadas.\nconst EMPRESAS = [\n  { empresa: 'BMG',  razon: 'BMG DESARROLLADORA INMOBILIARIA S.A.C.', ruc: '20615227685', contabilidad: '1RqRBLFGervdPIjOHGfbA2kWUeFRHUjKY' },\n  { empresa: 'MZA',  razon: 'MONTEZUMA ARQUITECTOS GERENCIA Y CONSTRUCCION E.I.R.L.', ruc: '20602354785', contabilidad: '1eOPFAhtYW6L-lkSRrnOruhBrAED3VEJ0' },\n  { empresa: 'MAAS', razon: 'MAAS CONSTRUCTORA S.A.C.', ruc: '20616628144', contabilidad: '17Kb4z3EmySjkiBvBpMLkxlFrlFvj4HY6' },\n];\nconst CARPETAS = ['01 Entrada', '02 Comprobantes de proveedores', '03 Órdenes OC-OS', '04 Pagos y vouchers', '05 Bancos', '06 Reportes', '07 Procesados por C.L.A.R.A', '08 Histórico (antes de 2025)'];\nconst DESDE = '2025-01-01'; // Regla de Gerencia: solo se usa información desde enero de 2025.\nconst configurada = (e) => /^[A-Za-z0-9_-]{15,}$/.test(e.contabilidad || '') && !String(e.contabilidad).startsWith('CONFIGURAR');\nconst b = $input.first().json.body || {};\nconst e = EMPRESAS.find((x) => x.empresa === b.empresa);\nif (!e || !configurada(e)) throw new Error('Empresa no configurada: ' + b.empresa);\nconst PREFIJO = { orden: '', voucher: 'Voucher ', comprobante: '', estado_cuenta: 'Estado de cuenta ', reporte: 'CLARA ' };\nconst nombre = String(b.nombre || '').replace(/[\\\\/:*?\"<>|]/g, '').trim().slice(0, 180);\nif (!nombre || !/\\.[a-z0-9]{2,5}$/i.test(nombre)) throw new Error('Nombre de archivo inválido');\nconst mime = String(b.mime || '');\nif (!/^(application\\/pdf|image\\/(jpeg|png|webp)|text\\/csv|application\\/json|application\\/vnd\\.openxmlformats-officedocument\\.spreadsheetml\\.sheet)$/.test(mime)) throw new Error('Tipo de archivo no permitido: ' + mime);\nconst base64 = String(b.base64 || '').replace(/^data:[^,]*,/, '');\nif (!base64 || base64.length > 20 * 1024 * 1024) throw new Error('Archivo vacío o mayor a 15 MB');\nconst pre = PREFIJO[b.categoria] || '';\n  return [{ json: { empresa: e.empresa, contabilidad: e.contabilidad, nombre: nombre.startsWith(pre) ? nombre : pre + nombre, mime, base64, referencia: String(b.referencia || '').slice(0, 120) } }];"
+      },
+      "id": "c62206c6-6cd5-46ee-bbae-66d312221a80",
+      "name": "Validar archivo del CRM",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2352,
+        3680
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "base64",
+        "options": {
+          "fileName": "={{ $json.nombre }}",
+          "mimeType": "={{ $json.mime }}"
+        }
+      },
+      "id": "9adbbd5c-4445-4100-abcb-c2c6c9bc12c9",
+      "name": "Convertir a archivo",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2560,
+        3680
+      ]
+    },
+    {
+      "parameters": {
+        "name": "={{ $('Validar archivo del CRM').item.json.nombre }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Validar archivo del CRM').item.json.contabilidad }}"
+        },
+        "options": {
+          "simplifyOutput": false
+        }
+      },
+      "id": "b60393e1-11bb-4421-b4fa-0ff758a0356c",
+      "name": "Subir a Contabilidad",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2784,
+        3680
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, id: $json.id, nombre: $json.name, link: $json.webViewLink || ('https://drive.google.com/file/d/' + $json.id + '/view') }) }}",
+        "options": {}
+      },
+      "id": "fa1922d3-affa-43ab-a520-cd93b15a20b0",
+      "name": "Responder al CRM",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        3008,
+        3680
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5d231cbc-362b-42b5-9712-09b03e61feee",
+              "leftValue": "={{ $json.mime === 'application/json' && /^(?:CLARA )?CLARA-SHEETS-/.test($json.nombre) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "622c783f-bc4d-4a26-9374-7e63e0164e90",
+      "name": "¿Compilado Google Sheets?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2560,
+        3968
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const v=$input.first().json;const p=JSON.parse(Buffer.from(v.base64,'base64').toString('utf8'));\nif(p.format!=='orok-clara-sheets-v1'||p.empresa!==v.empresa||!/^\\d{4}-\\d{2}$/.test(p.periodo)||!Array.isArray(p.sheets)||!p.sheets.length||p.sheets.length>30)throw Error('Compilado de Google Sheets no válido');\nlet cells=0;const names=new Set();const sheets=p.sheets.map((s,i)=>{if(typeof s.title!=='string'||!s.title.trim()||s.title.length>100||/[\\[\\]*?:/\\\\]/.test(s.title)||names.has(s.title)||!Array.isArray(s.columns)||!s.columns.length||s.columns.length>100||!Array.isArray(s.rows)||s.rows.length>25000)throw Error('Pestaña no válida');names.add(s.title);const rows=[s.columns.map(c=>String(c.title)),...s.rows];cells+=rows.length*s.columns.length;if(cells>500000)throw Error('Compilado demasiado grande');return {properties:{sheetId:i,title:s.title,gridProperties:{rowCount:Math.max(100,rows.length),columnCount:s.columns.length,frozenRowCount:1}},data:[{startRow:0,startColumn:0,rowData:rows.map((r,ri)=>({values:s.columns.map((col,j)=>{const v=r[j]??'';let userEnteredValue;if(typeof v==='number'&&Number.isFinite(v))userEnteredValue={numberValue:v};else if(typeof v==='boolean')userEnteredValue={boolValue:v};else if(typeof v==='string'&&v.length<=20000)userEnteredValue={stringValue:v};else throw Error('Celda no válida');return {userEnteredValue,...(ri===0?{userEnteredFormat:{textFormat:{bold:true},backgroundColor:{red:0.88,green:0.92,blue:0.96}}}:col.format==='n'?{userEnteredFormat:{numberFormat:{type:'NUMBER',pattern:'#,##0.00'}}}:col.format==='p'?{userEnteredFormat:{numberFormat:{type:'PERCENT',pattern:'0.0%'}}}:{})};})})).map(r=>r)}]};});\nreturn [{json:{empresa:v.empresa,contabilidad:v.contabilidad,periodo:p.periodo,spreadsheet:{properties:{title:String(p.titulo||'CLARA '+v.empresa).slice(0,180),locale:'es_MX',timeZone:'America/Lima'},sheets}}}];"
+      },
+      "id": "080b0a89-42ac-4e2c-bab5-2f2007ad0fc1",
+      "name": "Preparar compilado Google Sheets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2784,
+        3968
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://www.googleapis.com/drive/v3/files?pageSize=2&supportsAllDrives=true&includeItemsFromAllDrives=true&fields=files(id,name)&q='+encodeURIComponent(\"mimeType = 'application/vnd.google-apps.folder' and name = '06 Reportes' and '\"+$json.contabilidad+\"' in parents and trashed = false\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "f5d66df8-16ab-4eb0-92e7-02b7060ca3ba",
+      "name": "Buscar 06 Reportes para Sheets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3024,
+        3968
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1d98abc9-4777-4e84-828e-3937ee19bcf2",
+              "leftValue": "={{ ($json.files || []).length > 0 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f5bb4ca5-0598-4326-934b-38673c9b3823",
+      "name": "¿Existe 06 Reportes para Sheets?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3248,
+        3968
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/drive/v3/files?fields=id,name&supportsAllDrives=true",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({name:'06 Reportes',mimeType:'application/vnd.google-apps.folder',parents:[$('Preparar compilado Google Sheets').first().json.contabilidad]}) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "d7350094-646f-4d44-9565-3e4c170650bb",
+      "name": "Crear 06 Reportes para Sheets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3472,
+        4176
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const id=$json.id||$json.files?.[0]?.id;if(!id)throw Error('No se pudo resolver 06 Reportes');return [{json:{...$('Preparar compilado Google Sheets').first().json,reportesId:id}}];"
+      },
+      "id": "0055a8c7-b601-473c-a795-9b6cf6763c64",
+      "name": "Resolver 06 Reportes para Sheets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3712,
+        3968
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://www.googleapis.com/drive/v3/files?pageSize=2&supportsAllDrives=true&includeItemsFromAllDrives=true&fields=files(id,name)&q='+encodeURIComponent(\"mimeType = 'application/vnd.google-apps.folder' and name = '\"+$json.periodo+\"' and '\"+$json.reportesId+\"' in parents and trashed = false\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "3046dcde-4091-411b-bcc9-d5fcb6d5b15f",
+      "name": "Buscar mes de reportes Sheets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3936,
+        3968
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d61953e5-8669-4428-8835-22d812aef37f",
+              "leftValue": "={{ ($json.files || []).length > 0 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a0d822c0-557a-4c64-a051-08dffde91302",
+      "name": "¿Existe mes de reportes Sheets?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        4160,
+        3968
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/drive/v3/files?fields=id,name&supportsAllDrives=true",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({name:$('Resolver 06 Reportes para Sheets').first().json.periodo,mimeType:'application/vnd.google-apps.folder',parents:[$('Resolver 06 Reportes para Sheets').first().json.reportesId]}) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "904846d9-5576-4c38-92fc-022af6e68e99",
+      "name": "Crear mes de reportes Sheets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4400,
+        4176
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const id=$json.id||$json.files?.[0]?.id;if(!id)throw Error('No se pudo resolver la carpeta mensual');return [{json:{...$('Resolver 06 Reportes para Sheets').first().json,destinoId:id}}];"
+      },
+      "id": "6b7edd3e-acd3-4390-84fe-e5fb088abe84",
+      "name": "Resolver carpeta mensual Sheets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4624,
+        3968
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets?fields=spreadsheetId,spreadsheetUrl,properties.title",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.spreadsheet) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "ceee6e24-e80d-474e-af61-99c29feb22ae",
+      "name": "Crear Google Sheets del compilado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4864,
+        3968
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://www.googleapis.com/drive/v3/files/'+$('Crear Google Sheets del compilado').first().json.spreadsheetId+'?fields=parents&supportsAllDrives=true' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "48308b05-c3ff-44ab-b8d8-53515113fc3c",
+      "name": "Leer carpeta inicial de Sheets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5088,
+        3968
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ 'https://www.googleapis.com/drive/v3/files/'+$('Crear Google Sheets del compilado').first().json.spreadsheetId+'?fields=id,name,webViewLink&supportsAllDrives=true&addParents='+encodeURIComponent($('Resolver carpeta mensual Sheets').first().json.destinoId)+'&removeParents='+encodeURIComponent(($json.parents||[]).join(',')) }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({}) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "f7a7c6a6-968a-4d79-9a1d-8a2b91e9aa7b",
+      "name": "Ubicar Sheets en Contabilidad",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5312,
+        3968
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Preparar carpetas (ejecutar una vez)": {
+      "main": [
+        [
+          {
+            "node": "Carpetas · preparar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Carpetas · preparar": {
+      "main": [
+        [
+          {
+            "node": "Carpetas requeridas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Carpetas requeridas": {
+      "main": [
+        [
+          {
+            "node": "Buscar subcarpeta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar subcarpeta": {
+      "main": [
+        [
+          {
+            "node": "Subcarpetas faltantes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subcarpetas faltantes": {
+      "main": [
+        [
+          {
+            "node": "Crear subcarpeta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ordenar cada 10 minutos": {
+      "main": [
+        [
+          {
+            "node": "Reglas · ordenar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reglas · ordenar": {
+      "main": [
+        [
+          {
+            "node": "Carpetas · ordenar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Carpetas · ordenar": {
+      "main": [
+        [
+          {
+            "node": "Listar archivos sueltos en Contabilidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Listar archivos sueltos en Contabilidad": {
+      "main": [
+        [
+          {
+            "node": "Clasificar por carpeta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clasificar por carpeta": {
+      "main": [
+        [
+          {
+            "node": "Buscar carpeta de destino",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar carpeta de destino": {
+      "main": [
+        [
+          {
+            "node": "Resolver carpeta y meses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolver carpeta y meses": {
+      "main": [
+        [
+          {
+            "node": "Ya tiene destino final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar carpeta del mes": {
+      "main": [
+        [
+          {
+            "node": "Resolver carpeta del mes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolver carpeta del mes": {
+      "main": [
+        [
+          {
+            "node": "Falta la carpeta del mes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear carpeta del mes": {
+      "main": [
+        [
+          {
+            "node": "Archivos del mes nuevo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Archivos del mes nuevo": {
+      "main": [
+        [
+          {
+            "node": "Mover a su carpeta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mover a su carpeta": {
+      "main": [
+        [
+          {
+            "node": "Bitácora de archivos · PostgreSQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ya tiene destino final": {
+      "main": [
+        [
+          {
+            "node": "Mover a su carpeta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Buscar carpeta del mes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Falta la carpeta del mes": {
+      "main": [
+        [
+          {
+            "node": "Crear carpeta del mes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mover a su carpeta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Entrada cada 15 minutos": {
+      "main": [
+        [
+          {
+            "node": "Reglas · leer entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Entrada manualmente": {
+      "main": [
+        [
+          {
+            "node": "Reglas · leer entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reglas · leer entrada": {
+      "main": [
+        [
+          {
+            "node": "Carpetas · leer entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Carpetas · leer entrada": {
+      "main": [
+        [
+          {
+            "node": "Ubicar Entrada y Procesados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ubicar Entrada y Procesados": {
+      "main": [
+        [
+          {
+            "node": "Empresas con Entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Empresas con Entrada": {
+      "main": [
+        [
+          {
+            "node": "Listar archivos de Entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Listar archivos de Entrada": {
+      "main": [
+        [
+          {
+            "node": "Elegir archivos a leer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Elegir archivos a leer": {
+      "main": [
+        [
+          {
+            "node": "Descargar archivo de Entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descargar archivo de Entrada": {
+      "main": [
+        [
+          {
+            "node": "Es hoja de cálculo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Excel": {
+      "main": [
+        [
+          {
+            "node": "Movimientos desde hoja",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer CSV": {
+      "main": [
+        [
+          {
+            "node": "Movimientos desde hoja",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar lectura con Claude": {
+      "main": [
+        [
+          {
+            "node": "Claude · leer comprobante o voucher",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude · leer comprobante o voucher": {
+      "main": [
+        [
+          {
+            "node": "Validar lectura",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Movimientos desde hoja": {
+      "main": [
+        [
+          {
+            "node": "Agrupar por empresa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar lectura": {
+      "main": [
+        [
+          {
+            "node": "Agrupar por empresa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agrupar por empresa": {
+      "main": [
+        [
+          {
+            "node": "Buscar CLARA-BANDEJA.json",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Guardar lecturas · PostgreSQL",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Enviar lecturas al CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar CLARA-BANDEJA.json": {
+      "main": [
+        [
+          {
+            "node": "Bandeja existente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bandeja existente": {
+      "main": [
+        [
+          {
+            "node": "Existe la bandeja",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descargar bandeja": {
+      "main": [
+        [
+          {
+            "node": "Fusionar bandeja",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fusionar bandeja": {
+      "main": [
+        [
+          {
+            "node": "Actualizar bandeja",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bandeja nueva": {
+      "main": [
+        [
+          {
+            "node": "Crear bandeja",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar bandeja": {
+      "main": [
+        [
+          {
+            "node": "Archivar lo leído",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear bandeja": {
+      "main": [
+        [
+          {
+            "node": "Archivar lo leído",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Archivar lo leído": {
+      "main": [
+        [
+          {
+            "node": "Renombrar y archivar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es hoja de cálculo": {
+      "main": [
+        [
+          {
+            "node": "Es Excel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar lectura con Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es Excel": {
+      "main": [
+        [
+          {
+            "node": "Leer Excel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Leer CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Existe la bandeja": {
+      "main": [
+        [
+          {
+            "node": "Descargar bandeja",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Bandeja nueva",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inventario de carpetas": {
+      "main": [
+        [
+          {
+            "node": "Carpetas · inventario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Carpetas · inventario": {
+      "main": [
+        [
+          {
+            "node": "Listar raíz de Contabilidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Listar raíz de Contabilidad": {
+      "main": [
+        [
+          {
+            "node": "Subcarpetas a revisar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subcarpetas a revisar": {
+      "main": [
+        [
+          {
+            "node": "Listar contenido de subcarpeta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Listar contenido de subcarpeta": {
+      "main": [
+        [
+          {
+            "node": "Armar inventario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar inventario": {
+      "main": [
+        [
+          {
+            "node": "Guardar inventario en Contabilidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recibir archivo del CRM": {
+      "main": [
+        [
+          {
+            "node": "Validar archivo del CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar archivo del CRM": {
+      "main": [
+        [
+          {
+            "node": "¿Compilado Google Sheets?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convertir a archivo": {
+      "main": [
+        [
+          {
+            "node": "Subir a Contabilidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subir a Contabilidad": {
+      "main": [
+        [
+          {
+            "node": "Responder al CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Compilado Google Sheets?": {
+      "main": [
+        [
+          {
+            "node": "Preparar compilado Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Convertir a archivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar compilado Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Buscar 06 Reportes para Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar 06 Reportes para Sheets": {
+      "main": [
+        [
+          {
+            "node": "¿Existe 06 Reportes para Sheets?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Existe 06 Reportes para Sheets?": {
+      "main": [
+        [
+          {
+            "node": "Resolver 06 Reportes para Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Crear 06 Reportes para Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear 06 Reportes para Sheets": {
+      "main": [
+        [
+          {
+            "node": "Resolver 06 Reportes para Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolver 06 Reportes para Sheets": {
+      "main": [
+        [
+          {
+            "node": "Buscar mes de reportes Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar mes de reportes Sheets": {
+      "main": [
+        [
+          {
+            "node": "¿Existe mes de reportes Sheets?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Existe mes de reportes Sheets?": {
+      "main": [
+        [
+          {
+            "node": "Resolver carpeta mensual Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Crear mes de reportes Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear mes de reportes Sheets": {
+      "main": [
+        [
+          {
+            "node": "Resolver carpeta mensual Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolver carpeta mensual Sheets": {
+      "main": [
+        [
+          {
+            "node": "Crear Google Sheets del compilado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear Google Sheets del compilado": {
+      "main": [
+        [
+          {
+            "node": "Leer carpeta inicial de Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer carpeta inicial de Sheets": {
+      "main": [
+        [
+          {
+            "node": "Ubicar Sheets en Contabilidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ubicar Sheets en Contabilidad": {
+      "main": [
+        [
+          {
+            "node": "Responder al CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "America/Lima",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": -1
+  },
+  "active": false,
+  "pinData": {}
+}

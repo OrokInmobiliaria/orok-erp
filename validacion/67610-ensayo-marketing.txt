@@ -1,0 +1,48 @@
+✔ campaign creation is idempotent, drafts require facts with sources, and CRM records remain unchanged (6.6374ms)
+✔ Claude setup hides secrets and blank replacements preserve the key; models are queried without an inference call (11.5408ms)
+✔ analysis context contains aggregates and removes all contact identifiers, conversations and lead IDs (7.8544ms)
+✔ generation has exclusive leases, requires the correct token and charges at most one request for repeated execution (7.5438ms)
+✔ unknown Claude requests are never automatically repeated and remain visible for explicit review (6.9616ms)
+✔ editing a campaign while Claude is running prevents stale results from replacing the new revision (7.5668ms)
+✔ approval is revision-specific and audited; edits revoke it without moving leads (12.2811ms)
+✔ manual proposals reject unknown assets, unsupported formats, excessive duration, code and unapproved economics (2.6858ms)
+✔ media upload requires explicit rights, validates file signatures and is idempotent with audited private storage (5.5095ms)
+✔ exported pieces preserve their revision and approval; later source uploads require renewed approval (10.6383ms)
+✔ archiving is reversible in data preservation terms: no files or prior histories are removed and no queued output can publish (7.0004ms)
+✔ output truncation, API errors and missing JSON schema support never become approved campaigns (7.0876ms)
+✔ explicit hourly limits prevent repeated generation loops (9.7624ms)
+✔ Claude network transport rejects arbitrary hosts, redirects by non-success status and embedded credentials (0.3442ms)
+✔ manual template and renderer produce a real canvas composition and reject overflowing text instead of silently clipping (4.5798ms)
+✔ numeric and named commercial claims require a corresponding verified fact before they can enter a proposal (2.7087ms)
+✔ a pending paid generation cannot be approved as though its result already existed (6.6711ms)
+✔ an abandoned in-flight API call becomes unknown without repeating the call or leaving a false generating state (6.6594ms)
+✔ the exported readable plan keeps scripts and sources accessible without exposing contact records (2.3477ms)
+﹣ POSIX media files have owner-only permissions on the Linux deployment platform (0.043ms) # SKIP
+✔ social events are account-scoped, idempotent and do not create/move/modify any lead, quote or inventory (10.9147ms)
+✔ linking a scoped social identity to a lead is explicit and audited, without rewriting the CRM (7.3795ms)
+✔ Meta send uses the appropriate Instagram/Messenger hosts and never retries a duplicate request (8.1239ms)
+✔ closed windows, opt-out, disabled sending, test-recipient violations and TikTok all block outbound delivery (7.5279ms)
+✔ a provider timeout creates a visible unknown send and cannot be retried automatically (7.5071ms)
+✔ a provider echo received during a send is stored only once (7.5608ms)
+✔ Lola social suggestions are leased, validated, never sent, and cancelled when a human or new inbound intervenes (10.1328ms)
+✔ social economic replies stay within the approved boundary and unsupported evidence is rejected (9.7119ms)
+✔ webhook signature and channel/account validation precede normalized events; unsafe attachment URLs are stripped (7.1322ms)
+✔ config redacts secrets, preserves blank keys, and cannot activate an unimplemented TikTok sender (11.4435ms)
+✔ all social HTTP destinations require TLS and an allowlisted provider host (0.2764ms)
+✔ ad report snapshots overwrite rather than add spend, remove vanished rows, and never modify lead order (5.2549ms)
+✔ ad snapshots reject duplicates, invalid dates/metrics, currencies and mixed accounts atomically (2.858ms)
+✔ ad sync keeps the prior complete snapshot if a later provider page fails (8.0847ms)
+✔ Meta pagination uses only reconstructed official URLs and imports all placements once (7.2001ms)
+✔ currency and attribution remain separate; names and generic conversion events never manufacture CRM leads (0.5176ms)
+✔ explicit acquisition attribution produces a unique cumulative funnel and a clearly scoped revenue ratio (3.6805ms)
+✔ verified first-message referral can attribute a linked social lead; later referrals do not replace its origin (6.7596ms)
+✔ TikTok marketing reports can sync independently from the gated messaging API (13.7262ms)
+✔ a platform filter does not allocate all ad leads to every placement and active leads prevail over archived copies (0.6717ms)
+ℹ tests 40
+ℹ suites 0
+ℹ pass 39
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 303.8984

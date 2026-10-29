@@ -1,0 +1,216 @@
+✔ Google Calendar keeps the scheduled appointment in Lima and adds the INFINITY224 invitation (19.9442ms)
+✔ Google Calendar link is available for an attended appointment and excludes cancelled appointments (1.4897ms)
+✔ a shared Calendar appointment opens its existing event instead of creating a second invitation (0.3453ms)
+✔ expired recovery is one editable manual draft, with no API send or fabricated new window (5.661ms)
+✔ only a genuine inbound response can restore Lola; operator preference true (4.1641ms)
+✔ only a genuine inbound response can restore Lola; operator preference false (0.8304ms)
+✔ recovery refuses opt-out and open windows, never marks an opened link as sent (0.64ms)
+✔ maintenance prepares recovery automatically and respects consent (0.3957ms)
+✔ stale recovery cannot pause or reopen a conversation after the customer already replied (1.0224ms)
+✔ WhatsApp offers six real slots in pages of at most three buttons; same slot identity on each page (0.2682ms)
+✔ a cancelled CRM appointment cannot survive as a stale active WhatsApp appointment (0.1287ms)
+✔ CRM operator and Lola book, move and cancel the same event, without any WhatsApp history or transport (61.834ms)
+✔ shared agenda writes to the authenticated target lead even when another CRM record repeats the same email (1.3826ms)
+✔ a booking made in another channel after CRM availability is listed prevents a duplicate new event (10.9395ms)
+✔ Lola crea un lead en Lead Inicial y bloquea el mismo evento repetido (2.8755ms)
+✔ Lola deduplica por teléfono internacional y no usa el nombre como identidad (0.35ms)
+✔ una actualización conserva la etapa y el orden de todos los leads (0.6872ms)
+✔ la falta de respuesta a 24 horas pasa a Seguimiento y nunca a Perdido (0.219ms)
+✔ la baja pausa a Lola sin mover la etapa comercial (0.243ms)
+✔ pedir vendedor crea la tarea y pausa a Lola (0.2713ms)
+✔ interés en cita no inventa una cita ni un evento de Calendar (0.1675ms)
+✖ el receptor CRM exige secreto y mantiene idempotencia (37.5081ms)
+✖ connection_check valida el secreto y no abre ni modifica leads (7.1508ms)
+✔ n8n structure and executable code: 00-Lola-Unificado-67.6.1-INACTIVO.json (2.2819ms)
+✔ n8n structure and executable code: 01-Lola-Telegram-Revision-07-INACTIVO.json (3.0885ms)
+✔ n8n structure and executable code: 02-WhatsApp-Observador-Diagnostico-INACTIVO.json (0.3419ms)
+✔ n8n structure and executable code: 04-Lola-WhatsApp-COMPLETO-02-Agenda-CRM-INACTIVO.json (0.4231ms)
+✔ n8n structure and executable code: 05-Lola-Social-Sugerencias-INACTIVO.json (0.2857ms)
+✔ n8n structure and executable code: 06-Reportes-Meta-TikTok-INACTIVO.json (0.1582ms)
+✔ n8n structure and executable code: 07-TikTok-Entrada-Normalizada-PENDIENTE.json (0.1688ms)
+✔ n8n structure and executable code: 08-Campanas-Claude-CRM-INACTIVO.json (0.1257ms)
+✔ Telegram corrected copy retains exactly one enabled Telegram trigger and early callback acknowledgment (4.8053ms)
+✔ observer converts text/media/status/echo and connection probe without stale lead_upsert actions (1.7286ms)
+✔ worker routes empty queue, fixed replies and transcripts without Meta credentials or send calls (2.1471ms)
+✔ complete WhatsApp workflow carries Calendar/Gmail credentials and provider results through the CRM ledger (2.5164ms)
+✔ social worker only drafts and retains verified commercial observations; no Calendar/Meta send calls are present (1.2205ms)
+✔ TikTok relay is explicitly internal, authenticated and rejects raw unverified callbacks (1.7394ms)
+✔ Claude campaign workflow complements other workers and never embeds the Anthropic key or calls ad publishing APIs (0.8567ms)
+✔ social ingress creates exactly one CRM lead, handles first message automatically and keeps scoped identity (26.4119ms)
+✔ Instagram and Messenger use one agenda implementation and preserve separate conversation identities (6.2506ms)
+✔ explicit email persists in automatic mode; model-only profile remains a proposal (3.2733ms)
+✔ expired offers get a new identity, three new options and a tracked deadline after delivery (4.6388ms)
+✔ optout stops automation; only an explicit customer resume restores it with an audit event (7.3747ms)
+✔ a normalized form is idempotent, links by confirmed email and never starts an unsolicited message (1.4044ms)
+✔ ambiguous phone/email matches never silently merge different CRM leads (1.9088ms)
+✔ text choices bind to current request and calendar slot instead of inventing new actions (0.1933ms)
+✔ social manual takeover cancels queued bot work and manual sending uses the same ledger (2.6494ms)
+✔ all channels share the same calendar mutex and audio downloads reject unsafe hosts (0.7535ms)
+✔ instagram: book, reschedule and cancel one Calendar event through the shared engine (57.8555ms)
+✔ messenger: book, reschedule and cancel one Calendar event through the shared engine (42.6026ms)
+✔ a form and a later social message with the same confirmed email resolve to one lead (1.3567ms)
+✔ publication snapshots never add cumulative counts, ignore older captures and distinguish missing metrics (23.0583ms)
+✔ only explicit publication attribution joins a lead, appointment and sale without changing the CRM lead (3.8568ms)
+✔ bad links, duplicate posts and negative metrics cannot partially overwrite a snapshot (1.4984ms)
+✔ TikTok verifies authorized account and paginates the official Display API before saving metrics (10.5374ms)
+✔ a failed paginated sync does not replace the previous report with partial metrics (10.5514ms)
+✔ the analysis calls the configured model once, saves evidence, and never supplies personal lead data (5.1208ms)
+✔ an analysis with fabricated post evidence stays under review and is not automatically retried (3.9824ms)
+✔ CRM controls require session/origin, and marketing analytics keep the manager permission (10.3331ms)
+✔ authenticated CRM request reaches the actual shared n8n worker and authorized Calendar task without WhatsApp history (34.7957ms)
+✔ recovery RPC opens an editable manual message while preserving the expired API window (4.5603ms)
+✔ a legacy internal cancellation cannot silently leave an active linked event in Google Calendar (4.8943ms)
+✔ social events are account-scoped, idempotent and do not create/move/modify any lead, quote or inventory (17.8075ms)
+✔ linking a scoped social identity to a lead is explicit and audited, without rewriting the CRM (12.5643ms)
+✔ Meta send uses the appropriate Instagram/Messenger hosts and never retries a duplicate request (11.9788ms)
+✔ closed windows, opt-out, disabled sending, test-recipient violations and TikTok all block outbound delivery (11.3516ms)
+✔ a provider timeout creates a visible unknown send and cannot be retried automatically (8.0088ms)
+✔ a provider echo received during a send is stored only once (9.9841ms)
+✔ Lola social suggestions are leased, validated, never sent, and cancelled when a human or new inbound intervenes (13.0039ms)
+✔ social economic replies stay within the approved boundary and unsupported evidence is rejected (11.0786ms)
+✔ webhook signature and channel/account validation precede normalized events; unsafe attachment URLs are stripped (11.1481ms)
+✔ config redacts secrets, preserves blank keys, and cannot activate an unimplemented TikTok sender (17.1949ms)
+✔ all social HTTP destinations require TLS and an allowlisted provider host (0.3792ms)
+✔ ad report snapshots overwrite rather than add spend, remove vanished rows, and never modify lead order (6.5926ms)
+✔ ad snapshots reject duplicates, invalid dates/metrics, currencies and mixed accounts atomically (3.6755ms)
+✔ ad sync keeps the prior complete snapshot if a later provider page fails (10.544ms)
+✔ Meta pagination uses only reconstructed official URLs and imports all placements once (10.7531ms)
+✔ currency and attribution remain separate; names and generic conversion events never manufacture CRM leads (0.7468ms)
+✔ explicit acquisition attribution produces a unique cumulative funnel and a clearly scoped revenue ratio (4.3248ms)
+✔ verified first-message referral can attribute a linked social lead; later referrals do not replace its origin (8.7576ms)
+✔ TikTok marketing reports can sync independently from the gated messaging API (13.353ms)
+✔ a platform filter does not allocate all ad leads to every placement and active leads prevail over archived copies (0.6873ms)
+✔ unified endpoint authenticates its worker, claims scoped jobs, rejects wrong leases and completes one delivery (21.1463ms)
+✔ native signed Meta leadgen retrieves and registers one form without sending a message (7.0167ms)
+✔ normalized forms require the private credential and duplicate delivery does not create another lead (4.753ms)
+✔ final workflow has one shared agent, verified tools, authenticated ingress and no installer SQL (3.0413ms)
+✔ final worker propagates engine and lease through responses, audio and provider results (2.294ms)
+✔ unified ingress rejects raw callbacks and accepts only explicit normalized contracts (2.3859ms)
+✔ workflow routes every Calendar method to an explicit operation, keeps recovery transport-free and analysis on demand (3.3758ms)
+✔ preserves Telegram schedule rules and rejects past, Monday, outside hours and insufficient lead time (20.5059ms)
+✔ full booking: verified paged WhatsApp buttons, recheck, one Calendar event, CRM appointment and sales notification (38.6641ms)
+✔ collects a missing email before reading Calendar and uses the explicit address in the invitation (22.7739ms)
+✔ slot forged, old or belonging to another request cannot create a Calendar event (14.4177ms)
+✔ a newly occupied slot is checked again and replaced with options without creating a conflicting appointment (22.9417ms)
+✔ reprogramming updates the same Calendar event and CRM appointment instead of creating a second one (35.2029ms)
+✔ cancel requires explicit bound confirmation; No preserves event and Yes deletes it and records Seguimiento (26.1164ms)
+✔ seller selection registers the real handoff, notifies sales and pauses Lola (5.9729ms)
+✔ mail failure does not claim notification success and is not retried automatically (5.9032ms)
+✔ Calendar write timeout reconciles by deterministic ID and records only the event actually returned (13.9985ms)
+✔ manual takeover before dispatch cancels a queued appointment operation with no Calendar write (8.5801ms)
+✔ an already dispatched successful booking is reconciled into CRM after takeover without a bot confirmation (12.1056ms)
+✔ no selection after 24 hours moves only the eligible lead to Seguimiento and never Perdido (4.1609ms)
+✔ manual control or an appointment prevents expiry from demoting a lead (3.5302ms)
+✔ audio cancellation intent goes through the same confirmation flow without letting the language model delete an event (15.9795ms)
+✔ unconfirmed write outcome never claims a booking or moves the CRM lead to Cita (12.19ms)
+✔ incomplete or unauthorized Calendar list cannot be turned into available slots (5.6508ms)
+✔ new conversational text while a selected appointment is checking does not discard the booking request (13.8504ms)
+✔ interrupted mail dispatch is marked unknown after lease expiry and never sent again automatically (4.2455ms)
+✔ WhatsApp opt-out is reflected in the CRM record and does not change the stage or neighboring leads (3.2848ms)
+✔ a client can explicitly request an adviser after booking without being trapped by the already-accepted offer (14.4131ms)
+✔ a queued write that becomes too late is not sent to Calendar and returns to availability lookup (12.9372ms)
+✔ WhatsApp Ver más rotates all six real slots and rejects a forged page without a Calendar write (15.4296ms)
+✔ observer stores messages separately and does not change any existing lead, state or position (5.9416ms)
+✔ repeated webhook messages are permanently idempotent and do not duplicate leads or messages (0.955ms)
+✔ a new inbound phone appends one Lead Inicial without changing preexisting leads (1.714ms)
+✔ ambiguous phones and archived contacts are not silently duplicated or reactivated (1.0632ms)
+✔ an outbound copy can be recorded but never creates a lead or sends a message (0.738ms)
+✔ delivery callbacks before message recording and out-of-order events do not regress read status (0.6788ms)
+✔ same message ID from distinct business numbers does not collide and pagination is bounded (7.023ms)
+✔ expired inbound windows and historical notes never imply permission to send (0.851ms)
+✔ raw Meta events retain text, media metadata, button selection and campaign referral safely (0.4405ms)
+✖ conversation RPC requires login, stays read-only and has no send/control operations (28.4939ms)
+✖ Meta endpoint is disabled by default, then checks challenge, signature and allowed phone numbers (4.2682ms)
+✖ n8n observer accepts message copies only with the existing private secret (3.0541ms)
+✔ manual send is idempotent, maintains leads/positions/units and observes own echo without pausing automatic (11.6375ms)
+✔ sends require Manual, allowed test recipient, enabled connection and open 24-hour window (4.9918ms)
+✔ timeout is persisted as unknown and does not automatically retry an uncertain send (3.7223ms)
+✔ manual takeover and a phone/Mac echo cancel a generated response before sending (19.2409ms)
+✔ new inbound supersedes the old generation, duplicate webhooks never queue twice, and job leases are exclusive (6.1556ms)
+✔ Lola economic answers are deterministic, deliver three buttons once, and preserve CRM profile/stage (6.5836ms)
+✔ appointment selection is accepted once, keeps coordination open and never claims a booked appointment (11.0997ms)
+✔ suggestions require explicit request for old messages, never send, and remain editable (5.1112ms)
+✔ opt-out stops automatic messages and cannot be overridden by switching modes (7.3564ms)
+✔ audio transcription gates pricing and can be downloaded only for an authorized claimed job (7.5318ms)
+✔ unsupported audio recording reports conversion requirement; audio upload sends only after validation (4.0805ms)
+✔ coexistence echo parser identifies the recipient and button ID without inventing inbound messages (0.3239ms)
+✔ commercial evidence must come from observed tool output, not the model declaration alone (0.2744ms)
+✔ configuration never returns secrets, preserves blank keys and rejects invalid test recipients (13.3413ms)
+✔ Meta HTTP transport rejects redirects, arbitrary hosts and embedded credentials before connecting (0.3062ms)
+✔ captured profile is a reviewable proposal; explicit approval changes only selected fields without moving leads (5.093ms)
+✔ expired worker lease has a bounded retry and becomes a visible failed job (4.4281ms)
+ℹ tests 141
+ℹ suites 0
+ℹ pass 136
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 525.8741
+
+✖ failing tests:
+
+test at work\crm-6762-final\tests\lola-integration.test.cjs:140:1
+✖ el receptor CRM exige secreto y mantiene idempotencia (37.5081ms)
+  [TypeError: fetch failed] {
+    [cause]: Error: connect EACCES 127.0.0.1:57921
+        at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1864:16) {
+      errno: -4092,
+      code: 'EACCES',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 57921
+    }
+  }
+
+test at work\crm-6762-final\tests\lola-integration.test.cjs:165:1
+✖ connection_check valida el secreto y no abre ni modifica leads (7.1508ms)
+  [TypeError: fetch failed] {
+    [cause]: Error: connect EACCES 127.0.0.1:57923
+        at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1864:16) {
+      errno: -4092,
+      code: 'EACCES',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 57923
+    }
+  }
+
+test at work\crm-6762-final\tests\whatsapp-inbox.test.cjs:79:1
+✖ conversation RPC requires login, stays read-only and has no send/control operations (28.4939ms)
+  [TypeError: fetch failed] {
+    [cause]: Error: connect EACCES 127.0.0.1:57925
+        at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1864:16) {
+      errno: -4092,
+      code: 'EACCES',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 57925
+    }
+  }
+
+test at work\crm-6762-final\tests\whatsapp-inbox.test.cjs:87:1
+✖ Meta endpoint is disabled by default, then checks challenge, signature and allowed phone numbers (4.2682ms)
+  [TypeError: fetch failed] {
+    [cause]: Error: connect EACCES 127.0.0.1:57927
+        at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1864:16) {
+      errno: -4092,
+      code: 'EACCES',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 57927
+    }
+  }
+
+test at work\crm-6762-final\tests\whatsapp-inbox.test.cjs:102:1
+✖ n8n observer accepts message copies only with the existing private secret (3.0541ms)
+  [TypeError: fetch failed] {
+    [cause]: Error: connect EACCES 127.0.0.1:57929
+        at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1864:16) {
+      errno: -4092,
+      code: 'EACCES',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 57929
+    }
+  }

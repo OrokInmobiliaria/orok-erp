@@ -1,0 +1,91 @@
+RETOMAR LOLA Y CRM R28
+Punto de continuidad al 24/10/2026 (hora de Lima)
+
+VERSION CONSERVADA
+- CRM base activa: 67.6.10. No fue reemplazada ni migrada.
+- Nueva version: 67.6.11-r28, instalada solamente en preproduccion.
+- Preproduccion: https://lola-pruebas-crm-r28-preprod.kvrq8w.easypanel.host/
+- Imagen desplegada: easypanel/lola_pruebas/crm-r28-preprod:r28-separacion-oficial-15d
+- PostgreSQL de preproduccion: proyecto aislado infinity224_preproduccion_r28.
+- Salud del servicio comprobada: ok=true, persistence_guard=true y messaging_storage=postgresql.
+
+REGLA PRINCIPAL
+No instalar directamente sobre el CRM activo. Antes de la publicacion oficial se debe respaldar la aplicacion, los archivos privados y PostgreSQL; luego aplicar la migracion conservando leads, posiciones del Kanban, conversaciones, historial, cotizaciones, separaciones y conexiones ya configuradas.
+
+AVANCE ACUMULADO
+Se registraron 48 bloques funcionales resueltos o implementados durante cuatro jornadas: 20, 22, 23 y 24 de octubre de 2026. La etapa avanzada de Marketing y Claude no se considera terminada ni incluida dentro de este cierre.
+
+BLOQUES REALES QUE NO DEBEN REPETIRSE
+- WhatsApp de ensayo: recepcion, salida, estados y almacenamiento PostgreSQL comprobados.
+- Messenger: recepcion, salida manual, convivencia humana e historial comprobados.
+- Instagram: recepcion real, webhook, firma, filtro de contacto y almacenamiento PostgreSQL comprobados. Salida manual tambien comprobada.
+- Audio: grabacion, conversion, entrega y reproduccion comprobadas.
+- Agenda, asesor, Calendar, Meet, ubicaciones y seguimiento SLA comprobados.
+- Memoria PostgreSQL y generacion de un borrador de LOLA comprobadas.
+- Correo SMTP, acceso Drive y configuracion privada comprobados.
+- Kommo retirado y respuesta automatica antigua con precios desactivada.
+- App Meta publicada y politica de privacidad BMG/OROK actualizada.
+
+CAMBIOS INCLUIDOS EN R28
+- Desestimado/Perdido permite motivo obligatorio, elimina proxima accion y fecha, y registra historial.
+- Bandeja social colocada entre Kanban Leads y Nuevo lead.
+- Ojo para mostrar u ocultar la contrasena.
+- Cinco juegos de colores y selector libre del color de marca.
+- Datos para evaluacion bancaria GNB incorporados al lead y al Kanban.
+- LOLA reutiliza informacion conocida y solicita solamente los datos faltantes.
+- Flujo de separacion y minutas conectado con Google Drive.
+- Seleccion de minuta bancaria o compra directa segun el tipo de compra.
+- Copia por operacion sin modificar las plantillas principales.
+- Cierre de venta con minuta firmada, voucher notarial, fecha y responsable.
+- Estado final Vendida/Cerrada.
+- Version de preproduccion aislada para probar sin modificar los datos activos.
+
+DOCUMENTOS LEGALES
+- Carpeta de plantillas Legal entregada por el usuario y vinculada.
+- Carpeta de operaciones: CRM - Operaciones - Separaciones y Minutas.
+- ID de carpeta: 1L3QIHTzxNbWJiXjiehDtlagjXjz1lqYC
+- Prueba de operacion generada en: https://drive.google.com/drive/folders/1wZEtcZ2A5iXs1-PZxY3Y9dz6SYHDEIUg
+- Plantilla de separacion BMG/OROK actualizada.
+- Minuta bancaria y minuta de compra directa preparadas.
+- El formato de separacion fue ajustado al PDF correcto proporcionado por el usuario.
+- Los planos de la unidad se agregan despues de la ultima pagina legal.
+- La vigencia se conserva en 15 dias calendario en la plantilla, el calculo, el PDF y preproduccion.
+
+N8N Y MODELOS
+- Flujo vigente de ensayo: 84 nodos.
+- Recuperar memoria e historial PostgreSQL fue corregido para recibir un unico parametro JSON y conservar los controles de autorizacion.
+- Hay trabajo y Conservar trabajo fueron corregidos para manejar cola vacia y preservar job, engine y lease_token.
+- Gemini 2.5 Flash Lite quedo configurado como apoyo conversacional condicional.
+- El agente principal y el formateador continuan usando OpenAI.
+- Gemini no sustituye PostgreSQL ni completa la etapa creativa de Marketing/Claude.
+- No activar dos copias del mismo trabajador de n8n.
+
+PENDIENTES OBLIGATORIOS PARA LA PROXIMA SEMANA
+1. Generar una separacion final en preproduccion con datos de prueba y planos reales; revisar visualmente todas las paginas.
+2. Probar una minuta bancaria y una minuta de compra directa desde el mismo flujo.
+3. Probar el cierre de venta cargando minuta firmada y voucher notarial de prueba.
+4. Ejecutar una unica prueba integral de formulario real de Meta hasta verlo como lead en el CRM, con atribucion disponible.
+5. Corregir cualquier defecto encontrado solamente en preproduccion.
+6. Crear respaldo final de aplicacion, archivos privados y PostgreSQL del CRM activo.
+7. Ejecutar la migracion conservadora y comprobar conteos antes y despues.
+8. Solicitar autorizacion final del titular y recien entonces actualizar el CRM oficial.
+
+PUEDE QUEDAR PARA UNA ETAPA POSTERIOR
+- Dashboard y analisis semanal estilo Power BI.
+- Automatizacion avanzada de versiones de plantillas de Drive.
+- Migracion al numero o telefono definitivo.
+- Marketing y Claude: analisis de campanas, Meta Ads/TikTok Ads, biblioteca creativa, anuncios, carruseles, reels, voz, subtitulos, pruebas A/B, medicion por variante y realimentacion del ciclo creativo.
+
+ARCHIVOS PRINCIPALES PARA RETOMAR
+- RETOMAR-LOLA-CRM-R28-2026-10-24.txt: este documento.
+- LOLA-CRM-67.6.11-r28-PREPROD-FINAL-20261024.zip: codigo R28 final de continuidad.
+- SHA256-LOLA-CRM-67.6.11-r28-PREPROD-FINAL-20261024.txt: verificacion del paquete.
+- LOLA-N8N-VIGENTE-20261024.json: copia conservada del flujo instalado en n8n.
+- LOLA-67.6.10-PG-GEMINI-SALUDO-CORREGIDO-84-NODOS-INACTIVO.json: copia revisable e inactiva.
+- LOLA-RESULTADO-POSTGRES-BORRADOR-20261024.txt: evidencia de memoria y borrador.
+- Instagram-ESTADO-ACTUAL-20261024.json y Messenger-ESTADO-ACTUAL-20261024.json: evidencias sociales.
+
+SEGURIDAD Y CONSERVACION
+- El paquete no contiene contrasenas, tokens, secretos de webhook ni credenciales privadas.
+- No volver a generar tokens ni repetir permisos sociales salvo que una prueba devuelva un rechazo real.
+- No borrar las versiones anteriores ni la base activa hasta terminar la migracion y la verificacion final.

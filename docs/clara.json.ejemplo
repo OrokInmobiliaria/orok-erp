@@ -1,0 +1,5 @@
+{
+  "drive_webhook_url": "https://TU-N8N/webhook/clara-drive-guardar",
+  "drive_webhook_header": "X-Clara-Secret",
+  "drive_webhook_secret": "PEGAR_AQUI_EL_MISMO_VALOR_DE_LA_CREDENCIAL_N8N_(32+_caracteres)"
+}

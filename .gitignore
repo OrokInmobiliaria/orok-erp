@@ -1,0 +1,12 @@
+# ERP ÖRÖK · nunca subir dependencias, datos privados ni claves
+node_modules/
+private/
+**/.env*
+**/*.pem
+**/*.key
+**/*.p12
+*.zip
+.test-temp/
+.npm-logs/
+.npm-cache/
+n8n/produccion-mapa.json

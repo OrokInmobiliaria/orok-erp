@@ -1,0 +1,29 @@
+{
+  "version": "67.6.2",
+  "workflow": "00-Lola-Unificado-67.6.2-INACTIVO.json",
+  "nodes": 63,
+  "active": false,
+  "selected_tests": {
+    "passed": 137,
+    "failed": 0,
+    "provider_calls": "simuladas",
+    "http_protocol": "manejador real en proceso, sin sockets"
+  },
+  "excluded_socket_tests": 5,
+  "exclusion_reason": "EACCES al conectar a 127.0.0.1 en el entorno de trabajo; no presentados como aprobados",
+  "frontend": "Compilación Vite producción correcta; no verificación visual en servidor real",
+  "production_deployed": false,
+  "messages_sent_to_customers": 0,
+  "real_provider_mutations": 0,
+  "pending": [
+    "Importar y ejecutar en motor real n8n con credenciales",
+    "Validar Calendar, invitaciones y Gmail reales",
+    "Verificar número Business/coexistencia para recuperación manual",
+    "Permisos y callbacks Meta/Instagram/Facebook/formularios",
+    "Autorizar Display API TikTok para publicaciones",
+    "Acceso y adaptador TikTok Messaging, envío bloqueado",
+    "Conciliar e importar Postgres histórico",
+    "Validación visual del CRM instalado"
+  ],
+  "original_telegram_sha256": "77f317e6cce031bd578aa6f9b8a18627ca914b91f9e6cfd1b82fdf5570970696"
+}

@@ -1,0 +1,17 @@
+ANTECEDENTE DE PRUEBAS: la conexión permanente ya quedó validada. Prevalece VALIDACION-CLARA-PERMANENTE.txt.
+
+C.L.A.R.A · PRUEBAS DE TRES EMPRESAS · 28/10/2026
+BMG: ejecución 97281 aprobada, compilado de 12 pestañas.
+MZA: ejecución 97335 aprobada, compilado de 12 pestañas.
+MAAS: ejecución 97338 aprobada, compilado de 12 pestañas.
+Las tres pruebas se hicieron desde el botón Guardar Google Sheets en Drive del ERP R41.
+Se verificó que cada empresa apunta a su propia raíz de Contabilidad y que las tres carpetas mensuales son distintas.
+Ruta: Empresa / Contabilidad / 06 Reportes / 2026-10.
+Cinco comprobaciones de aislamiento y datos aprobadas: rechazo de empresa diferente, periodo inválido, compilado vacío y pestaña duplicada; conservación de cero numérico.
+82 nodos y conexiones conservados; zona America/Lima; sin pinData; exportación INACTIVA.
+Solo se deja habilitado el disparador Recibir archivo del CRM con Header Auth existente.
+Apagados: preparar carpetas, ordenar cada 10 minutos, leer cada 15 minutos, leer manualmente e inventario.
+El flujo se guarda como ERP R41 · C.L.A.R.A · DRIVE PERMANENTE · SOLO GUARDADO, ID mR8Bhr8hGvtaZire.
+ACTIVACIÓN: diálogo Publish preparado para el titular según la skill del proyecto. Pendiente confirmar publicación y luego cambiar únicamente en el ensayo la URL webhook-test a webhook. No declarar conexión permanente operativa antes de esa prueba.
+Conservar producción, base, volumen privado, variables, credenciales, leads, vínculos, archivos e historial del Kanban.
+Este ZIP contiene código completo y flujos sin secretos. El respaldo privado real permanece en el servidor; no se distribuye en el ZIP.

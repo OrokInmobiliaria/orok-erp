@@ -1,0 +1,17 @@
+C.L.A.R.A — CONEXIÓN PERMANENTE VERIFICADA — 28/10/2026 (Lima)
+Ámbito: ERP R41 de ensayo. El CRM vivo 67.6.10 no fue actualizado.
+Flujo publicado por Gerencia: mR8Bhr8hGvtaZire, 82 nodos, America/Lima.
+Se reparó el historial mediante guardado normal del editor. Versión actual y publicada coinciden; no se editó directamente la base de n8n.
+Solo el disparador Recibir archivo del CRM está habilitado, con Header Auth existente.
+Preparación, lectura automática, lectura manual, inventario y ordenación automática siguen apagados. No se quitaron nodos.
+URL privada del ensayo cambiada de webhook-test a /webhook/clara-drive-guardar; secreto y propietario conservados. Copia previa privada en el servidor.
+PRUEBA PERMANENTE: ejecución 97409, modo webhook, success, 28/10/2026 18:47:29 a 18:47:34 Lima (5.104 s).
+Se pulsó Guardar Google Sheets en Drive desde el ERP sin iniciar Execute workflow en n8n. La pantalla confirmó el guardado correcto.
+Prueba sin clave: HTTP 403. No se habilitó acceso anónimo.
+BMG, MZA y MAAS: pruebas desde ERP aprobadas, 12 pestañas por compilado; raíces contables correctas y tres carpetas mensuales distintas.
+Ruta: Empresa / Contabilidad / 06 Reportes / AAAA-MM.
+Pruebas de aislamiento: empresa distinta, periodo inválido, compilado vacío y pestaña duplicada rechazados; cero numérico conservado.
+Anterior CLARA iVH9kY90XpxfwsVy archivada de forma recuperable; su copia permanece en el respaldo privado.
+Exportación oficial descargada de n8n después de publicar. Se entrega INACTIVA y sin ID/versionId/pinData para evitar activación o sobrescritura accidental al importar.
+Los flujos de otras IAs se conservan. No se prueba ni afirma aquí su conexión final.
+No repetir la importación CLI con un versionId inventado y publicar inmediatamente: el historial debe existir. Preferir importar y guardar desde el editor.

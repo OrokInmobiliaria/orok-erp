@@ -1,0 +1,14 @@
+import React,{useState} from 'react';
+import {api} from './dataService';
+const date=value=>new Date(value).toLocaleString('es-PE',{timeZone:'America/Lima'});
+export default function WhatsAppConsent({leadId,consent,optOut,onChanged,followup}){
+ const [form,setForm]=useState({confirmed:false,evidence:'',granted_at:''}),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
+ async function save(e){e.preventDefault();setBusy(true);setMessage('');try{await api.recordWhatsAppFollowupConsent(leadId,{...form,granted_at:new Date(form.granted_at).toISOString()});setMessage('Permiso registrado. No activa LOLA ni envía mensajes.');await onChanged?.();}catch(error){setMessage(error.message);}finally{setBusy(false);}}
+ return <details className="whatsapp-suggestion"><summary>Seguimiento · CRM y WhatsApp</summary>
+  {optOut?<p>El cliente solicitó la baja. Los envíos automáticos están bloqueados; un operador no puede reemplazar esa baja con un permiso anterior.</p>:consent?.granted?<p>Permiso registrado el {date(consent.granted_at)}. Evidencia: {consent.evidence}</p>:<p>Sin permiso registrado para retomar por WhatsApp después de 24 horas. Esto no bloquea la gestión interna del CRM ni la continuación de la consulta dentro de la ventana vigente.</p>}
+  {followup&&<p role="status">Seguimiento: {followup.eligible?'Listo para evaluar el próximo seguimiento.':followup.reason}{followup.due_at?' Próxima evaluación: '+date(followup.due_at)+'.':''}</p>}
+  <p>El CRM gestiona tareas, plazos y seguimiento interno sin solicitar una autorización adicional al cliente. LOLA puede continuar una consulta sin respuesta dentro de las 24 horas, respetando el SLA, las bajas y la atención del asesor.</p><p>Para retomar por WhatsApp después de 24 horas se utiliza una plantilla aprobada por Meta y un permiso existente verificable, obtenido en un formulario u otro canal. El cliente no tiene que escribir una frase especial. No registres permisos supuestos.</p>
+  {!optOut&&<details><summary>Registrar permiso existente para mensajes posteriores a 24 horas</summary><form onSubmit={save} aria-label="Registrar permiso de seguimiento"><label><input type="checkbox" checked={form.confirmed} disabled={busy} onChange={e=>setForm({...form,confirmed:e.target.checked})}/> El cliente autorizó seguimiento de ÖRÖK</label><label>Evidencia del permiso<input required maxLength={500} minLength={8} disabled={busy} value={form.evidence} onChange={e=>setForm({...form,evidence:e.target.value})} placeholder="Formulario, mensaje u otro registro verificable"/></label><label>Fecha y hora del permiso<input required type="datetime-local" disabled={busy} value={form.granted_at} onChange={e=>setForm({...form,granted_at:e.target.value})}/></label><button type="submit" disabled={busy||!form.confirmed||!form.evidence||!form.granted_at}>{busy?'Guardando…':'Guardar permiso existente'}</button></form></details>}
+  {message&&<p role="status">{message}</p>}
+ </details>;
+}

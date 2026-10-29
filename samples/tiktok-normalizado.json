@@ -1,0 +1,13 @@
+{
+  "action": "social_message",
+  "channel": "tiktok",
+  "account_id": "REEMPLAZAR_ID_CUENTA",
+  "contact_id": "REEMPLAZAR_ID_CLIENTE",
+  "message": {
+    "id": "REEMPLAZAR_ID_MENSAJE",
+    "at": "REEMPLAZAR_FECHA_ISO_REAL",
+    "direction": "inbound",
+    "type": "text",
+    "text": "Texto del mensaje validado"
+  }
+}

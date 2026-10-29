@@ -1,0 +1,59 @@
+ACUERDO DE RESERVA PREFERENTE
+
+BMG Desarrolladora Inmobiliaria S.A.C., que utiliza ÖRÖK como nombre comercial, RUC 20615227685, con domicilio legal en Calle Puquina 138, Maranga, San Miguel, Lima, Perú, representada por su apoderado {{COMPANY_REPRESENTATIVE}}, con DNI: {{COMPANY_REPRESENTATIVE_DNI}}, conforme a las facultades inscritas en la partida electrónica {{COMPANY_RECORD}} del Registro de Personas Jurídicas de Lima, a quien en adelante se le denominará como “LA INMOBILIARIA”.
+
+ANTECEDENTES
+
+LA INMOBILIARIA tiene derechos sobre terreno ubicado en CALLE LA APACHETA 224 Distrito de San Miguel, Provincia y Departamento del Lima, cuyo dominio, linderos y medidas perimétricas se encuentran inscritos en la Partida Electrónica Nº40984402 del Registro de Predios de Lima (en adelante, EL TERRENO).
+
+Asimismo, LA INMOBILIARIA informa que, para poder viabilizar el desarrollo de este proyecto, se informa que ya hay un anteproyecto de Arquitectura, y licencia de Demolición, los tramite siguientes como la licencia de Definitiva y el Dictamen de Edificación por la Comisión Técnica Distrital o por Revisor Urbano están planeados llevarse a cabo previo a la ejecución de la obra.
+
+De la otra parte, {{CLIENT_NAME}}, identificado(a) con DNI N° {{DNI}}, de estado civil {{MARITAL_STATUS}}, con domicilio en {{ADDRESS}}, distrito de {{DISTRICT}}, provincia de {{PROVINCE}} y departamento de {{DEPARTMENT}}, a quien en adelante se le denominará: EL/ LOS PARTICIPANTE/S.
+
+CLÁUSULA PRIMERA; DEL PROYECTO:
+
+EL/LOS PARTICIPANTE/S declara/n que desea/n ser parte de esta lista de reserva preferente, razón por la cual las partes celebran el presente Acuerdo. EL/LOS PARTICIPANTE/S declara/n que este Acuerdo tiene la condición de acuerdo negociado dado que ha tenido oportunidad de observar y proponer modificaciones en su redacción. De tal manera, EL/LOS PARTICIPANTE/S y LA INMOBILIARIA convienen en que todas las estipulaciones aquí establecidas han sido susceptibles de negociación individual, informada y suficiente, y que todas son plenamente satisfactorias para las partes.
+
+EL/LOS PARTICIPANTE/S declara/n conocer que LA INMOBILIARIA imputará la totalidad de los montos pagados por EL/LOS PARTICIPANTE/S a fin de elaborar el futuro contrato definitivo de compraventa.
+
+CLÁUSULA SEGUNDA: DEL OBJETO DE CONTRATO DE SEPARACIÓN:
+
+2.1. Mediante el presente contrato EL CLIENTE separa la unidad inmobiliaria {{UNIT_NUMBER}}, según Cotización Nro. {{QUOTE_CODE}}, por el valor total de {{FINAL_PRICE}} ({{FINAL_PRICE_WORDS}}).
+
+2.2. El precio de compraventa pactado es de {{FINAL_PRICE}} ({{FINAL_PRICE_WORDS}}), incluido el I.G.V., por la unidad inmobiliaria.
+
+CLÁUSULA TERCERA; FORMA DE PAGO:
+
+En caso se llegase a realizar la compra definitiva del inmueble objeto del presente contrato de separación, EL CLIENTE deberá pagarlo de la manera siguiente:
+
+Separación de {{SEPARATION_AMOUNT}} ({{SEPARATION_AMOUNT_WORDS}}) a la firma del presente contrato en calidad de reserva.
+
+Cuota inicial a la firma de la minuta de compraventa de bien futuro por {{INITIAL_AMOUNT}} ({{INITIAL_AMOUNT_WORDS}}).
+
+Saldo del precio de venta del departamento mediante {{FINANCING_TYPE}} por {{FINANCED_AMOUNT}} ({{FINANCED_AMOUNT_WORDS}}).
+
+CLÁUSULA CUARTA: OTRAS OBLIGACIONES Y DERECHOS ACCESORIOS:
+
+EL CLIENTE declara conocer que:
+
+La presente separación tiene un plazo máximo de 15 días calendario a partir de la firma del presente compromiso.
+
+Vencido el plazo fijado para este contrato, la empresa quedará automáticamente facultada para disponer a su solo criterio y sin restricción alguna, de la unidad inmobiliaria materia de este documento.
+
+Se pierde el derecho de separación al inmueble si EL CLIENTE desiste por voluntad propia de celebrar el contrato y/o si dentro del plazo fijado, no entrega la documentación que a criterio del Banco se le solicite para sustentar la evaluación del crédito hipotecario.
+
+Solo en el caso de no aprobarse la calificación del Crédito Hipotecario por el Banco, cualquier devolución se realizará {{REFUND_CONDITION}}, quedando así resuelto este contrato de separación.
+
+CLÁUSULA QUINTA: SOLUCIÓN DE CONTROVERSIAS:
+
+Todas las controversias, derivadas o relacionadas con este contrato o convenio, serán resueltas de forma definitiva mediante arbitraje de acuerdo con el Reglamento de Arbitraje del Centro Nacional e Internacional de Arbitraje de la Cámara de Comercio de Lima, a cuyas normas, administración y decisión se someten las partes en forma incondicional, declarando conocerlas y aceptarlas en su integridad. La decisión final será dictada por un Tribunal Arbitral para lo cual cada parte designará un árbitro y entre los dos árbitros elegidos designaran al tercer arbitro quien presidirá el Tribunal Arbitral. Las partes se comprometen a asumir el pago del 50% de los costos que demande el proceso, y al final en el laudo el Tribunal Arbitra ordenara a la parte que ha sido vencida totalmente
+
+CLÁUSULA SEXTA; JURISDICCIÓN Y COMPETENCIA;
+
+EL/LOS PARTICIPANTE/S declara/n que el origen de los fondos con los cuales adquirirá la unidad inmobiliaria, tiene su origen en su actividad económica: {{ECONOMIC_ACTIVITY}}, por tanto, son lícitos y no provienen de actividad ilegal alguna. En cualquier caso, EL/LOS PARTICIPANTE/S asume/n total responsabilidad respecto del origen de los recursos utilizados para realizar la presente operación, exonerando de responsabilidad al respecto a LA INMOBILIARIA.
+
+Asimismo, EL/LOS PARTICIPANTES declara/n que no califica/n como Persona Expuesta Políticamente (PEP) definida así por la Resolución SBS 4349-2016, publicada el 14 de agosto de 2016, como aquellas personas naturales, nacionales o extranjeras, que cumplen o que en los últimos cinco (05) años hayan cumplido funciones públicas destacadas o funciones prominentes en una organización internacional, sea en el territorio nacional o extranjero, y cuyas circunstancias financieras puedan ser objeto de un interés público; así también se considera como PEP al colaborador directo de la máxima autoridad de la institución. En consecuencia, EL/LOS PARTICIPANTE/S declara/n que, en el plazo antes mencionado, no ha/n ocupado ninguno de los cargos o ejercido funciones señalados en la precitada resolución.
+
+Se suscribe el presente documento en dos (2) ejemplares, con el mismo contenido e igual valor, en la ciudad de Lima a los {{DAY}} días del mes de {{MONTH}} del {{YEAR}}.
+
+[[SIGNATURES]]

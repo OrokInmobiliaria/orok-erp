@@ -1,0 +1,21 @@
+ANTECEDENTE DE PRUEBAS: la conexión permanente ya quedó validada. Prevalece VALIDACION-CLARA-PERMANENTE.txt.
+
+VALIDACIÓN C.L.A.R.A · 28/10/2026
+Creación Google Sheets desde el botón del ERP R41: CORRECTA.
+Pantalla: Google Sheets guardado en Contabilidad → 06 Reportes → 2026-10.
+n8n: Workflow executed successfully.
+Drive verificado visualmente: BMG / 2.Contabilidad / 06 Reportes / 2026-10.
+Contiene CLARA BMG - Compilado total 2026-10-28 y la hoja técnica SIN VALOR CONTABLE.
+Carpeta: https://drive.google.com/drive/u/1/folders/1alV0hs_RaGhxlsWjz_vplOCb3wBqibeE
+Regla implementada para BMG, MZA y MAAS; prueba integral ejecutada con BMG.
+La prueba técnica inicial tardó 4.151 s; no garantiza ese tiempo para todos los tamaños.
+Ensayo desplegado mediante ZIP completo en Easypanel, último despliegue Success 2026-10-28 23:36:34 UTC.
+Contenedor vigente verificado: 1d825902b8e6. App.js SHA256 efa903c9903c7579f176819e6095ffbe3f6d16830d97fe7a6058c8dce0b8f3c9.
+Flujo nuevo: mR8Bhr8hGvtaZire, 82 nodos, SIN PUBLICAR.
+Conexión temporal webhook-test: falta publicación controlada y sustituir URL por webhook permanente. No declarar operación continua habilitada.
+CLARA anterior 69 nodos iVH9kY90XpxfwsVy queda inactivo, pendiente archivar al cerrar la activación final.
+Los flujos activos de otros asistentes no se modificaron. La producción permanece intacta.
+Compilación/sintaxis y transformación de datos correctas, ceros numéricos y DNI con ceros iniciales preservados; cadenas con = se guardan como texto sin ejecutar fórmulas.
+Pruebas existentes: 13 Drive + 1 menú + 4 red/servicios aprobadas; 7 HTTP locales no pudieron ejecutarse por bloqueo EACCES de red local del entorno. No se declaran aprobadas.
+Respaldo privado del servidor previo a cambios en /root/orok-pre-final-20261028-222655; configuración y secretos no incluidos en este ZIP.
+Mantener bases, volúmenes privados, variables, credenciales, links, historial y posiciones del Kanban al actualizar oficialmente.

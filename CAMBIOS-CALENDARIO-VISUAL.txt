@@ -1,0 +1,12 @@
+CALENDARIO VISUAL R41 - ENSAYO
+Fechas, fases e hitos pasan de Supuestos a Calendario.
+Fases: control deslizante para mover inicio, fecha mensual y duración numérica. Hitos adicionales: fecha, mes y control deslizante.
+Mover o alargar construcción desplaza entrega, independización y posventa manteniendo sus desfases. Ventas y cobranzas se recalculan con sus vínculos existentes.
+Los hitos calculados siguen el modelo; hitos adicionales no crean pagos. Los pagos con meses explícitos conservan ese mes.
+8 pruebas de modelo y controles aprobadas.
+Se mantienen todos los demás archivos del paquete, incluidos n8n. No contiene respaldo actual de base de datos ni credenciales.
+Aplicación exclusiva al ensayo. Preservar base, archivos privados, conexiones, credenciales, historial y Kanban al desplegar.
+
+Vista general anterior recuperada como resultado visual: barras mensuales de fases, línea bancaria y rombos de hitos. Controles debajo; actualización con los mismos datos y cálculos.
+
+Panel de ajustes plegable, cerrado al entrar. Permanece abierto al modificar una fecha o duración.

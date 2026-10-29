@@ -1,0 +1,103 @@
+{
+  "fecha_lima": "2026-10-24",
+  "recepcion_real_verificada": true,
+  "revision": "instagram-transport-r24",
+  "perfil_personal_facebook": {
+    "nombre": "Marcos Martin Montezuma Chirinos",
+    "distinto_de_admin": "Marcos Montez",
+    "identificado_en": "Business Suite, mensaje LOLA MEMORIA MESSENGER 24OCT",
+    "url": "https://www.facebook.com/marcosmartin.montezumachirinos"
+  },
+  "invitacion_evaluador": {
+    "aprobada_expresamente_por_titular": true,
+    "app": "1633244618375190",
+    "notificacion_facebook": "Titular confirma no aparece",
+    "siguiente": "Ninguno para recepción: prueba terminada",
+    "rol": "Evaluador",
+    "enviada_una_vez": true,
+    "estado": "Aceptada; rol Evaluador activo en Meta",
+    "url_aceptacion_verificada": "https://developers.facebook.com/settings/developer/requests/",
+    "sesion_actual_navegador": "Marcos Montez; muestra cero solicitudes propias, NO es el destinatario",
+    "aceptada_por_titular": true
+  },
+  "token_anterior": {
+    "valid": false,
+    "caducidad_lima": "2026-10-23 22:00:00",
+    "comprobado_en_servidor": true,
+    "expires_at": 1792810800,
+    "error_code": 190,
+    "http_debug": 200
+  },
+  "token_reparado": {
+    "page": "745193628688500",
+    "type": "PAGE",
+    "expires_at": 0,
+    "post_guardado_me_id": "745193628688500",
+    "app": "1633244618375190",
+    "messenger_configuracion_identica": true,
+    "instagram_manage_messages": true,
+    "origen": "Token PAGE existente y valido de la MISMA aplicacion y pagina, ya guardado en conexion Messenger",
+    "valid": true,
+    "post_guardado_me_http": 200,
+    "guardado_solo_en_instagram": true,
+    "credencial_nueva_generada": false,
+    "secretos_mostrados": false
+  },
+  "instagram": {
+    "test_recipients": [
+      "contacto propio @martinmontezuma77"
+    ],
+    "automatico": false,
+    "frase": "Lola ensayo instagram ÖRÖK",
+    "envios": true,
+    "recepcion": true,
+    "login_provider": "facebook",
+    "account_id": "17841477503996588",
+    "contacto_propio_autorizado": true
+  },
+  "sin_reinicio": true,
+  "sin_cambios_codigo": true,
+  "produccion_modificada": false,
+  "consola_desconectada": true,
+  "sin_nuevos_mensajes_solicitados": false,
+  "next": "Recepción y salida manual de Instagram aprobadas. No repetir token, permisos, invitación, suscripciones ni mensajes. Continuar con formularios y atribución de campañas.",
+  "prueba_final": {
+    "resultado": "APROBADA",
+    "alcance": "Instagram -> webhook del CRM -> PostgreSQL",
+    "mensaje": "Lola ensayo instagram ÖRÖK",
+    "webhook": {
+      "at_utc": "2026-10-24T17:58:44.663Z",
+      "http": 200,
+      "stage": "ok",
+      "signature_valid": true,
+      "account_match": true,
+      "events": 1,
+      "ignored": 0
+    },
+    "persistencia": {
+      "received_at_utc": "2026-10-24T17:58:42.684Z",
+      "social_thread": true,
+      "lead_linked": true,
+      "channel_thread_exists": true,
+      "message_rows": 1,
+      "message_found": true,
+      "direction": "inbound",
+      "type": "text",
+      "text_exact": true
+    },
+    "envios_habilitados": false,
+    "lola_automatica": false,
+    "respuesta_ia_generada": false
+  },
+  "prueba_salida": {
+    "resultado": "APROBADA DE EXTREMO A EXTREMO",
+    "canal": "instagram",
+    "destinatario": "contacto propio de ensayo",
+    "fecha_lima": "2026-10-24 13:54:14",
+    "texto": "Hola, Martín. Esta es una prueba controlada de salida desde el CRM de ÖRÖK por Instagram. No requiere respuesta.",
+    "confirmacion_crm": "Envío confirmado por la plataforma.",
+    "modo": "Manual",
+    "lola_automatica": false,
+    "recepcion_confirmada_por_titular": true
+  }
+}

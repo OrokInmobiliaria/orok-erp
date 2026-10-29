@@ -1,0 +1,35 @@
+MINUTA DE COMPRAVENTA DIRECTA
+
+SEÑOR NOTARIO:
+
+Sírvase extender en su Registro de Escrituras Públicas una de COMPRAVENTA que celebran:
+
+{{COMPANY_NAME}}, RUC {{COMPANY_RUC}}, con domicilio en {{COMPANY_ADDRESS}}, representada por {{COMPANY_REPRESENTATIVE}}, DNI {{COMPANY_REPRESENTATIVE_DNI}}, conforme a la partida {{COMPANY_RECORD}}, en adelante LA VENDEDORA.
+
+COMPRADORES
+
+{{SIGNERS}}
+
+ANTECEDENTES
+
+LA VENDEDORA declara su facultad para transferir la unidad inmobiliaria {{UNIT_NUMBER}}, vinculada a la separación {{SEPARATION_CODE}}.
+
+OBJETO Y PRECIO
+
+LA VENDEDORA transfiere a LOS COMPRADORES la unidad {{UNIT_NUMBER}} por el precio de {{FINAL_PRICE}} ({{FINAL_PRICE_WORDS}}).
+
+FORMA DE PAGO
+
+La operación se realiza mediante pago directo o al contado, conforme al cronograma y constancias aceptados por las partes. Toda modificación deberá incorporarse a la versión final revisada antes de la firma.
+
+DECLARACIONES
+
+Las partes declaran que los datos consignados coinciden con el acuerdo de separación y que revisarán la versión final antes de firmarla.
+
+GASTOS, TRIBUTOS Y ESCRITURA PÚBLICA
+
+Los gastos notariales, registrales y tributos se asumirán según la legislación aplicable y el acuerdo final de las partes.
+
+Lima, {{DAY}} de {{MONTH}} de {{YEAR}}.
+
+[[SIGNATURES]]

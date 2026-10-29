@@ -1,0 +1,45 @@
+{
+  "name": "orok-crm-cloud",
+  "version": "67.6.26-r43",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.cjs",
+    "start": "node server.cjs",
+    "dev": "vite --host 127.0.0.1",
+    "build": "node build.mjs",
+    "backup-before-update": "node deploy/create-preupdate-snapshot.cjs",
+    "postgres:check": "node deploy/check-postgres.cjs",
+    "postgres:preview": "node deploy/migrate-postgres.cjs",
+    "postgres:migrate": "node deploy/migrate-postgres.cjs --apply --writers-stopped --install-schema",
+    "rehearsal:preview": "node deploy/init-rehearsal.cjs",
+    "rehearsal:init": "node deploy/init-rehearsal.cjs --apply --install-schema",
+    "rehearsal:workflow": "node deploy/prepare-rehearsal-workflow.cjs",
+    "build:evaluador": "node deploy/build-evaluador.cjs evaluador-src/evaluador.html evaluador-src/jspdf.umd.min.js evaluador-src/exceljs.min.js",
+    "build:contabilidad": "node deploy/build-contabilidad.cjs contabilidad-src/clara-contabilidad.html evaluador-src/jspdf.umd.min.js evaluador-src/exceljs.min.js",
+    "migraciones": "node deploy/aplicar-migraciones.cjs",
+    "codigo-instalacion": "node deploy/codigo-instalacion.cjs",
+    "produccion:antes": "node deploy/produccion.cjs antes",
+    "produccion:despues": "node deploy/produccion.cjs despues",
+    "verificar-actualizacion": "node deploy/verificar-actualizacion.cjs --respaldo ultimo",
+    "n8n:auditar": "node deploy/n8n-herramientas.cjs auditar n8n/LOLA-ENSAYO-67.6.13-r30-MARKETING-CONEXIONES-INACTIVO.json n8n/MORA-ENSAYO-67.6.17-EVALUADOR-CONVERSACIONAL-INACTIVO.json n8n/CLARA-ENSAYO-67.6.18-DRIVE-CONTABLE-INACTIVO.json",
+    "n8n:preparar": "node deploy/n8n-herramientas.cjs preparar --mapa n8n/produccion-mapa.json --salida n8n/produccion n8n/LOLA-ENSAYO-67.6.13-r30-MARKETING-CONEXIONES-INACTIVO.json n8n/MORA-ENSAYO-67.6.17-EVALUADOR-CONVERSACIONAL-INACTIVO.json n8n/CLARA-ENSAYO-67.6.18-DRIVE-CONTABLE-INACTIVO.json"
+  },
+  "dependencies": {
+    "firebase-admin": "14.4.0",
+    "google-auth-library": "10.9.1",
+    "lucide-react": "0.344.0",
+    "nodemailer": "10.2.1",
+    "pdf-lib": "1.17.1",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "pg": "8.23.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "4.7.0",
+    "vite": "7.3.6",
+    "@electric-sql/pglite": "0.5.10"
+  }
+}

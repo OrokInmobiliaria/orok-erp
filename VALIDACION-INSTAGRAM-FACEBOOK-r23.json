@@ -1,0 +1,33 @@
+{
+  "revision": "instagram-facebook-login-r23",
+  "deployed": false,
+  "production_changed": false,
+  "instagram_connected": false,
+  "reason": "Instagram CAPTCHA loop persists; official Facebook Login route prepared for the linked professional account. Owner token generation pending.",
+  "local_tests": {
+    "pass": 12,
+    "fail": 0,
+    "scope": "5 provider tests and 7 existing social rehearsal isolation tests; no general regression repeated"
+  },
+  "build": {
+    "passed": true,
+    "modules": 1492,
+    "javascript": "dist/assets/index-D6YaNvxu.js"
+  },
+  "changes": [
+    "Selectable official Instagram Login or Facebook Login, legacy default retained",
+    "Changing provider requires its token and App Secret before saving",
+    "Recipient/account guards retained for both providers",
+    "Distinct stable form field IDs/names and secret autocomplete hints"
+  ],
+  "live_pending": [
+    "Generate token through Meta using authorized owner",
+    "Verify actual linked Instagram API ID and username",
+    "Use matching parent Meta App Secret for Facebook Login; no reuse of child IG App Secret",
+    "Review webhook publication requirements before activation",
+    "Deploy r23 trial after account authorization, configure Instagram only, keep automatic replies off",
+    "Validate real authorized Instagram tester reception and native human coexistence"
+  ],
+  "production_crm_replaced": false,
+  "n8n_active": false
+}

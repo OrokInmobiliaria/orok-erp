@@ -1,0 +1,11 @@
+HOTFIX R32C · INICIO CLARO
+Fecha: 26/10/2026
+
+Problema: una regla visual general interpretaba la capa `#codex-browser-sidebar-comments-root` del navegador integrado como si fuera una ventana del CRM y aplicaba desenfoque a toda la pantalla de acceso.
+
+Corrección:
+- `src/glass.css`: excepción explícita para la capa técnica del navegador.
+- `dist/assets/index-CdZei-eI.css`: misma corrección en la versión ya construida.
+- `dist/index.html`: identificador `?v=r32c-login-clear-2` para evitar que el navegador reutilice la hoja anterior.
+
+La corrección no modifica PostgreSQL, leads, conexiones, usuarios, n8n ni el CRM oficial.

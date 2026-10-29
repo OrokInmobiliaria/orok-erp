@@ -1,0 +1,16 @@
+✔ fresh server reports mail unconfigured and cannot send a challenge (1.6952ms)
+✔ Google sender is the real mailbox; only the support alias receives the code and the password stays encrypted (8.694ms)
+✔ failed verification leaves prior credentials intact and no raw provider error is exposed (6.9906ms)
+✔ changing SMTP destinations cannot reuse the saved password and only secure ports are accepted (11.6786ms)
+✔ Gmail accepts a complete grouped app key and refuses other credentials before contacting the provider (6.1696ms)
+✔ SMTP diagnostics expose only allowlisted error codes and numeric provider status (0.1881ms)
+✔ SMTP rejection keeps the account blocked; an accepted delivery still requires the real approval code (32.6896ms)
+✔ only the authenticated manager can configure mail before approval; unauthenticated users and vendors cannot (197.2574ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 327.1209

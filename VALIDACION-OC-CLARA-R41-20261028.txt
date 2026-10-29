@@ -1,0 +1,33 @@
+PRUEBA REAL DE ORDEN OC / C.L.A.R.A — R41 AISLADO — 28/10/2026
+
+Orden: OC-BMG-2026-0001, proveedor ficticio, total S/ 1.18.
+Se comprobó el bloqueo del PDF antes de completar la aprobación.
+Martin Montezuma envió y aprobó personalmente la orden como Gerencia General.
+La pantalla confirmó Aprobada, dos firmas y código coincidente 68E7-5C54-691D.
+Se generó automáticamente un PDF de 216737 bytes en la carpeta Contabilidad de BMG.
+La lectura independiente de Drive confirmó el estado Aprobada, S/ 1.18 y las dos firmas.
+PDF: https://drive.google.com/file/d/1eWJkYznAH8OUltQipLeZeZGOHEFIxOJm/view
+La orden quedó Anulada con motivo «test» y conserva las firmas, el archivo y el historial.
+No hubo envío al proveedor, comprobante ni pago real.
+
+CORRECCIÓN INCLUIDA
+La pantalla conservaba en memoria la huella del borrador con número cero después de
+que el servidor asignaba el número definitivo al enviar a aprobación. Esto mostraba
+una firma inválida sin que la firma guardada estuviera dañada. Reabrir el módulo
+confirmó la validez de la firma real, sin modificar el documento.
+Se renueva la huella tras recibir la orden del servidor y cuando cambia su contenido;
+se muestra «Verificando firma» mientras se calcula; el PDF usa la huella actual.
+Un cálculo atrasado no puede sobrescribir el de una versión más reciente.
+No se modificaron firmas guardadas, reglas de aprobación, permisos ni nodos n8n.
+
+VERIFICACIÓN LOCAL
+10/10 pruebas: 8 cadenas/permisos de aprobación + 2 regresiones de huella de pantalla.
+Compilación de Contabilidad y comprobación de sintaxis satisfactorias.
+Esto no constituye una validación integral nueva de todo el ERP.
+En la prueba ampliada anterior quedó un fallo aparte en el test de códigos de
+instalación de r37-obra-cobranzas; requiere diagnóstico antes de dar esa función por validada.
+
+PRODUCCIÓN
+El CRM vivo no se actualizó. Conservar bases, volúmenes privados, usuarios, claves,
+conversaciones, archivos, vínculos y posiciones Kanban. Antes del cambio oficial:
+respaldo actualizado con restore-check verified=true y comparación de conteos.

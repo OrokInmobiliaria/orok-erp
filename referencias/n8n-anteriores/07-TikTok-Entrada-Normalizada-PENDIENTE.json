@@ -1,0 +1,119 @@
+{
+  "name": "ÖRÖK · 07 TikTok contrato de entrada · PENDIENTE ADAPTADOR",
+  "nodes": [
+    {
+      "id": "da5c0179-f4fe-4c9d-b847-d7571e25098b",
+      "name": "Entrada TikTok normalizada autenticada",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "3bd995c5-6ed3-4106-ae8c-7391a4075b7c",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "orok-tiktok-normalizado-v675",
+        "authentication": "headerAuth",
+        "responseMode": "onReceived",
+        "options": {}
+      }
+    },
+    {
+      "id": "f5cfd5db-d6d9-45c3-b334-5bd4b9d9c5ce",
+      "name": "Validar contrato normalizado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const p=$input.first().json.body;if(p?.channel!=='tiktok'||p?.action!=='social_message'||!p?.message?.id||!p?.account_id||!p?.contact_id)throw Error('Se requiere un evento TikTok validado y normalizado por el adaptador oficial autorizado; no conectar el callback crudo aquí.');return [{json:p}];"
+      }
+    },
+    {
+      "id": "30fbb81c-a208-4ef6-bded-2d32783efbfc",
+      "name": "Registrar TikTok en CRM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://crm.orok.com.pe/api/integrations/lola",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 55000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5PAGEfNsGTSyVlRq",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "id": "155c1bb1-1500-45fb-b13f-c0d6be8fc981",
+      "name": "ADAPTADOR TIKTOK PENDIENTE",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -300
+      ],
+      "parameters": {
+        "content": "## Contrato interno, NO webhook oficial TikTok\nFalta verificar elegibilidad, firma y esquema real del Business Messaging API de la cuenta. Un adaptador autorizado debe validar el callback y convertirlo al contrato samples/tiktok-normalizado.json. Header Auth es distinto del secreto público de Meta. Este flujo solo registra; NO envía ni activa Lola automática.",
+        "height": 240,
+        "width": 650
+      }
+    }
+  ],
+  "connections": {
+    "Entrada TikTok normalizada autenticada": {
+      "main": [
+        [
+          {
+            "node": "Validar contrato normalizado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar contrato normalizado": {
+      "main": [
+        [
+          {
+            "node": "Registrar TikTok en CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "pinData": {},
+  "settings": {
+    "executionTimeout": 60,
+    "timezone": "America/Lima",
+    "saveManualExecutions": true
+  }
+}

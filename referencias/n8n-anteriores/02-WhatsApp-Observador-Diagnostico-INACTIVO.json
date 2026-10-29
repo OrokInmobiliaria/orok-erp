@@ -1,0 +1,192 @@
+{
+  "name": "Lola WhatsApp - Observador 02 DIAGNOSTICO AUTENTICADO",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "orok-whatsapp-observer-v2",
+        "options": {},
+        "authentication": "headerAuth",
+        "responseMode": "onReceived"
+      },
+      "id": "bfbfa78b-0655-4f2e-b523-1eee7deed50b",
+      "name": "Entrada WhatsApp SOLO REGISTRO",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        16,
+        368
+      ],
+      "webhookId": "4c737434-2074-4f2a-ad33-cb2052cc1d7d",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5PAGEfNsGTSyVlRq",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw=$input.first().json;const body=raw.body||raw;\nif(body.action==='connection_check')return [{json:{action:'connection_check'}}];\nif(body.object!=='whatsapp_business_account')return [];\nconst output=[];\nfor(const e of body.entry||[])for(const c of e.changes||[]){const v=c.value||{},account=String(v.metadata?.phone_number_id||'');\n if(!['messages','smb_message_echoes'].includes(c.field))continue;\n const echo=c.field==='smb_message_echoes';\n for(const m of (echo?v.message_echoes:v.messages)||[]){const phone=String(echo?m.to:m.from||'').replace(/\\D/g,'');if(!phone||!m.id||!account)continue;\n output.push({json:{action:'whatsapp_message',business_phone_id:account,phone,name:(v.contacts||[]).find(x=>x.wa_id===phone)?.profile?.name||'',referral:m.referral||null,message:{id:m.id,at:m.timestamp,direction:echo?'outbound':'inbound',sender:echo?'Equipo · WhatsApp/Mac':'Cliente',type:m.type,text:m.text?.body||m.button?.text||m.interactive?.button_reply?.title||m.interactive?.list_reply?.title||'',button_id:m.interactive?.button_reply?.id||m.interactive?.list_reply?.id||m.button?.payload||null,media:m[m.type]||null}}});}\n for(const s of v.statuses||[])if(['sent','delivered','read','failed'].includes(s.status))output.push({json:{action:'whatsapp_status',business_phone_id:account,message_id:s.id,status:s.status,at:s.timestamp}});\n}\nif(output.length>100)throw Error('Lote mayor a 100 eventos');return output;\n"
+      },
+      "id": "2163b978-e34a-44d4-b18f-af8bd805d4bb",
+      "name": "Normalizar mensaje Meta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://crm.orok.com.pe/api/integrations/lola",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "80344e02-05c4-4267-b1e4-8ec031cc41bc",
+      "name": "Registrar o actualizar CRM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        528,
+        368
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5PAGEfNsGTSyVlRq",
+          "name": "Header Auth account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1500
+    },
+    {
+      "parameters": {
+        "content": "DIAGNÓSTICO AUTENTICADO. Meta debe usar https://crm.orok.com.pe/api/integrations/whatsapp (firma HMAC y challenge). Este webhook n8n NO sustituye esa verificación. Sirve solo para reenviar eventos de fuentes de confianza con Header Auth. Para probar sin datos usa el nodo Prueba sin escritura. Sin datos fijados; timeout 15s. No responde WhatsApp.",
+        "height": 300,
+        "width": 520,
+        "color": 5
+      },
+      "id": "1111ee02-195f-4a98-8f2e-132ea786b40e",
+      "name": "IMPORTANTE - SOLO REGISTRO",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "f84563d5-81df-450c-8ef2-6584dbf73229",
+      "name": "Prueba manual sin escritura",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        500
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "ee7d62ea-21fd-41cd-b32f-365cd0eb151f",
+      "name": "Prueba sin escritura",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        500
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://crm.orok.com.pe/api/integrations/lola",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({action:'connection_check'}) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5PAGEfNsGTSyVlRq",
+          "name": "Header Auth account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Entrada WhatsApp SOLO REGISTRO": {
+      "main": [
+        [
+          {
+            "node": "Normalizar mensaje Meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar mensaje Meta": {
+      "main": [
+        [
+          {
+            "node": "Registrar o actualizar CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prueba manual sin escritura": {
+      "main": [
+        [
+          {
+            "node": "Prueba sin escritura",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "executionTimeout": 240,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true
+  },
+  "tags": []
+}

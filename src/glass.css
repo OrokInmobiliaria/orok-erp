@@ -1,0 +1,161 @@
+/* R32c · Cristal esmerilado en todos los menús y ventanas + 4 paletas.
+   Inspirado en "glassmorphism": paneles translúcidos con desenfoque sobre un fondo con formas de color,
+   borde claro fino y brillo interior. Las paletas solo cambian colores; la estructura es la misma. */
+:root,html[data-palette="terracota"]{
+ --orok-brand:#85442a;--orok-dark:#35190f;--orok-accent:#eb6834;--orok-soft:rgba(255,255,255,.5);--orok-bg:#f4ece6;
+ --orb-1:#eb6834;--orb-2:#b5654a;--orb-3:#f2c38f;--orb-4:#d98aa0;--base:#f3ebe5;--shadow-rgb:70,35,20;--tint-rgb:133,68,42}
+html[data-palette="oceano"]{
+ --orok-brand:#1d5fa8;--orok-dark:#0b2a4a;--orok-accent:#19b3a6;--orok-bg:#e8f1f8;
+ --orb-1:#2a78d6;--orb-2:#19b3a6;--orb-3:#8fd3f4;--orb-4:#5b7cfa;--base:#e7f0f8;--shadow-rgb:10,40,80;--tint-rgb:29,95,168}
+html[data-palette="lavanda"]{
+ --orok-brand:#5b4bc4;--orok-dark:#2a2163;--orok-accent:#c05bd6;--orok-bg:#ecebfb;
+ --orb-1:#6c5ce7;--orb-2:#c05bd6;--orb-3:#9fb4ff;--orb-4:#e3a3f0;--base:#e9e8fa;--shadow-rgb:40,30,110;--tint-rgb:91,75,196}
+html[data-palette="esmeralda"]{
+ --orok-brand:#1f7a5a;--orok-dark:#0f3b2c;--orok-accent:#d6a33a;--orok-bg:#edf4ef;
+ --orb-1:#1f9a6e;--orb-2:#d6a33a;--orb-3:#8fd6b4;--orb-4:#5fb3a1;--base:#ecf3ee;--shadow-rgb:15,60,40;--tint-rgb:31,122,90}
+
+:root{
+ --glass-bg:rgba(255,255,255,.46);--glass-strong:rgba(255,255,255,.72);--glass-border:rgba(255,255,255,.62);
+ --blur:blur(26px) saturate(175%);
+ --glass-shadow:inset 0 1px 0 rgba(255,255,255,.85),inset 0 -1px 0 rgba(255,255,255,.18),0 22px 50px -24px rgba(var(--shadow-rgb),.45);
+ --hair:rgba(var(--tint-rgb),.14)}
+
+/* Fondo con formas de color difuminadas (fijo, detrás de todo) */
+html{background:var(--base)!important}
+body{background:transparent!important}
+body::before{content:"";position:fixed;inset:-10%;z-index:-1;pointer-events:none;
+ background:
+  radial-gradient(38vmax 38vmax at 8% 12%,var(--orb-1),transparent 62%),
+  radial-gradient(34vmax 34vmax at 92% 8%,var(--orb-3),transparent 60%),
+  radial-gradient(40vmax 40vmax at 85% 88%,var(--orb-2),transparent 62%),
+  radial-gradient(30vmax 30vmax at 20% 92%,var(--orb-4),transparent 60%);
+ opacity:.78;filter:blur(8px) saturate(125%)}
+#root{position:relative;z-index:0}
+
+/* Superficie de cristal base */
+.glass,.nav-menu,.tabbar,.sheet,.export-pop,.search-palette,.bi-slicers,.bi-filter-toggle,.whatsapp-panel{
+ background:linear-gradient(135deg,rgba(255,255,255,.62),rgba(255,255,255,.34))!important;
+ -webkit-backdrop-filter:var(--blur)!important;backdrop-filter:var(--blur)!important;
+ border:1px solid var(--glass-border)!important;box-shadow:var(--glass-shadow)!important}
+
+/* Cabecera fija: cristal; el menú dentro no lleva su propio filtro (no se puede desenfocar dos veces) */
+/* Nota: la cabecera y las tarjetas NO llevan backdrop-filter: ese filtro convertiría a los paneles fijos que contienen
+   (barra móvil, hojas, ventanas) en relativos a ellos. El efecto se logra con capas translúcidas sobre el fondo de color. */
+.app-header{background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.5))!important;border-bottom:1px solid var(--glass-border)!important;box-shadow:0 10px 30px -22px rgba(var(--shadow-rgb),.5)!important}
+.nav-shell{background:rgba(255,255,255,.38)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;border:1px solid var(--glass-border)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.8)!important}
+/* Los menús desplegables nacen dentro de la cabecera: más opacos para leerse bien sobre el contenido */
+.nav-menu{background:linear-gradient(135deg,rgba(255,255,255,.86),rgba(255,255,255,.7))!important}
+.nav-top[aria-current="true"]{background:linear-gradient(135deg,var(--orok-brand),var(--orok-dark))!important;box-shadow:0 8px 20px -10px rgba(var(--tint-rgb),.8),inset 0 1px 0 rgba(255,255,255,.25)!important}
+
+/* Tarjetas: cristal un poco más opaco para que el texto se lea bien */
+.orok-card,.bi-card,.bi-kpi{background:linear-gradient(135deg,rgba(255,255,255,.8),rgba(255,255,255,.56))!important;border:1px solid var(--glass-border)!important;box-shadow:var(--glass-shadow)!important}
+.kanban-card{background:linear-gradient(135deg,rgba(255,255,255,.86),rgba(255,255,255,.66))!important;border-color:var(--glass-border)!important}
+.kanban-col{background:rgba(255,255,255,.22)!important;border:1px solid rgba(255,255,255,.35)}
+.kanban-stage-strip{background:linear-gradient(180deg,rgba(255,255,255,.82),rgba(255,255,255,.66))!important;-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
+.kanban-stage-header{background:rgba(255,255,255,.8)!important;border:1px solid var(--glass-border)}
+
+/* Ventanas (diálogos): velo con desenfoque + panel de cristal */
+div[style*="position: fixed"][style*="inset: 0"],div[style*="position: fixed"][style*="top: 0px"][style*="bottom: 0px"],.whatsapp-overlay,.search-veil,.sheet-veil{background:rgba(var(--shadow-rgb),.16)!important;-webkit-backdrop-filter:blur(14px) saturate(150%)!important;backdrop-filter:blur(14px) saturate(150%)!important}
+div[style*="position: fixed"] > [role="dialog"],div[style*="position: fixed"] > .orok-card,div[style*="position: fixed"] > form.orok-card,div[style*="position: fixed"] > section{background:linear-gradient(135deg,rgba(255,255,255,.8),rgba(255,255,255,.6))!important;border:1px solid var(--glass-border)!important;box-shadow:var(--glass-shadow),0 40px 90px -30px rgba(var(--shadow-rgb),.55)!important}
+
+/* Controles */
+.orok-input{background:rgba(255,255,255,.55)!important;border:1px solid rgba(255,255,255,.7)!important;box-shadow:inset 0 1px 2px rgba(var(--shadow-rgb),.06)}
+.orok-input:focus{background:rgba(255,255,255,.85)!important;border-color:rgba(var(--tint-rgb),.45)!important}
+.orok-btn-primary{background:linear-gradient(135deg,var(--orok-brand),var(--orok-dark))!important;color:#fff!important;box-shadow:0 10px 22px -12px rgba(var(--tint-rgb),.85),inset 0 1px 0 rgba(255,255,255,.25)!important;border:0!important}
+.orok-btn-secondary{background:rgba(255,255,255,.5)!important;color:var(--orok-dark)!important;border:1px solid rgba(255,255,255,.7)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 4px 12px -8px rgba(var(--shadow-rgb),.35)}
+.orok-btn-secondary:hover{background:rgba(255,255,255,.72)!important}
+.inbox-row,.search-row.on{background:rgba(255,255,255,.55)!important}
+.inbox-tabs,.bi-seg{background:rgba(255,255,255,.35)!important;border:1px solid rgba(255,255,255,.55)}
+.bi-seg button[aria-pressed=true],.inbox-tab[aria-selected=true]{background:rgba(255,255,255,.9)!important}
+input[type=checkbox].switch:checked{background:linear-gradient(135deg,var(--orok-brand),var(--orok-accent))}
+.bi-funnel .fill,.bi-root{--accent:var(--orok-brand)}
+
+/* Selector de paleta */
+.palette-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.palette-option{display:flex;flex-direction:column;gap:6px;text-align:left;padding:10px;border-radius:18px;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.45);cursor:pointer;font:inherit;color:var(--ink-1)}
+.palette-option[aria-checked=true]{outline:3px solid var(--orok-brand);outline-offset:1px}
+.palette-preview{height:86px;border-radius:13px;position:relative;overflow:hidden;display:block}
+.palette-glass{position:absolute;inset:18px 14px;border-radius:10px;background:rgba(255,255,255,.45);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.7);display:flex;flex-direction:column;justify-content:center;gap:6px;padding:0 10px}
+.palette-glass i{display:block;height:7px;border-radius:4px;width:80%}
+.palette-name{display:flex;align-items:center;gap:5px;font-weight:700;font-size:14px}
+.palette-option small{color:var(--ink-3);font-size:11.5px}
+
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+ .glass,.nav-menu,.tabbar,.sheet,.export-pop,.search-palette,.bi-slicers,.whatsapp-panel,.orok-card,.bi-card,.bi-kpi,.app-header{background:rgba(255,255,255,.96)!important}}
+@media (prefers-reduced-transparency:reduce){
+ .glass,.nav-menu,.tabbar,.sheet,.export-pop,.search-palette,.bi-slicers,.whatsapp-panel,.orok-card,.bi-card,.bi-kpi,.app-header,.kanban-card{background:rgba(255,255,255,.97)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}}
+@media print{body::before{display:none}}
+/* r32c-login-clarity-hotfix */
+#codex-browser-sidebar-comments-root{background:transparent!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+
+/* R33c · Franja de identidad del encabezado (ÖRÖK, selector, cuenta y proyecto): SÓLIDA, sin cristal.
+   El cristal empieza de la línea hacia abajo (menú y contenido). Colores fijos: no siguen la paleta elegida. */
+.app-brand-row{position:relative;isolation:isolate;border-bottom-color:#85442A!important}
+.app-brand-row::before{content:"";position:absolute;inset:0 0 -2px 0;z-index:-1;pointer-events:none;background:#FCFAF8;
+ box-shadow:0 0 0 100vmax #FCFAF8;clip-path:inset(-100vmax -100vmax 2px -100vmax)}
+@media print{.app-brand-row::before{display:none}}
+
+/* R33c · Asistente L.O.L.A (botón flotante y panel de cristal, para todos los roles en el CRM) */
+.lola-fab{position:fixed;right:22px;bottom:22px;z-index:1400;display:inline-flex;align-items:center;gap:8px;padding:12px 18px;border:0;border-radius:999px;cursor:pointer;font:inherit;font-weight:700;letter-spacing:.06em;color:#fff;
+ background:linear-gradient(135deg,var(--orok-brand),var(--orok-dark));box-shadow:0 14px 30px -12px rgba(var(--tint-rgb),.9),inset 0 1px 0 rgba(255,255,255,.25);transition:transform .12s var(--ease),filter .2s}
+.lola-fab:hover{filter:brightness(1.08)}.lola-fab:active{transform:scale(.97)}.lola-fab:focus-visible{outline:3px solid rgba(42,120,214,.45);outline-offset:3px}
+.lola-panel{position:fixed;right:20px;bottom:20px;z-index:1450;width:min(400px,calc(100vw - 24px));height:min(600px,calc(100vh - 110px));display:flex;flex-direction:column;border-radius:24px;overflow:hidden;
+ background:linear-gradient(135deg,rgba(255,255,255,.86),rgba(255,255,255,.72))!important;-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow),0 40px 90px -30px rgba(var(--shadow-rgb),.55);animation:sheet-in .22s var(--ease)}
+.lola-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:14px 14px 12px 18px;border-bottom:1px solid var(--hair)}
+.lola-head b{display:block;color:#85442A;font-weight:800;letter-spacing:.12em}.lola-head small{display:block;font-size:11.5px;color:var(--ink-3)}
+.lola-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.lola-icon{border:0;background:rgba(255,255,255,.55);color:var(--orok-dark);width:34px;height:34px;border-radius:10px;display:grid;place-items:center;cursor:pointer}
+.lola-icon:hover,.lola-icon[aria-pressed=true]{background:#fff}
+.lola-log{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.lola-empty p{margin:0 0 10px;font-size:13.5px;color:var(--ink-2);line-height:1.5}
+.lola-chips{display:flex;flex-direction:column;gap:6px}.lola-chips button{text-align:left;border:1px solid var(--glass-border);background:rgba(255,255,255,.6);border-radius:12px;padding:8px 12px;font:inherit;font-size:13px;color:var(--ink-1);cursor:pointer}
+.lola-chips button:hover{background:#fff}
+.lola-msg{font-size:13.5px;line-height:1.5;max-width:90%;overflow-wrap:anywhere;animation:sheet-in .18s var(--ease)}
+.lola-msg p{margin:0 0 6px}.lola-msg p:last-of-type{margin-bottom:0}.lola-msg small{display:block;margin-top:6px;font-size:10.5px;color:var(--ink-3)}
+.lola-user{align-self:flex-end;color:#fff;padding:9px 13px;border-radius:16px 16px 4px 16px;background:linear-gradient(135deg,var(--orok-brand),var(--orok-dark))}
+.lola-bot{align-self:flex-start;padding:10px 13px;border-radius:16px 16px 16px 4px;background:rgba(255,255,255,.8);border:1px solid var(--glass-border)}
+.lola-typing{color:var(--ink-3);font-style:italic}.lola-error{color:#b42318;font-size:12.5px}
+.lola-input{display:flex;gap:8px;align-items:flex-end;padding:10px 12px 12px;border-top:1px solid var(--hair)}
+.lola-input textarea{flex:1;resize:none;min-height:40px;max-height:120px;padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.7);font:inherit;font-size:13.5px;color:var(--ink-1)}
+.lola-mic,.lola-send{flex:none;width:40px;height:40px;border-radius:12px;border:0;display:grid;place-items:center;cursor:pointer;background:rgba(255,255,255,.7);color:var(--orok-dark)}
+.lola-send{background:linear-gradient(135deg,var(--orok-brand),var(--orok-dark));color:#fff}
+.lola-mic.on{background:#b42318;color:#fff;animation:lola-pulse 1.2s infinite}
+.lola-mic:disabled,.lola-send:disabled{opacity:.45;cursor:default}
+@keyframes lola-pulse{0%{box-shadow:0 0 0 0 rgba(180,35,24,.45)}70%{box-shadow:0 0 0 10px rgba(180,35,24,0)}100%{box-shadow:0 0 0 0 rgba(180,35,24,0)}}
+.lola-config{flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:10px;font-size:13px}
+.lola-config h4{margin:0;color:#85442A}.lola-config label{display:flex;flex-direction:column;gap:4px;font-weight:600}.lola-config label:has(input[type=checkbox]){flex-direction:row;align-items:center;gap:8px}
+.lola-config .orok-input{margin:0;padding:9px 12px}.lola-note{margin:0;font-size:11.5px;color:var(--ink-3);font-weight:400;line-height:1.45}
+@media (max-width:760px){.lola-fab{bottom:calc(92px + env(safe-area-inset-bottom));right:14px;padding:11px 15px}.lola-panel{right:12px;left:12px;width:auto;bottom:calc(88px + env(safe-area-inset-bottom));height:min(560px,calc(100vh - 170px))}}
+@media (prefers-reduced-motion:reduce){.lola-panel,.lola-msg{animation:none}.lola-mic.on{animation:none}}
+@media print{.lola-fab,.lola-panel{display:none!important}}
+.lola-head>div:first-child{min-width:0}.lola-head>.lola-row{flex-wrap:nowrap;gap:4px;flex:none}
+@media (max-width:420px){.lola-icon{width:30px;height:30px}.lola-head small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+
+/* R36 · Avisos de instalación y actualización del ERP (cristal ÖRÖK) */
+.pwa-aviso{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:1500;display:flex;align-items:center;gap:10px;max-width:min(560px,calc(100vw - 32px));padding:10px 12px 10px 16px;border-radius:16px;
+ background:linear-gradient(135deg,rgba(255,255,255,.86),rgba(255,255,255,.7));-webkit-backdrop-filter:blur(26px) saturate(175%);backdrop-filter:blur(26px) saturate(175%);border:1px solid rgba(255,255,255,.65);box-shadow:0 22px 50px -24px rgba(70,35,20,.45);font-size:14px;color:#292524}
+.pwa-aviso span{flex:1}.pwa-aviso .pwa-si{border:0;border-radius:12px;padding:8px 14px;font:inherit;font-weight:700;color:#fff;cursor:pointer;background:linear-gradient(135deg,#85442A,#5E2817)}
+.pwa-aviso .pwa-no{border:0;background:transparent;font:inherit;cursor:pointer;color:#6b625c;padding:6px}
+.pwa-registro{position:fixed;inset:0;z-index:2000;display:grid;place-items:center;padding:16px;background:rgba(53,25,15,.28);-webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%)}
+.pwa-registro-caja{width:min(440px,100%);display:flex;flex-direction:column;gap:10px;padding:24px;border-radius:22px;background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(255,255,255,.76));border:1px solid rgba(255,255,255,.7);box-shadow:0 40px 90px -30px rgba(70,35,20,.55);font-family:'Outfit',sans-serif;color:#292524}
+.pwa-registro-caja h2{margin:0;font-size:20px}.pwa-registro-caja p{margin:0;font-size:14px;line-height:1.5;color:#57534e}
+.pwa-registro-caja label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600}
+.pwa-registro-caja input{font:inherit;font-size:15px;padding:10px 12px;border-radius:12px;border:1px solid #E7DFD8;background:#fff}
+.pwa-registro-caja button{border:0;border-radius:14px;padding:12px;font:inherit;font-weight:700;color:#fff;cursor:pointer;background:linear-gradient(135deg,#85442A,#5E2817)}
+.pwa-registro-caja small{color:#78716c}.pwa-err{color:#b42318!important;min-height:1em}
+.orok-mark-reg{font-weight:900;letter-spacing:.16em;font-size:22px;background:linear-gradient(135deg,#B3362B,#85442A 55%,#5E2817);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* R41 · Preferencia personal común a todos los módulos. Acceso sin Crystal. */
+.appearance-menu{display:flex;justify-content:flex-end;margin-bottom:6px}
+.appearance-menu>.nav-top{background:var(--glass-bg);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur)}
+.appearance-dialog{width:min(760px,calc(100vw - 32px));max-height:85dvh;overflow:auto;padding:20px;border-radius:26px;border:1px solid var(--glass-border);background:linear-gradient(135deg,rgba(255,255,255,.86),rgba(255,255,255,.70));color:var(--ink-1);box-shadow:var(--glass-shadow);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur)}
+.appearance-dialog::backdrop{background:rgba(30,25,20,.22);backdrop-filter:blur(8px)}
+.appearance-dialog .theme-picker{clear:both;background:transparent!important;box-shadow:none!important;border:0!important;padding:10px 0 0;margin:0!important;backdrop-filter:none!important}
+.appearance-close{float:right;margin-bottom:8px}
+.evaluador-frame{padding:6px;border:1px solid var(--glass-border);border-radius:24px;overflow:hidden;background:var(--glass-bg);box-shadow:var(--glass-shadow);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur)}
+.evaluador-frame>iframe{border-radius:17px!important;box-sizing:border-box}
+.access-screen{background:var(--orok-bg)!important}
+.access-screen .orok-card,.access-screen .orok-input,.access-screen .orok-input:focus{background:#fff!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+@media (prefers-reduced-transparency:reduce){.appearance-dialog,.appearance-menu>.nav-top,.evaluador-frame{background:var(--orok-bg);backdrop-filter:none;-webkit-backdrop-filter:none}.appearance-dialog::backdrop{backdrop-filter:none}}
+
+.erp-navigation{display:flex;align-items:center;gap:8px}.erp-navigation>.nav-shell{flex:1;min-width:0}.erp-navigation>.appearance-menu{margin:0;flex-shrink:0}

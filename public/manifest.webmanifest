@@ -1,0 +1,22 @@
+{
+  "name": "ERP ÖRÖK · CRM, Evaluador y Contabilidad",
+  "short_name": "ERP ÖRÖK",
+  "description": "CRM inmobiliario con L.O.L.A, Evaluador con M.O.R.A y Contabilidad y Finanzas con C.L.A.R.A.",
+  "lang": "es-PE",
+  "start_url": "/?origen=app",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#FCF9F6",
+  "theme_color": "#85442A",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "CRM Inmobiliario", "url": "/?modulo=crm" },
+    { "name": "Contabilidad y Finanzas", "url": "/?modulo=contabilidad" },
+    { "name": "Evaluador Inmobiliario", "url": "/?modulo=evaluador" }
+  ]
+}

@@ -1,0 +1,12 @@
+'use strict';
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),os=require('node:os'),crypto=require('node:crypto');
+const {createServer}=require('../server.cjs'),{MemoryFirestore}=require('./memory-firestore.cjs'),{FirestoreProject}=require('../firestore-project.cjs');
+async function setup(){const privateDir=fs.mkdtempSync(path.join(os.tmpdir(),'orok-creative-http-')),store=new FirestoreProject(new MemoryFirestore());await store.initialize({settings:{},leads:[{id:'one',name:'Prueba',status:'Cita'}],units:[],quotes:[],separations:[]});const config={privateDir,testing:true,cookieName:'sid',origin:'http://localhost'},authCache={require:async cookie=>{if(!['manager','seller'].includes(cookie))throw Error('Inicia sesión.');return {name:cookie,role:cookie==='manager'?'Gerente':'Vendedor'};}},cache={read:()=>store.read()},server=createServer({config,store,cache,authCache,auth:{execute:async()=>{throw Error('Not used');}}});await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;config.origin=base;const call=async(name,args=[],cookie='manager',origin=base)=>{const r=await fetch(base+'/api/rpc/db.'+name,{method:'POST',headers:{'Content-Type':'application/json','X-Orok-Request':'1',Origin:origin,Cookie:'sid='+cookie},body:JSON.stringify({args})});return {status:r.status,data:await r.json()};};return {privateDir,store,base,call,close:async()=>{server.closeAllConnections();await new Promise(r=>server.close(r));fs.rmSync(privateDir,{recursive:true,force:true});}};}
+test('exportar leads exige Gerencia por HTTP y entrega un Excel válido',async()=>{const t=await setup();try{
+ for(const n of ['exportLeads','exportLeadsToSheet','getLeadExportConfig','saveLeadExportConfig','getLeadExportHistory'])assert.equal((await t.call(n,[{ids:['one']}],'seller')).status,400,n);
+ assert.equal((await t.call('exportLeads',[{ids:['one']}],'manager','https://evil.test')).status,403);
+ const r=await t.call('exportLeads',[{ids:['one'],format:'xlsx'}]);assert.equal(r.status,200);assert.equal(r.data.value.count,1);
+ assert.equal(Buffer.from(r.data.value.base64,'base64').readUInt32LE(0),0x04034b50);
+ assert.equal((await t.call('getLeadExportHistory')).data.value[0].actor,'manager');
+ assert.equal((await t.call('exportLeadsToSheet',[{ids:['one']}])).status,400);
+}finally{await t.close();}});

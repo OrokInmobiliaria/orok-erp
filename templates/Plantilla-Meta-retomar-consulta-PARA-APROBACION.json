@@ -1,0 +1,31 @@
+{
+  "name": "orok_retomar_consulta_v1",
+  "language": "es",
+  "category": "MARKETING",
+  "components": [
+    {
+      "type": "BODY",
+      "text": "Hola {{1}}, somos el equipo de ÖRÖK. Nos escribiste sobre Infinity 224. ¿Deseas retomar tu consulta? Podemos ayudarte con información del proyecto, una visita o un asesor.",
+      "example": {
+        "body_text": [
+          [
+            "María"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "BUTTONS",
+      "buttons": [
+        {
+          "type": "QUICK_REPLY",
+          "text": "Sí, continuar"
+        },
+        {
+          "type": "QUICK_REPLY",
+          "text": "No, gracias"
+        }
+      ]
+    }
+  ]
+}

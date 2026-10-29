@@ -1,0 +1,14 @@
+{
+  "_nota": "Solo hosts, nombres e ID de credenciales. NUNCA claves. Copiar como n8n/produccion-mapa.json y completar con los datos de producción.",
+  "hosts": {
+    "lola-pruebas-crm.kvrq8w.easypanel.host": "crm.orok.com.pe"
+  },
+  "credenciales": {
+    "LOLA ENSAYO 955318057 - CRM": { "nombre": "LOLA PRODUCCIÓN - CRM", "id": "ID_DE_LA_CREDENCIAL_EN_N8N" },
+    "LOLA ENSAYO 955318057 - PostgreSQL": { "nombre": "LOLA PRODUCCIÓN - PostgreSQL", "id": "ID_DE_LA_CREDENCIAL_EN_N8N" },
+    "M.O.R.A ENSAYO - Anthropic API": { "nombre": "ERP ÖRÖK - Anthropic API", "id": "ID_DE_LA_CREDENCIAL_EN_N8N" },
+    "C.L.A.R.A - Google Drive (cuenta de contabilidad)": { "nombre": "C.L.A.R.A - Google Drive (cuenta de contabilidad)", "id": "ID_DE_LA_CREDENCIAL_EN_N8N" },
+    "C.L.A.R.A - Webhook CRM": { "nombre": "C.L.A.R.A - Webhook CRM PRODUCCIÓN", "id": "ID_DE_LA_CREDENCIAL_EN_N8N" }
+  },
+  "nuevos_webhook_ids": true
+}

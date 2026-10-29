@@ -1,0 +1,339 @@
+<title>Arquitectura ERP ÖRÖK</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap">
+<style>
+/* Layout: franja de identidad sólida arriba (como el CRM) y una columna de lectura con diagramas en lámina clara */
+:root{
+  --id-red:#B3362B; --id-brown:#85442A; --id-deep:#5E2817;
+  --bg:#F4EEE9; --surface:#FFFFFF; --sunk:#FAF6F2; --ink:#231A15; --muted:#6B5F57; --line:#E4D7CD; --accent:#85442A; --accent-soft:#F3E5DC;
+  --ok:#2F7D4A; --ok-soft:#E3F1E7; --warn:#A8641A; --warn-soft:#F8EAD5; --bad:#B42318; --bad-soft:#FBE3DE; --info:#2A6FB0; --info-soft:#E3EEF8;
+  --paper:#FFFDFB; --band:#FCFAF8;
+  --f:'Outfit',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#17110E; --surface:#221915; --sunk:#1C1512; --ink:#F2EAE4; --muted:#B5A79D; --line:#3A2D26; --accent:#E39A78; --accent-soft:#3A2419;
+  --ok:#6CC48D; --ok-soft:#1D3325; --warn:#E3A857; --warn-soft:#3A2B17; --bad:#EF8A74; --bad-soft:#3E1F19; --info:#7FB2E8; --info-soft:#1B2B3C;
+  --band:#1E1612; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#17110E; --surface:#221915; --sunk:#1C1512; --ink:#F2EAE4; --muted:#B5A79D; --line:#3A2D26; --accent:#E39A78; --accent-soft:#3A2419;
+  --ok:#6CC48D; --ok-soft:#1D3325; --warn:#E3A857; --warn-soft:#3A2B17; --bad:#EF8A74; --bad-soft:#3E1F19; --info:#7FB2E8; --info-soft:#1B2B3C;
+  --band:#1E1612; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f);font-size:15.5px;line-height:1.55}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.band{background:var(--band);border-bottom:2px solid var(--id-brown)}
+.band .wrap{padding-block:28px 18px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
+.mark{margin:0;font-size:40px;font-weight:900;letter-spacing:2px;line-height:1;color:var(--id-brown);background:linear-gradient(135deg,var(--id-red),#9A3B27 40%,var(--id-brown) 70%,var(--id-deep));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.band p{margin:6px 0 0;color:var(--muted);font-size:14px}
+.proj{font-weight:700;color:var(--id-brown);font-size:15px}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .proj{color:#D9896A}}
+:root[data-theme="dark"] .proj{color:#D9896A}
+main .wrap{padding-block:28px 64px;display:flex;flex-direction:column;gap:34px}
+h1{font-size:clamp(26px,4vw,36px);font-weight:800;line-height:1.15;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font-size:22px;font-weight:700;margin:0 0 6px;text-wrap:balance}
+h3{font-size:15px;font-weight:700;margin:0 0 6px}
+p{margin:0}
+.lead{font-size:17px;color:var(--muted);max-width:70ch;margin-top:10px}
+section{display:flex;flex-direction:column;gap:12px;min-width:0}
+.eyebrow{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.note{color:var(--muted);font-size:14px;max-width:75ch}
+.toc{display:flex;flex-wrap:wrap;gap:6px}
+.toc a{font-size:13px;color:var(--ink);text-decoration:none;border:1px solid var(--line);background:var(--surface);padding:5px 11px;border-radius:999px}
+.toc a:hover{border-color:var(--accent);color:var(--accent)}
+.toc a:focus-visible,a:focus-visible{outline:3px solid var(--info);outline-offset:2px}
+.dia{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px;overflow-x:auto}
+.dia pre{margin:0;min-width:640px;display:flex;justify-content:center;background:transparent;color:#2A1A12;font-family:var(--f)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-width:0}
+.card ul{margin:6px 0 0;padding-left:18px}.card li{margin:3px 0}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--sunk);font-weight:600}
+tr:last-child td{border-bottom:0}
+td.c{text-align:center}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 10px;border-radius:999px;white-space:nowrap}
+.p-ok{background:var(--ok-soft);color:var(--ok)}.p-warn{background:var(--warn-soft);color:var(--warn)}.p-bad{background:var(--bad-soft);color:var(--bad)}.p-info{background:var(--info-soft);color:var(--info)}.p-mut{background:var(--sunk);color:var(--muted);border:1px solid var(--line)}
+.code{font-variant-numeric:tabular-nums;font-weight:600;color:var(--accent)}
+.sign{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr));gap:10px;margin-top:6px}
+.sign div{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;font-size:13px;background:var(--sunk)}
+.sign b{display:block;font-size:13.5px}
+.phase{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));gap:14px}
+.phase .card{display:flex;flex-direction:column;gap:6px}
+.phase .num{font-size:12px;font-weight:700;color:var(--accent);letter-spacing:.08em;text-transform:uppercase}
+ol.dec{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:80ch}
+.callout{border:1px solid var(--line);border-left:4px solid var(--id-brown);background:var(--surface);border-radius:12px;padding:14px 16px}
+@media (max-width:520px){.mark{font-size:32px}h2{font-size:20px}}
+</style>
+
+<div class="band"><div class="wrap">
+  <div><h1 class="mark" aria-label="ÖRÖK">ÖRÖK</h1><p>ERP inmobiliario · constructor · diseño</p></div>
+  <div style="text-align:right"><div class="proj">Logística, finanzas y control de proyectos</div><p>Propuesta de funcionamiento para aprobar · 28 de octubre de 2026</p></div>
+</div></div>
+
+<main><div class="wrap">
+<section>
+  <span class="eyebrow">Antes de construir</span>
+  <h1>Cómo funcionarán y se conectarán los módulos nuevos</h1>
+  <p class="lead">Tres módulos nuevos se suman al CRM y al Evaluador: <b>Planificación y presupuestos</b>, <b>Logística</b> (órdenes de compra y de servicio) y <b>Contabilidad y tesorería</b>, más un tablero de <b>control financiero</b> con curva S. Todos trabajan para las tres empresas del grupo y cada uno tiene su asistente de IA. El formato de OC y OS se ajustará al Excel que vas a enviar.</p>
+  <nav class="toc" aria-label="Secciones">
+    <a href="#mapa">Mapa</a><a href="#compra">Flujo de compra</a><a href="#estados">Estados de OC y OS</a><a href="#formato">Formato y firmas</a><a href="#pagos">Pagos y alertas</a><a href="#bancos">Bancos y correo</a><a href="#empresas">Tres empresas</a><a href="#curva">Curva S</a><a href="#ia">IA</a><a href="#roles">Permisos</a><a href="#decisiones">Decisiones</a><a href="#fases">Fases</a>
+  </nav>
+</section>
+
+<section id="mapa">
+  <h2>1. Mapa de módulos</h2>
+  <p class="note">El presupuesto aprobado en el Evaluador pasa a Planificación como línea base. Logística compra contra ese presupuesto, Contabilidad registra y paga, y el control financiero compara lo real con lo planificado. Las líneas punteadas son la retroalimentación: lo comprometido (OC y OS) y lo devengado (facturas) descuentan el saldo de cada partida.</p>
+  <div class="dia"><pre class="mermaid">
+%%{init:{"theme":"base","themeVariables":{"fontFamily":"Outfit, Segoe UI, sans-serif","fontSize":"15px","primaryColor":"#FBF3EE","primaryBorderColor":"#85442A","primaryTextColor":"#2A1A12","secondaryColor":"#F3E7DF","tertiaryColor":"#FFFDFB","lineColor":"#8A6A5C","clusterBkg":"#FFFDFB","clusterBorder":"#D9C3B5","edgeLabelBackground":"#FFFFFF"},"flowchart":{"curve":"basis","htmlLabels":true}}}%%
+flowchart TB
+  EMP{{"Selector de empresa · Inmobiliaria · Constructora · Diseño&lt;br/&gt;cada módulo trabaja con la empresa elegida"}}
+  EVA["&lt;b&gt;Evaluador Inmobiliario&lt;/b&gt;&lt;br/&gt;viabilidad, mercado, banca&lt;br/&gt;&lt;i&gt;IA M.O.R.A&lt;/i&gt;"]
+  CRM["&lt;b&gt;CRM Inmobiliario&lt;/b&gt;&lt;br/&gt;leads, ventas, separaciones&lt;br/&gt;&lt;i&gt;IA L.O.L.A&lt;/i&gt;"]
+  PLA["&lt;b&gt;Planificación y presupuestos&lt;/b&gt; · nuevo&lt;br/&gt;partidas, línea base, versiones,&lt;br/&gt;cronograma valorizado&lt;br/&gt;&lt;i&gt;IA de planificación&lt;/i&gt;"]
+  LOG["&lt;b&gt;Logística&lt;/b&gt; · nuevo&lt;br/&gt;requerimientos, cotizaciones,&lt;br/&gt;OC y OS, firmas, recepción&lt;br/&gt;&lt;i&gt;IA de logística&lt;/i&gt;"]
+  CON["&lt;b&gt;Contabilidad y tesorería&lt;/b&gt; · nuevo&lt;br/&gt;facturas, cuentas por pagar, pagos,&lt;br/&gt;vouchers, bancos y conciliación&lt;br/&gt;&lt;i&gt;IA de finanzas&lt;/i&gt;"]
+  REP["&lt;b&gt;Control financiero&lt;/b&gt; · nuevo&lt;br/&gt;estados financieros por proyecto y empresa,&lt;br/&gt;curva S, alertas de pago"]
+  MAIL["Correo del usuario&lt;br/&gt;Gmail o Microsoft 365"]
+  FIR["Firmas&lt;br/&gt;electrónica o digital"]
+  BANK["Estados de cuenta&lt;br/&gt;BCP, BBVA, Interbank, Scotiabank"]
+  EMP --&gt; EVA
+  EMP --&gt; CRM
+  EVA --&gt;|"presupuesto y cronograma aprobados"| PLA
+  PLA --&gt;|"saldo por partida"| LOG
+  LOG --&gt;|"OC y OS recibidas"| CON
+  LOG -.-&gt;|"comprometido"| PLA
+  CON -.-&gt;|"devengado y pagado"| PLA
+  CRM --&gt;|"cobranzas de clientes"| CON
+  LOG --- FIR
+  CON --- MAIL
+  BANK --&gt; CON
+  CON --&gt; REP
+  PLA --&gt;|"plan"| REP
+  LOG --&gt;|"avance físico"| REP
+  REP --&gt;|"real frente al plan"| EVA
+</pre></div>
+</section>
+
+<section id="compra">
+  <h2>2. Flujo de una compra o de un servicio</h2>
+  <p class="note">Es el ciclo estándar de una constructora (de la necesidad al pago). Cruza tres documentos antes de pagar: la orden, la recepción o conformidad y la factura. Si no coinciden, el pago queda observado.</p>
+  <div class="dia"><pre class="mermaid">
+%%{init:{"theme":"base","themeVariables":{"fontFamily":"Outfit, Segoe UI, sans-serif","fontSize":"15px","primaryColor":"#FBF3EE","primaryBorderColor":"#85442A","primaryTextColor":"#2A1A12","secondaryColor":"#F3E7DF","tertiaryColor":"#FFFDFB","lineColor":"#8A6A5C","clusterBkg":"#FFFDFB","clusterBorder":"#D9C3B5","edgeLabelBackground":"#FFFFFF"},"flowchart":{"curve":"basis","htmlLabels":true}}}%%
+flowchart TD
+  A["1 · Requerimiento&lt;br/&gt;obra, diseño u oficina"] --&gt; B{"¿Hay saldo en la partida?"}
+  B --&gt;|"sí"| C["2 · Cotizaciones&lt;br/&gt;mínimo 3 proveedores"]
+  B --&gt;|"no"| B2["Ampliación de presupuesto&lt;br/&gt;Gerencia aprueba una nueva versión"] --&gt; C
+  C --&gt; D["3 · Cuadro comparativo&lt;br/&gt;la IA compara precio, plazo e historial"]
+  D --&gt; E{"¿El monto supera el tope&lt;br/&gt;de aprobación?"}
+  E --&gt;|"no"| F["4 · Emitir OC u OS&lt;br/&gt;número correlativo por empresa"]
+  E --&gt;|"sí"| E2["Aprobación de Gerencia"] --&gt; F
+  F --&gt; G["5 · Firmas&lt;br/&gt;elaboró · revisó · aprobó · proveedor"]
+  G --&gt; H["6 · Envío al proveedor&lt;br/&gt;PDF desde el correo del usuario"]
+  H --&gt; I["7 · Recepción o conformidad&lt;br/&gt;guía, acta o valorización"]
+  I --&gt; J["8 · Factura electrónica&lt;br/&gt;validada en SUNAT y cruzada con OC y recepción"]
+  J --&gt; K["9 · Cuenta por pagar&lt;br/&gt;vence según la condición de pago"]
+  K --&gt; L["10 · Programación de pagos&lt;br/&gt;alertas por vencer y vencidas"]
+  L --&gt; M["11 · Pago&lt;br/&gt;se sube la foto o el PDF del abono"]
+  M --&gt; N["12 · La IA lee el voucher&lt;br/&gt;monto, fecha y n.º de operación"]
+  N --&gt; O["13 · Correo al proveedor&lt;br/&gt;borrador listo para revisar y enviar"]
+  N --&gt; P["14 · Conciliación bancaria&lt;br/&gt;con el estado de cuenta"]
+  P --&gt; Q["Estados financieros y curva S"]
+</pre></div>
+  <div class="tw"><table>
+    <thead><tr><th>Paso</th><th>Quién lo hace</th><th>Qué deja en el sistema</th></tr></thead>
+    <tbody>
+      <tr><td>Requerimiento</td><td>Residente de obra, arquitecto u oficina</td><td>Partida del presupuesto, cantidad, fecha requerida y sustento</td></tr>
+      <tr><td>Cotizaciones y cuadro comparativo</td><td>Logística</td><td>Tres cotizaciones adjuntas y el proveedor elegido con su motivo</td></tr>
+      <tr><td>Aprobación</td><td>Gerencia de proyecto; Gerencia general sobre el tope</td><td>Aprobación con fecha, hora y nombre</td></tr>
+      <tr><td>OC u OS y firmas</td><td>Logística emite; firman los responsables y el proveedor</td><td>PDF numerado con sus firmas y su huella digital</td></tr>
+      <tr><td>Recepción o conformidad</td><td>Almacén u obra (OC); responsable del servicio (OS)</td><td>Guía de remisión, acta o valorización, con fotos</td></tr>
+      <tr><td>Factura y cuenta por pagar</td><td>Contabilidad</td><td>Comprobante validado en SUNAT, IGV, detracción o retención y vencimiento</td></tr>
+      <tr><td>Pago y aviso</td><td>Tesorería</td><td>Foto o PDF del abono, lectura automática y correo al proveedor</td></tr>
+    </tbody></table></div>
+</section>
+
+<section id="estados">
+  <h2>3. Estados de una OC u OS</h2>
+  <p class="note">Cada orden muestra su estado en todo momento y guarda el historial de quién la movió y cuándo. Una orden solo se anula con motivo, nunca se borra. Numeración correlativa por empresa y año, por ejemplo <span class="code">OC-CNS-2026-0001</span> u <span class="code">OS-INM-2026-0014</span>.</p>
+  <div class="dia"><pre class="mermaid">
+%%{init:{"theme":"base","themeVariables":{"fontFamily":"Outfit, Segoe UI, sans-serif","fontSize":"15px","primaryColor":"#FBF3EE","primaryBorderColor":"#85442A","primaryTextColor":"#2A1A12","secondaryColor":"#F3E7DF","tertiaryColor":"#FFFDFB","lineColor":"#8A6A5C","clusterBkg":"#FFFDFB","clusterBorder":"#D9C3B5","edgeLabelBackground":"#FFFFFF"},"flowchart":{"curve":"basis","htmlLabels":true}}}%%
+stateDiagram-v2
+  direction LR
+  [*] --&gt; Borrador
+  Borrador --&gt; EnAprobacion: se envía a aprobar
+  EnAprobacion --&gt; Observada: falta sustento
+  Observada --&gt; Borrador: se corrige
+  EnAprobacion --&gt; Aprobada
+  Aprobada --&gt; Firmada: firmas completas
+  Firmada --&gt; Enviada: correo al proveedor
+  Enviada --&gt; Aceptada: el proveedor acepta
+  Aceptada --&gt; Recibida: guía o conformidad
+  Recibida --&gt; Facturada: factura validada
+  Facturada --&gt; Pagada: abono conciliado
+  Pagada --&gt; Cerrada
+  Borrador --&gt; Anulada
+  EnAprobacion --&gt; Anulada
+  Aprobada --&gt; Anulada: con motivo
+  Cerrada --&gt; [*]
+  Anulada --&gt; [*]
+  EnAprobacion: En aprobación
+</pre></div>
+</section>
+
+<section id="formato">
+  <h2>4. Formato estandarizado y firmas</h2>
+  <div class="grid">
+    <div class="card"><h3>Qué llevará el formato de OC y OS</h3>
+      <ul><li>Logo, razón social y RUC de la empresa que compra</li><li>Número, fecha, proyecto, partida y centro de costo</li><li>Proveedor: RUC, contacto, cuenta bancaria y CCI</li><li>Detalle: ítem, descripción, unidad, cantidad, precio unitario y parcial</li><li>Subtotal, IGV, total, moneda, detracción o retención si aplica</li><li>Condiciones: forma de pago, adelanto, plazo, lugar de entrega, garantía y penalidades</li><li>Bloque de firmas y código de verificación</li></ul>
+      <p class="note" style="margin-top:8px">Se ajusta a tu Excel: mismos campos y orden, con el diseño de ÖRÖK. Se imprime en A4 o se descarga en PDF.</p></div>
+    <div class="card"><h3>Bloque de firmas</h3>
+      <div class="sign"><div><b>Elaboró</b>Logística</div><div><b>Revisó</b>Gerencia de proyecto</div><div><b>Aprobó</b>Gerencia general, si supera el tope</div><div><b>Aceptó</b>Proveedor</div></div>
+      <p class="note" style="margin-top:10px">Cada orden pide solo las firmas que correspondan según el monto y el tipo.</p></div>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>Tipo de firma</th><th>Cómo funciona</th><th>Cuándo usarla</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill p-info">Electrónica simple</span></td><td>La persona firma en el ERP con su sesión y un código enviado a su correo. Queda la fecha, la hora, el usuario y la huella del PDF.</td><td>Uso diario interno y aceptación del proveedor por enlace</td></tr>
+      <tr><td><span class="pill p-ok">Digital con certificado</span></td><td>Firma con un certificado digital de una entidad acreditada. El ERP recibe el PDF firmado y verifica que no cambió.</td><td>Contratos y órdenes de monto alto, o cuando el proveedor o el banco lo exijan</td></tr>
+    </tbody></table></div>
+  <p class="note">Conviene confirmar con tu asesor legal qué nivel de firma exige cada tipo de documento.</p>
+</section>
+
+<section id="pagos">
+  <h2>5. Control de pagos y alertas</h2>
+  <p class="note">Cada cuenta por pagar tiene su vencimiento según la condición de la orden (contado, 15, 30 o 60 días, adelantos y saldos). El tablero agrupa por estado y avisa a quien corresponda en el ERP y por correo.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Estado</th><th>Regla</th><th>Aviso</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill p-mut">Pendiente de aprobación</span></td><td>Factura registrada sin visto bueno para pagar</td><td>A Gerencia, diario</td></tr>
+      <tr><td><span class="pill p-info">Programado</span></td><td>Con fecha de pago asignada</td><td>A Tesorería, el día anterior</td></tr>
+      <tr><td><span class="pill p-warn">Por vencer</span></td><td>Vence en 7 días o menos</td><td>A Tesorería y Gerencia, a los 7, 3 y 1 días</td></tr>
+      <tr><td><span class="pill p-bad">Vencido</span></td><td>Pasó la fecha y no tiene pago</td><td>Diario, con los días de atraso</td></tr>
+      <tr><td><span class="pill p-warn">Pagado sin comprobante</span></td><td>Marcado como pagado sin foto del abono</td><td>A quien registró el pago</td></tr>
+      <tr><td><span class="pill p-ok">Pagado y conciliado</span></td><td>El abono aparece en el estado de cuenta</td><td>Sin aviso; queda cerrado</td></tr>
+      <tr><td><span class="pill p-warn">Detracción por depositar</span></td><td>Factura afecta al SPOT sin constancia de depósito</td><td>A Contabilidad, antes del plazo</td></tr>
+    </tbody></table></div>
+</section>
+
+<section id="bancos">
+  <h2>6. Pagos, bancos y correo</h2>
+  <div class="grid">
+    <div class="card"><h3>Foto del abono y correo al proveedor</h3>
+      <ul><li>Tesorería sube la foto o el PDF del abono desde el celular o la PC</li><li>La IA lee el monto, la fecha, el banco y el número de operación, y propone a qué factura corresponde</li><li>El ERP prepara el correo al proveedor con la OC, la factura y el abono adjuntos</li><li>Se envía desde la cuenta de correo de la persona que inició sesión (Gmail o Microsoft 365), después de revisarlo</li></ul></div>
+    <div class="card"><h3>Estados de cuenta y conciliación</h3>
+      <ul><li>Se suben los estados de cuenta de cada banco y cuenta (Excel, CSV o PDF)</li><li>El ERP cruza cada movimiento con pagos y cobranzas por monto, fecha y número de operación</li><li>Las cobranzas de clientes llegan del CRM: separaciones, iniciales y desembolsos</li><li>Lo que no cuadra queda en una bandeja para revisar; nada se concilia sin regla clara</li></ul>
+      <p class="note" style="margin-top:8px">Los bancos peruanos no siempre ofrecen conexión directa. Se empieza con la carga de estados de cuenta y se conecta directo donde el banco lo permita.</p></div>
+  </div>
+</section>
+
+<section id="empresas">
+  <h2>7. Las tres empresas</h2>
+  <p class="note">El selector del encabezado, junto al de CRM y Evaluador, cambia de empresa. Cada empresa tiene su propia numeración, cuentas bancarias, presupuestos, órdenes y estados financieros. Los proveedores son un solo catálogo por RUC, compartido por las tres.</p>
+  <div class="dia"><pre class="mermaid">
+%%{init:{"theme":"base","themeVariables":{"fontFamily":"Outfit, Segoe UI, sans-serif","fontSize":"15px","primaryColor":"#FBF3EE","primaryBorderColor":"#85442A","primaryTextColor":"#2A1A12","secondaryColor":"#F3E7DF","tertiaryColor":"#FFFDFB","lineColor":"#8A6A5C","clusterBkg":"#FFFDFB","clusterBorder":"#D9C3B5","edgeLabelBackground":"#FFFFFF"},"flowchart":{"curve":"basis","htmlLabels":true}}}%%
+flowchart LR
+  subgraph INM["Inmobiliaria · dueña del proyecto"]
+    I1["Vende departamentos&lt;br/&gt;CRM y cobranzas"]
+    I2["Contrata obra y diseño&lt;br/&gt;OS interempresa"]
+  end
+  subgraph CNS["Constructora"]
+    C1["Ejecuta la obra&lt;br/&gt;valorizaciones mensuales"]
+    C2["Compra materiales&lt;br/&gt;y subcontrata · OC y OS"]
+  end
+  subgraph DIS["Diseño y arquitectura"]
+    D1["Proyecto, licencias&lt;br/&gt;y supervisión"]
+  end
+  PROV["Proveedores y subcontratistas&lt;br/&gt;catálogo único por RUC"]
+  CONS["Consolidado del grupo&lt;br/&gt;se eliminan las operaciones entre empresas"]
+  I2 --&gt;|"contrato de obra · OS"| C1
+  I2 --&gt;|"honorarios · OS"| D1
+  C1 --&gt;|"factura la valorización"| I2
+  D1 --&gt;|"factura honorarios"| I2
+  C2 --&gt; PROV
+  D1 --&gt; PROV
+  INM --&gt; CONS
+  CNS --&gt; CONS
+  DIS --&gt; CONS
+</pre></div>
+  <div class="callout"><b>Operaciones entre empresas.</b> Cuando la Inmobiliaria contrata a la Constructora o a Diseño, se emite una OS interempresa. En la Inmobiliaria es una cuenta por pagar y en la otra empresa es una cuenta por cobrar, con el mismo documento. El consolidado del grupo elimina esas operaciones para no contar dos veces el mismo dinero.</div>
+</section>
+
+<section id="curva">
+  <h2>8. Curva S y control financiero</h2>
+  <p class="note">La curva S compara cuatro líneas del mismo proyecto: lo planificado, el avance físico, el costo real y la caja. Con ellas se ve a tiempo si la obra va atrasada o gasta más de lo previsto.</p>
+  <div class="dia"><pre class="mermaid">
+%%{init:{"theme":"base","themeVariables":{"fontFamily":"Outfit, Segoe UI, sans-serif","fontSize":"15px","primaryColor":"#FBF3EE","primaryBorderColor":"#85442A","primaryTextColor":"#2A1A12","secondaryColor":"#F3E7DF","tertiaryColor":"#FFFDFB","lineColor":"#8A6A5C","clusterBkg":"#FFFDFB","clusterBorder":"#D9C3B5","edgeLabelBackground":"#FFFFFF"},"flowchart":{"curve":"basis","htmlLabels":true}}}%%
+flowchart LR
+  CRO["Cronograma valorizado&lt;br/&gt;valor planificado"] --&gt; PV(("Plan"))
+  AVA["Avance físico de obra&lt;br/&gt;recepciones y valorizaciones"] --&gt; EV(("Valor ganado"))
+  DEV["Facturas registradas&lt;br/&gt;costo devengado"] --&gt; AC(("Costo real"))
+  PAGO["Pagos conciliados&lt;br/&gt;salidas de caja"] --&gt; CAJ(("Caja"))
+  COB["Cobranzas del CRM&lt;br/&gt;separaciones, iniciales, desembolsos"] --&gt; CAJ
+  PV --&gt; S["Curva S del proyecto"]
+  EV --&gt; S
+  AC --&gt; S
+  CAJ --&gt; FL["Flujo de caja real&lt;br/&gt;frente al flujo de M.O.R.A"]
+  S --&gt; IND["Indicadores&lt;br/&gt;SPI = valor ganado / plan&lt;br/&gt;CPI = valor ganado / costo real"]
+</pre></div>
+  <div class="grid">
+    <div class="card"><h3>Presupuesto, comprometido, devengado y pagado</h3><p class="note">Por partida, proyecto y empresa. El saldo disponible para nuevas órdenes es el presupuesto menos lo comprometido.</p></div>
+    <div class="card"><h3>Estados financieros de gestión</h3><p class="note">Resultados por proyecto, flujo de caja real frente al proyectado por M.O.R.A, cuentas por pagar y por cobrar, por empresa y consolidado.</p></div>
+    <div class="card"><h3>Contabilidad formal</h3><p class="note">Los estados financieros tributarios los cierra tu contador. El ERP le entrega el registro de compras, los pagos y los asientos listos para su sistema.</p></div>
+  </div>
+</section>
+
+<section id="ia">
+  <h2>9. IA asistida en cada módulo</h2>
+  <p class="note">Igual que L.O.L.A y M.O.R.A, la IA propone y una persona aprueba. Nunca emite, firma ni paga sola.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Módulo</th><th>Qué hace la IA</th></tr></thead>
+    <tbody>
+      <tr><td>Planificación y presupuestos</td><td>Arma el presupuesto por partidas desde el Evaluador, detecta partidas sin saldo y propone ajustes del cronograma</td></tr>
+      <tr><td>Logística</td><td>Convierte un pedido escrito o dictado en requerimiento, compara cotizaciones, sugiere proveedor y redacta la OC u OS</td></tr>
+      <tr><td>Contabilidad y tesorería</td><td>Lee facturas y vouchers, propone la conciliación, arma el programa de pagos y redacta el correo al proveedor</td></tr>
+      <tr><td>Control financiero</td><td>Explica desviaciones de la curva S y del flujo, y alerta riesgos de caja por empresa</td></tr>
+    </tbody></table></div>
+</section>
+
+<section id="roles">
+  <h2>10. Permisos con un equipo de tres</h2>
+  <p class="note">Las funciones se agrupan en tres roles, y cada persona puede tener permisos distintos en cada empresa.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Acción</th><th class="c">Gerencia</th><th class="c">Administración y logística</th><th class="c">Proyecto u obra</th></tr></thead>
+    <tbody>
+      <tr><td>Crear requerimientos</td><td class="c">Sí</td><td class="c">Sí</td><td class="c">Sí</td></tr>
+      <tr><td>Cotizar y emitir OC u OS</td><td class="c">Sí</td><td class="c">Sí</td><td class="c">No</td></tr>
+      <tr><td>Aprobar sobre el tope</td><td class="c">Sí</td><td class="c">No</td><td class="c">No</td></tr>
+      <tr><td>Dar conformidad de recepción</td><td class="c">Sí</td><td class="c">Sí</td><td class="c">Sí</td></tr>
+      <tr><td>Registrar facturas y pagos</td><td class="c">Sí</td><td class="c">Sí</td><td class="c">No</td></tr>
+      <tr><td>Ver saldos bancarios y estados financieros</td><td class="c">Sí</td><td class="c">Solo su empresa</td><td class="c">No</td></tr>
+      <tr><td>Aprobar versiones del presupuesto</td><td class="c">Sí</td><td class="c">No</td><td class="c">No</td></tr>
+    </tbody></table></div>
+</section>
+
+<section id="decisiones">
+  <h2>11. Lo que necesito de ti</h2>
+  <ol class="dec">
+    <li><b>El Excel de OC y OS</b>, para copiar sus campos y su orden.</li>
+    <li><b>Las tres empresas:</b> razón social, RUC, logo y qué hace cada una.</li>
+    <li><b>Bancos y cuentas</b> de cada empresa, y un estado de cuenta de ejemplo de cada banco.</li>
+    <li><b>Topes de aprobación:</b> desde qué monto aprueba Gerencia general, en soles y en dólares.</li>
+    <li><b>Firmas:</b> si basta la firma electrónica simple o si algunas órdenes llevan certificado digital.</li>
+    <li><b>Correo:</b> si el equipo usa Gmail o Microsoft 365.</li>
+    <li><b>Contabilidad:</b> si el contador es interno o externo, y qué sistema usa.</li>
+    <li><b>Nombres de las IA</b> de los módulos nuevos, al estilo de L.O.L.A y M.O.R.A, o una sola IA para logística y finanzas.</li>
+  </ol>
+</section>
+
+<section id="fases">
+  <h2>12. Orden de construcción propuesto</h2>
+  <div class="phase">
+    <div class="card"><span class="num">Fase 1</span><h3>Empresas, presupuestos y logística</h3><p class="note">Selector de empresa, presupuesto por partidas desde el Evaluador, requerimientos, cotizaciones, OC y OS con el formato y firmas.</p></div>
+    <div class="card"><span class="num">Fase 2</span><h3>Contabilidad y tesorería</h3><p class="note">Facturas, cuentas por pagar, alertas, foto del abono y correo al proveedor desde la cuenta del usuario.</p></div>
+    <div class="card"><span class="num">Fase 3</span><h3>Bancos y control financiero</h3><p class="note">Estados de cuenta, conciliación, estados financieros de gestión, consolidado y curva S.</p></div>
+  </div>
+  <p class="note">Cada fase entra primero al ensayo y llega al CRM en uso solo después de probarse, con el mismo cuidado de respaldo que la actualización actual. Conviene empezar la Fase 1 cuando el CRM vivo ya esté actualizado.</p>
+</section>
+</div></main>

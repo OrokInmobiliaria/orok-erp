@@ -1,0 +1,770 @@
+{
+  "version": "67.6.2",
+  "files": [
+    {
+      "path": "analytics-worker.cjs",
+      "bytes": 339,
+      "sha256": "93e1b9bcbbf60cd209c2060f8afbc44f3bbdbb94648d778e23d2350ab435b01f"
+    },
+    {
+      "path": "app.js",
+      "bytes": 258,
+      "sha256": "c936e7d3af0f4d0cfcdcf7cb7588cbadbfe6530eabc8915fa413a2cc95c65227"
+    },
+    {
+      "path": "application.cjs",
+      "bytes": 46362,
+      "sha256": "d221488492cd7420a4ac176b5a06f736b7e82e742d6cc90b215fc41710ee5452"
+    },
+    {
+      "path": "assets.cjs",
+      "bytes": 1221,
+      "sha256": "3b66320788172738faaedfe600fdc5791b701e6ebb9cb91919315dc9d338ac1f"
+    },
+    {
+      "path": "backup-scheduler.cjs",
+      "bytes": 3371,
+      "sha256": "92b8dc9649623ab8861740a5afef2985da986f85f1717c4da460bf6224570786"
+    },
+    {
+      "path": "build.mjs",
+      "bytes": 130,
+      "sha256": "b3cb98378b5f652d926b7ad0c8010dbe93acd2211eb3f1e455e967ab40a9a9ef"
+    },
+    {
+      "path": "business/adsAnalytics.js",
+      "bytes": 16541,
+      "sha256": "3ea5d4a7249bef02519f69c0f402db84274574d0bcc3420da522bd15a58bc223"
+    },
+    {
+      "path": "business/analyticsPDF.js",
+      "bytes": 9563,
+      "sha256": "107b78feecb4c447984227d225c94cd932517f5616aa6767521bcaab726f9277"
+    },
+    {
+      "path": "business/analyticsService.js",
+      "bytes": 11431,
+      "sha256": "9de78f039a0e470eb501bd9886454be930e8199d7119522187fdd634d073c636"
+    },
+    {
+      "path": "business/analyticsService.original.js",
+      "bytes": 11327,
+      "sha256": "676bc98e1089d338258df3ec9ecdc11887e349d23d1ea59ea8061a14d05fcc65"
+    },
+    {
+      "path": "business/approvalMail.js",
+      "bytes": 3001,
+      "sha256": "93d1ff48b69d5768fb696a1595e62ae751fa2b33f4c151440c4ba57cc568f89e"
+    },
+    {
+      "path": "business/authService.js",
+      "bytes": 8214,
+      "sha256": "666b79b361f8f1e935ce48a2ac1f73efc881b713059a1f00f911ce071e4a5929"
+    },
+    {
+      "path": "business/calendarService.js",
+      "bytes": 888,
+      "sha256": "36db81e2f42470d71c591d4767baf93cb362a72010bca4543bb3812cf95f705e"
+    },
+    {
+      "path": "business/channelHistory.js",
+      "bytes": 7464,
+      "sha256": "da460c07fdafef201fd94d55623fe0837c78ce22e0a8565cc6e57a39dd552af5"
+    },
+    {
+      "path": "business/creativeCampaigns.js",
+      "bytes": 26201,
+      "sha256": "bcfdeb7e4e1694414d077745e5691ea7d3f207d923fe524093e43a054b75bf32"
+    },
+    {
+      "path": "business/crmConversation.js",
+      "bytes": 3014,
+      "sha256": "591ec3848d42a21dab1edeba380d3eb5ff3e25133134b2aaf4cc7731d39c99f5"
+    },
+    {
+      "path": "business/documentRecognition.js",
+      "bytes": 7267,
+      "sha256": "2405eb2022a254beddb58f29baa69aea105cc04591e7abc924f3f8f9f1362f42"
+    },
+    {
+      "path": "business/driveDocumentStore.js",
+      "bytes": 3600,
+      "sha256": "a3ccb3a1bf8b61172ef01e1d4d5e54c8447709898eb5df101d9b5c856a8ce5dd"
+    },
+    {
+      "path": "business/firestoreValueGuard.js",
+      "bytes": 666,
+      "sha256": "421ecc5465fbe5715880f036e586ea48dda48fdfa53887949c9dde1f27062b56"
+    },
+    {
+      "path": "business/funnelService.js",
+      "bytes": 3389,
+      "sha256": "179f7f2f993ea5ac7002d3aedcea65af88b565228fc863c3bfe187e2eec872d6"
+    },
+    {
+      "path": "business/geminiService.js",
+      "bytes": 2777,
+      "sha256": "7af97647c8ca36857aabeac1524d17966bba827ec607d7136d5eb40a7782d2c5"
+    },
+    {
+      "path": "business/insightService.js",
+      "bytes": 8251,
+      "sha256": "7491b2b12dddb45df75da232dc12e07c702ed204fdf9d64d62bba8196bf46a13"
+    },
+    {
+      "path": "business/leadComments.js",
+      "bytes": 759,
+      "sha256": "4224d99525dbaa55d854165f853788d620e11dd0eacfad063eeb6753afec3ec1"
+    },
+    {
+      "path": "business/leadImport.js",
+      "bytes": 13432,
+      "sha256": "e390634d831279d09b228fc737dc60721fef1a2e0b7809e85b5b61f64780080b"
+    },
+    {
+      "path": "business/lifecycle.js",
+      "bytes": 8317,
+      "sha256": "198dc3a173ffd77965b2e0ad3098410b53b34f0ca56a72a6808bf5de90c86c31"
+    },
+    {
+      "path": "business/lolaIntegration.js",
+      "bytes": 11082,
+      "sha256": "6fd01a00354d643bca96ac27dc4f0fbc56942684037013d3b7b973d5d2d354b8"
+    },
+    {
+      "path": "business/omnichannel.js",
+      "bytes": 12575,
+      "sha256": "d837317ad4e260371cc21f15a9cf41cbc2e50a50af3b126e0f354204ceb23a17"
+    },
+    {
+      "path": "business/planService.js",
+      "bytes": 8490,
+      "sha256": "76cf665bd089370382d420ef97f7ce8c8815ecc9a7377fee4ae78bdc972eb5ad"
+    },
+    {
+      "path": "business/publicationAnalytics.js",
+      "bytes": 13804,
+      "sha256": "e39b4bf16a7c8eed3a0bb8ff9bd18829175d6eff80599bc40083b9b921c4acd4"
+    },
+    {
+      "path": "business/queries.js",
+      "bytes": 32317,
+      "sha256": "f530a045ecd1c1a4bb99db34c44f83212e17e91607460b79561e355e0be4a6ad"
+    },
+    {
+      "path": "business/quotePDF.js",
+      "bytes": 16487,
+      "sha256": "feb97a953f61f75a4c5ff3960d9f7b8c0aa337a48af3f94b460eb0782e866988"
+    },
+    {
+      "path": "business/quoteRecords.js",
+      "bytes": 1135,
+      "sha256": "1f781cd20cd08d116a8654e51df1d5db378e6ac916f73eb66cf0f022386e7321"
+    },
+    {
+      "path": "business/salesService.js",
+      "bytes": 1878,
+      "sha256": "d44c4e8a3aedee5337133f4c993f8b458eafecd126760e82a20d01743a1ea7cc"
+    },
+    {
+      "path": "business/separationPDF.js",
+      "bytes": 13704,
+      "sha256": "65d31238ad9a6c508807cbbc16169185c77a9b4c63970dd00dd0b0c164ba834e"
+    },
+    {
+      "path": "business/separationService.js",
+      "bytes": 9674,
+      "sha256": "b956267d419fb02c375b1f553ea90d18ac03546f8dc2d39bd1895bbdf2bd9ee2"
+    },
+    {
+      "path": "business/sheetAccess.js",
+      "bytes": 1832,
+      "sha256": "659ab1700c2962e9ef1cd68d332717d8a50b390424c6d78ed15ccd8e20606f26"
+    },
+    {
+      "path": "business/slaScheduler.cjs",
+      "bytes": 5515,
+      "sha256": "24bae484259b2f9866ab2862751db61c4e77a2273b2e26ff6a4951d63b5f0f21"
+    },
+    {
+      "path": "business/slaService.js",
+      "bytes": 6548,
+      "sha256": "be8a551a861eb496ffbbad69d648e543be1e1d85f257058f8427e4193ab59fcf"
+    },
+    {
+      "path": "business/socialGateway.js",
+      "bytes": 8075,
+      "sha256": "97a555018f851dafc5d542f633233a2c098e1180b2df44d837855001ae4b2693"
+    },
+    {
+      "path": "business/socialInbox.js",
+      "bytes": 13978,
+      "sha256": "2e7548e874c9eead31fbdc67d8d28dc9ce768b6f26ff18af680667b38a2a52c9"
+    },
+    {
+      "path": "business/toolLinks.js",
+      "bytes": 1996,
+      "sha256": "59b0e1786617db2ddee85a667ec459a48a8775e5a769699981fa24388e800bcd"
+    },
+    {
+      "path": "business/weeklyAnalyticsPDF.js",
+      "bytes": 4363,
+      "sha256": "5686fbcab7b4ec9ab1b5ed892483b9e42b4b4123ad4cfd5287b18c9623b4f9f4"
+    },
+    {
+      "path": "business/whatsappAgenda.js",
+      "bytes": 31599,
+      "sha256": "48a3746126575c73b9c1abd745e090a5b1468f8b3dfcd86dae873365c08f9cb9"
+    },
+    {
+      "path": "business/whatsappGateway.js",
+      "bytes": 8687,
+      "sha256": "f846c85c1d5abce1698350baa41366817eb9f94d12116746e58eccebc5783ba8"
+    },
+    {
+      "path": "business/whatsappInbox.js",
+      "bytes": 11931,
+      "sha256": "96a0529087249a6d96ebb1b5b2541869f5a7433e94a689e69ba12d01a9313d57"
+    },
+    {
+      "path": "business/whatsappRecovery.js",
+      "bytes": 4300,
+      "sha256": "f7a2716074f84a85cd1608b12dacfd6b535e4ef7a99718ad22c66464060825ae"
+    },
+    {
+      "path": "business/whatsappService.js",
+      "bytes": 28084,
+      "sha256": "76f256688983ce183fe94c841e4265a5426b240872681daf9896cea36d622c65"
+    },
+    {
+      "path": "cloud-auth.cjs",
+      "bytes": 4811,
+      "sha256": "d82ed0a8cf45781df92a3db2499cdea5228f46be0884208929694389075f6ca8"
+    },
+    {
+      "path": "COMPARACION-ORIGINAL-67.6.2.md",
+      "bytes": 5243,
+      "sha256": "5432631bc3d2b0057afa05d4a1523ac8f65d9e4166fb24c4967dffdbbb60e605"
+    },
+    {
+      "path": "config.cjs",
+      "bytes": 1679,
+      "sha256": "9bc72c06cbef56f20f55278fe5e6f9b5d6b11fa5cb6d54884cae3f7aee734e25"
+    },
+    {
+      "path": "CORRESPONDENCIA-96-NODOS-67.6.2.csv",
+      "bytes": 17731,
+      "sha256": "c3cde8b123262db35ceab7b9846264506579d28be473f3d554218fe14b00a0d6"
+    },
+    {
+      "path": "deploy/create-preupdate-snapshot.cjs",
+      "bytes": 4436,
+      "sha256": "3c4e21fa9143404a15f72edd400bc33ed1ca91fbc349e1ca633fcbf55e9b4d15"
+    },
+    {
+      "path": "dist/assets/index-COfFdWD5.js",
+      "bytes": 493611,
+      "sha256": "f877b1159362b1086f2d136c279bf56310b2c5460cee8ad9494a4b4e9a02bef5"
+    },
+    {
+      "path": "dist/assets/index-y0v0MsxJ.css",
+      "bytes": 11121,
+      "sha256": "67a03885995ac29ce9a33b8cfcfe12088b9e44d912af037eb3c29f2f305b908d"
+    },
+    {
+      "path": "dist/index.html",
+      "bytes": 3788,
+      "sha256": "f224e63ed9dddce39084db3a7a2e04b9e739f124a644fe08302db81c5f720adf"
+    },
+    {
+      "path": "firestore-project.cjs",
+      "bytes": 7340,
+      "sha256": "3b249cb3d2c80db621de6e5436f8f1e12c7377bab6e602e25833a87e00457ebb"
+    },
+    {
+      "path": "index.html",
+      "bytes": 3685,
+      "sha256": "23e3d253d3c6d2f5871a668da922cd33991fdb15b8d59b78367ef7c5498b30d4"
+    },
+    {
+      "path": "LEER-PRIMERO-67.6.2.md",
+      "bytes": 12759,
+      "sha256": "9c98297a545eb8c82e85ac14a6bf4b3959a816ca9924e0e6ba08188b29233f6a"
+    },
+    {
+      "path": "n8n/00-Lola-Unificado-67.6.2-INACTIVO.json",
+      "bytes": 76283,
+      "sha256": "36ff4ab527962b6fee7c507beb4e0ade1839730704c34d0cc795ff31223c6ac7"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 153219,
+      "sha256": "fbc3c4c83137070e657827dc063a869e99ef14dc22187f1ef72d0c114a01a409"
+    },
+    {
+      "path": "package.json",
+      "bytes": 777,
+      "sha256": "544977147227bea04c5e11837047fb42a1a03ef577fd95a88dcefa3f8821c066"
+    },
+    {
+      "path": "PLANTILLA-RECUPERACION-67.6.2.md",
+      "bytes": 1304,
+      "sha256": "3f0c33f1c408498f31b627c7176c4f3dd65915bff4002aea1ad8fcf6bd74b949"
+    },
+    {
+      "path": "referencias/documentacion-anterior/LEEME-PRIMERO-v67.5.0.md",
+      "bytes": 13356,
+      "sha256": "9f2d31793e2ffaafd36b5f056b9e572fda599b0a158c5a5552d70f33ce6c9a6c"
+    },
+    {
+      "path": "referencias/documentacion-anterior/LEEME-PRIMERO-v67.6.0.md",
+      "bytes": 12657,
+      "sha256": "461008d5878b234d9431e1cc5f3de94066838a9cd613ff9e73b54da61af37eb8"
+    },
+    {
+      "path": "referencias/documentacion-anterior/LEEME-v67.4.1-WHATSAPP-COMPLETO.md",
+      "bytes": 11494,
+      "sha256": "6408be1283e8f94008f223218e73648a534361bbc3938f3ecd8def759aad4fc1"
+    },
+    {
+      "path": "referencias/documentacion-anterior/LEER-PRIMERO-67.6.1.md",
+      "bytes": 10363,
+      "sha256": "819a46abdb033bc6611080092edc3bdc75ef5065f0f481a86011c6a488afa0f8"
+    },
+    {
+      "path": "referencias/documentacion-anterior/MANIFEST-67.6.1.json",
+      "bytes": 22484,
+      "sha256": "7e8eb75b2360de9573b1d8f9d7d4ddf1a61649575de2459274dbe39d4ffa32d4"
+    },
+    {
+      "path": "referencias/documentacion-anterior/MANIFEST-v67.6.0.json",
+      "bytes": 17265,
+      "sha256": "b4b5383bbe407cd44beb893450c5faf8e14adc66f6738c4cf8fb2db18f8b719b"
+    },
+    {
+      "path": "referencias/documentacion-anterior/VALIDACION-67.6.1.json",
+      "bytes": 860,
+      "sha256": "e7cde57e3b086bf57a4bf96fe90aec9d78ec6f8fd1ecfa162d9507fc3cfffdf3"
+    },
+    {
+      "path": "referencias/documentacion-anterior/VALIDACION-v67.6.0.json",
+      "bytes": 1142,
+      "sha256": "cd56d081589be6af410cecc1be84079babdc5302b58f46369e947984169df492"
+    },
+    {
+      "path": "referencias/documentacion-anterior/VALIDACION-v67.6.0.txt",
+      "bytes": 21027,
+      "sha256": "1c4204f9ed27e7ee329e806a44b6bc17f248d3c00ba025e3b15391bc5be1d04b"
+    },
+    {
+      "path": "referencias/n8n-anteriores/00-Lola-Unificado-67.6.1-INACTIVO.json",
+      "bytes": 56196,
+      "sha256": "98f96832615e59e1fcff3e3d51c2304aee19acef15044136660d1d015d3a4f85"
+    },
+    {
+      "path": "referencias/n8n-anteriores/01-Lola-Telegram-Revision-07-INACTIVO.json",
+      "bytes": 225250,
+      "sha256": "8553b1a5429a4fb8a757ed49fa6bc3ec822bd74b6385b85511961d0ec8ef91e7"
+    },
+    {
+      "path": "referencias/n8n-anteriores/02-WhatsApp-Observador-Diagnostico-INACTIVO.json",
+      "bytes": 6357,
+      "sha256": "310fc1c3a6fe7c95abc2d833af51e0cc1f7e91d6369be4d6e0c32d26d7a02b51"
+    },
+    {
+      "path": "referencias/n8n-anteriores/04-Lola-WhatsApp-COMPLETO-02-Agenda-CRM-INACTIVO.json",
+      "bytes": 46244,
+      "sha256": "77b05b179fe4bdfa7f15482730ad5f73acddd6e181064492c9bfae212b601127"
+    },
+    {
+      "path": "referencias/n8n-anteriores/05-Lola-Social-Sugerencias-INACTIVO.json",
+      "bytes": 17686,
+      "sha256": "4243cccb0fac92c8c6681e7134aa3c5e26f796903d093f76ca787e5f15f5c6d5"
+    },
+    {
+      "path": "referencias/n8n-anteriores/06-Reportes-Meta-TikTok-INACTIVO.json",
+      "bytes": 2752,
+      "sha256": "1e6acd9d6e4a7c1efd5f06c2e38c31ecc7257e89d74e341bb3fcf29a6f9c0f67"
+    },
+    {
+      "path": "referencias/n8n-anteriores/07-TikTok-Entrada-Normalizada-PENDIENTE.json",
+      "bytes": 3444,
+      "sha256": "51b6f5fb72509aaaca670eef49df2332204f5e6b0a8cd15c9d75310a9296f00f"
+    },
+    {
+      "path": "referencias/n8n-anteriores/08-Campanas-Claude-CRM-INACTIVO.json",
+      "bytes": 5582,
+      "sha256": "85e55a916ab5c1b957c0852f37bdc81d4be19006a7906e20a2eb9d5b50bcdf10"
+    },
+    {
+      "path": "safe-network.cjs",
+      "bytes": 1222,
+      "sha256": "dbd3e03ab632662a105cb2e6aaf48c22d6c7dd04dbadbf017158377ee82d9cef"
+    },
+    {
+      "path": "samples/publicaciones-normalizadas.json",
+      "bytes": 110,
+      "sha256": "63a096b717097cd7487df23ce2fe00afa521a25ec0250c448821ddcd1328c3be"
+    },
+    {
+      "path": "samples/reporte-publicidad-plantilla.json",
+      "bytes": 651,
+      "sha256": "37320a3731a09d3b2b07919e9f0b9d5ab243f6331228899e1f5af81d8942dfec"
+    },
+    {
+      "path": "samples/tiktok-normalizado.json",
+      "bytes": 319,
+      "sha256": "f9524aab940015737aff2e6a494468aca0baba72dc301ce373866def4bd5c5b5"
+    },
+    {
+      "path": "scripts/build-multichannel-flows.py",
+      "bytes": 10230,
+      "sha256": "731a9555226752c8e6434d30a567de63bca6bcf2e8cd26b121f1d106ee5e68aa"
+    },
+    {
+      "path": "server.cjs",
+      "bytes": 17831,
+      "sha256": "7ff6dfa0388ef3f34c6c08715c68c5e2cebc4cf17e453540a6046652d5ba0f97"
+    },
+    {
+      "path": "sheet-sync.cjs",
+      "bytes": 4017,
+      "sha256": "908e4fbba96d01d5473949648b154b19a4675e4ac4831e648ea04b644648bc88"
+    },
+    {
+      "path": "sql/01-consultar-funciones-instaladas-SOLO-LECTURA.sql",
+      "bytes": 381,
+      "sha256": "daafa45cb64705d3744311745f4c7aeb04bc563fa2f1cfecc0bcdc75e9f1d007"
+    },
+    {
+      "path": "sql/02-exportar-estado-Telegram-SOLO-LECTURA.sql",
+      "bytes": 329,
+      "sha256": "a2f0d1ce5441cca9e4f17c0efb1b2820d09230689bcfd5a5a55388fc5d70a9d3"
+    },
+    {
+      "path": "src/Access.jsx",
+      "bytes": 8588,
+      "sha256": "c5998be7c8ddeff338ca62139fd92e94fa180d2f424bb25096bb9be5192da37e"
+    },
+    {
+      "path": "src/AccessValidation.jsx",
+      "bytes": 4018,
+      "sha256": "472e496194f8f69d1a426964aa86cc5b03a2feb80f0a3b5e6cbe40b20b523289"
+    },
+    {
+      "path": "src/AdsDashboard.jsx",
+      "bytes": 12308,
+      "sha256": "b85260734c79a60c7a6060dddc72edcf2d0eac56a6f867b406591b44675473b3"
+    },
+    {
+      "path": "src/App.jsx",
+      "bytes": 179735,
+      "sha256": "28ae3f2dad56b6dfeffca690edbd1149265823b4c673f6ad7ba0084abb903861"
+    },
+    {
+      "path": "src/BusinessDashboard.jsx",
+      "bytes": 11264,
+      "sha256": "42070ef5c7d00e2d61365cc2d1313986a79794c991f013e41695480dd175accf"
+    },
+    {
+      "path": "src/calendarInvite.mjs",
+      "bytes": 4239,
+      "sha256": "a1e23a1fe49194d9504110f548d3edf552d7dd9f6cafb5e98e3e20817864ecfe"
+    },
+    {
+      "path": "src/CampaignStudio.jsx",
+      "bytes": 28779,
+      "sha256": "fd08202adc74bf4ccc292ea79c9976ebf01e1a92b315a8884dbbf6b78ed81273"
+    },
+    {
+      "path": "src/cloudBridge.js",
+      "bytes": 9639,
+      "sha256": "41ab6eba8f30dbb3764f95b8c774be604cbd6be164ed99108dbe9051d15831fd"
+    },
+    {
+      "path": "src/creativeRenderer.mjs",
+      "bytes": 10367,
+      "sha256": "a4a7335c747fe4528282d8d4839b28714e54a715fcaff90dfdf1aa927b738031"
+    },
+    {
+      "path": "src/CrmLolaPanel.jsx",
+      "bytes": 4345,
+      "sha256": "c12bb8af5547b5be09778ecf4d60ce57320ed2d3b1145d6abba2208a046f63a0"
+    },
+    {
+      "path": "src/DashboardCharts.jsx",
+      "bytes": 11668,
+      "sha256": "a3b06d6bc9ca90011c792f1b9df1b1b4abd97157e9a14dd2cbf437588c9f5019"
+    },
+    {
+      "path": "src/dataService.js",
+      "bytes": 15508,
+      "sha256": "0a69c3827604f46032a8d229cb60a85e345840074f7c40f583d2d0cdcc28cf5f"
+    },
+    {
+      "path": "src/firebase.js",
+      "bytes": 520,
+      "sha256": "241f424d2776753f708fb037e3b9c47c0dc3d5850f94428e7cfa4a9ab3ca8aaa"
+    },
+    {
+      "path": "src/HelpCenter.jsx",
+      "bytes": 13559,
+      "sha256": "918920482e25b163976059bf7555f5a73dda1b4462c8cb9fdf49e68e44a0ee0e"
+    },
+    {
+      "path": "src/LeadComments.jsx",
+      "bytes": 2184,
+      "sha256": "f5f74806bb42a2c5e6205866a4dc42d2dfb5e56560b270fa8ab214049b10ee42"
+    },
+    {
+      "path": "src/LeadLifecycle.jsx",
+      "bytes": 32973,
+      "sha256": "078d93aab9998f67f481427a18091be64c0a4457e7f92351a3f47903653504bb"
+    },
+    {
+      "path": "src/main.jsx",
+      "bytes": 213,
+      "sha256": "cdb646c1ec3e1b5c28878d6f68c6a556326a5296e45fb1742003dabd9273f622"
+    },
+    {
+      "path": "src/MarketingExpenses.jsx",
+      "bytes": 4516,
+      "sha256": "78cc9adcc7bb12339cf5fc37cf6349ed3cd16579d80bc32e4d20d1eee8d11554"
+    },
+    {
+      "path": "src/operationalTraffic.js",
+      "bytes": 2291,
+      "sha256": "ede700762157fafc5a1c95a7a4adaaf6014b7e3730ff7488c1711b385887322d"
+    },
+    {
+      "path": "src/PublicationDashboard.jsx",
+      "bytes": 7243,
+      "sha256": "072172d761558296a79f6389aac02da76e9e546431a23c460e04b2abb192a099"
+    },
+    {
+      "path": "src/responsive.css",
+      "bytes": 8001,
+      "sha256": "44c535fe5713992533991c008579eaa7546b45246030c29de3306c532f71a06a"
+    },
+    {
+      "path": "src/SocialConnections.jsx",
+      "bytes": 6282,
+      "sha256": "aa9b5886080dc234d9467acf4695c311bc07ad751527340ae0cad559e90ed9f8"
+    },
+    {
+      "path": "src/SocialInbox.jsx",
+      "bytes": 8917,
+      "sha256": "ca4de3f524ce90b2ab51036c631fd66a3642bc567ac1821916154c3172ac1ac3"
+    },
+    {
+      "path": "src/useToolLinks.js",
+      "bytes": 2013,
+      "sha256": "cb6caf859b361e55feecb7c8c62d459b5f6121b68867bc811abfbf3b3b23bd4c"
+    },
+    {
+      "path": "src/WeeklyAnalysis.jsx",
+      "bytes": 5776,
+      "sha256": "16eacc837d2c33185d0a560354a564dac92afc01d0ad904adc43c2b5b6c03734"
+    },
+    {
+      "path": "src/WhatsAppConversation.jsx",
+      "bytes": 17380,
+      "sha256": "15ed59978a010c3a80428c987a95199232fbc4fe0504c9c2b858169435a1c729"
+    },
+    {
+      "path": "src/whatsappInbox.css",
+      "bytes": 4270,
+      "sha256": "fae892ae84b94df1e5a69c11a0772d9eebf7838bf7f03f24547161d7a6894a43"
+    },
+    {
+      "path": "src/WhatsAppRecovery.jsx",
+      "bytes": 2278,
+      "sha256": "138cc84b8db507bc6d3653162f9ac4ef6e02e3bc4ca0dfb0d64763426d016609"
+    },
+    {
+      "path": "templates/Plantilla_Separacion_Infinity224_Google_Docs.docx",
+      "bytes": 39803,
+      "sha256": "b068362fa18d1e331ca4b9530e8b13fa1b252bcd1a2174b507916fd7b82b9efd"
+    },
+    {
+      "path": "templates/separacion-base.txt",
+      "bytes": 6481,
+      "sha256": "0d610fca690228446394b883e6a47b38d40f6dd2f9efc2b30aec8f161b75e179"
+    },
+    {
+      "path": "tests/backup-scheduler.test.cjs",
+      "bytes": 2354,
+      "sha256": "173bb258db07e1694e17fad73175a77ae835e21870d285c4b62f38654cebf6b9"
+    },
+    {
+      "path": "tests/calendar-invite.test.cjs",
+      "bytes": 2350,
+      "sha256": "3aa2008c588653db150d8d79ad688cf9ae1a0b1432b8264af2b71bc8c164dce9"
+    },
+    {
+      "path": "tests/creative-campaigns.test.cjs",
+      "bytes": 16855,
+      "sha256": "dce191c62caa12aee0c42609e541d395c9f58a9558c2a450e02f543770504ac8"
+    },
+    {
+      "path": "tests/creative-renderer.test.cjs",
+      "bytes": 2795,
+      "sha256": "6a3f2a857545ac31e18dea5414bf78e078aec702d71614bddc8e17a861e75a77"
+    },
+    {
+      "path": "tests/creative-web.test.cjs",
+      "bytes": 5365,
+      "sha256": "db60db36117dd8bdd569dbde933f77fe4de613942a562e04cee1181a3652314d"
+    },
+    {
+      "path": "tests/crm-recovery.test.cjs",
+      "bytes": 9569,
+      "sha256": "9221578cc2fc55e4e02802501b3f49344e6d1d563138f7c4b7ce048ab232a2b3"
+    },
+    {
+      "path": "tests/document-recognition.test.cjs",
+      "bytes": 4589,
+      "sha256": "1843c6b0f61efa478053ab0b5feee9157723756f94f25a8e38e3f9f6f65b0060"
+    },
+    {
+      "path": "tests/fixtures/funnel.cjs",
+      "bytes": 887,
+      "sha256": "7f881bec217582f7cb7ccb38e5d84f45d2657d6cae77afb01cf7e3272f92d06d"
+    },
+    {
+      "path": "tests/funnel.test.cjs",
+      "bytes": 9631,
+      "sha256": "00b499ca43eb643cf868c6a8a66a3cee12b7bca7dc31db52b85d420534039e85"
+    },
+    {
+      "path": "tests/gemini-service.test.cjs",
+      "bytes": 1386,
+      "sha256": "2f485013db936b3c5a7ebf9a71dc18e005faf01749caf329bdfcc52d39817b21"
+    },
+    {
+      "path": "tests/lola-integration.test.cjs",
+      "bytes": 7481,
+      "sha256": "8a3b61e3dea048439f0be2709327dc04a016cef770f9171982dab62433517c77"
+    },
+    {
+      "path": "tests/memory-firestore.cjs",
+      "bytes": 3013,
+      "sha256": "558653e13b2e37bbc9bf6e901db4bc19295ca1328a2ff6864333eb1d605d3b67"
+    },
+    {
+      "path": "tests/n8n-flows.test.cjs",
+      "bytes": 9792,
+      "sha256": "f3b9a50cabaa74658f858efb071c0ffdcb78aa68041c0d32492e1674052bc3f7"
+    },
+    {
+      "path": "tests/omnichannel.test.cjs",
+      "bytes": 12317,
+      "sha256": "a0f7f77ba6e77f33a534aaa5451dc1a90e3584aad6f18f4666e64e84a3c76940"
+    },
+    {
+      "path": "tests/publications.test.cjs",
+      "bytes": 6463,
+      "sha256": "bd752d7b244085120cb4be481d46dfeeaf6bcaf12e67a4ff38d4d1e79ad84fac"
+    },
+    {
+      "path": "tests/quote.test.cjs",
+      "bytes": 794,
+      "sha256": "092110bfd3435917a8f2b0b437df3aec68835b64fffa38d44c8378f0fb778556"
+    },
+    {
+      "path": "tests/separation.test.cjs",
+      "bytes": 7951,
+      "sha256": "596062615d7e1646c50f91b058ca80d1cb2c2653e04d68f6627933d047d1364d"
+    },
+    {
+      "path": "tests/shared-crm-protocol.test.cjs",
+      "bytes": 5339,
+      "sha256": "8a2edd074490e076e011ef8a11f0de935756cb640c37aad0d1746ee6d07a4e31"
+    },
+    {
+      "path": "tests/social-ads.test.cjs",
+      "bytes": 17573,
+      "sha256": "6fed9ee9bd60d36b2bd7dc5251146dac286056a615f83ca52abb5c587d6d773a"
+    },
+    {
+      "path": "tests/social-web.test.cjs",
+      "bytes": 5516,
+      "sha256": "14c6fb580f0d1bcc18b8cfaa6d90c8cab8f400e8891e3098e3e936a5cfba4c1a"
+    },
+    {
+      "path": "tests/storage.test.cjs",
+      "bytes": 2285,
+      "sha256": "f976529270e69a4a91b46446769cd3bd205d8949fcf23223746867dea4c52d47"
+    },
+    {
+      "path": "tests/unified-protocol.test.cjs",
+      "bytes": 5987,
+      "sha256": "973dd5ea82332ac3eadd51d8ea70ad616790b84c4349fd4eb0bdc9c67c5fcfe1"
+    },
+    {
+      "path": "tests/unified-workflow.test.cjs",
+      "bytes": 5233,
+      "sha256": "ad2b6f35245e9269f8175fcb3f6c8b162cbfc3798943bca14d30eea171f03260"
+    },
+    {
+      "path": "tests/updates.test.cjs",
+      "bytes": 13738,
+      "sha256": "40711284561ee4faf82802486d35c0edf568fe3086a2972ab85db9d0e31f5694"
+    },
+    {
+      "path": "tests/web.test.cjs",
+      "bytes": 14331,
+      "sha256": "8ab35cd4c7be93956d849c8730437ece29b3870ab3d7076aef0abfad890a648f"
+    },
+    {
+      "path": "tests/whatsapp-agenda.test.cjs",
+      "bytes": 20085,
+      "sha256": "7c33d3d47405c3e2e98e18e950f213e4fa20b3bf0ef4cb5d0dd715fc34001e65"
+    },
+    {
+      "path": "tests/whatsapp-inbox.test.cjs",
+      "bytes": 12139,
+      "sha256": "22ddc53d75750f9b7b91afc1470761e9adf164f708cf2e025481a6c3f238a83b"
+    },
+    {
+      "path": "tests/whatsapp-service.test.cjs",
+      "bytes": 15564,
+      "sha256": "59e5aba91cb1eb66093c03197cc492c659bfe18328a0acab1f673d7beaf4283c"
+    },
+    {
+      "path": "tests/whatsapp-ui-smoke.cjs",
+      "bytes": 5284,
+      "sha256": "c78ffdd3dbec0fe8b01ec1c736f5b2d5ed678d9adfd65a7260d515c89eec5b56"
+    },
+    {
+      "path": "tests/whatsapp-web.test.cjs",
+      "bytes": 8309,
+      "sha256": "518849c0e5b2fcb86130d0d59c12b6a5acde8622640a5e28b67cd574e87f6715"
+    },
+    {
+      "path": "tsconfig.json",
+      "bytes": 91,
+      "sha256": "ede5cce958365bda5dbc435921405bd15fd74ac5f3e335d53f765a3a921c2972"
+    },
+    {
+      "path": "validacion/6762-broader-tests-with-socket-limits.txt",
+      "bytes": 17205,
+      "sha256": "f08afbc103d39e04d9624dd1bd59f35dab2116267759b91577b102cdff4d6b1b"
+    },
+    {
+      "path": "validacion/6762-release-tests.txt",
+      "bytes": 14666,
+      "sha256": "80fb601aff30b196c21a0052ac3aa6e32945650c7ebd216bc9fdbcdd1108dff2"
+    },
+    {
+      "path": "VALIDACION-67.6.2.json",
+      "bytes": 1219,
+      "sha256": "d70d9a1f7960910362c0a1da3b4604534d87e2a6ff644587741a182455674e61"
+    },
+    {
+      "path": "vite.config.js",
+      "bytes": 220,
+      "sha256": "abccbeaa1ae5a5f7b7f4b20cca58debaf81b48615789a12dd0c4def0621a1e8a"
+    }
+  ]
+}

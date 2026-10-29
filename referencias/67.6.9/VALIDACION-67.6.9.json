@@ -1,0 +1,156 @@
+{
+  "version": "67.6.9",
+  "workflow": "00-Lola-Unificado-67.6.9-INACTIVO.json",
+  "nodes": 71,
+  "active": false,
+  "selected_tests": {
+    "passed": 212,
+    "failed": 0,
+    "provider_calls": "simuladas",
+    "http_protocol": "manejador real en proceso, sin sockets"
+  },
+  "excluded_socket_tests": 5,
+  "exclusion_reason": "EACCES al conectar a 127.0.0.1 en el entorno de trabajo; no presentados como aprobados",
+  "frontend": "Compilación Vite producción correcta; no verificación visual en servidor real",
+  "production_deployed": false,
+  "messages_sent_to_customers": 0,
+  "real_provider_mutations": 0,
+  "pending": [
+    "Configurar y validar conexión privada o TLS verificado entre Namecheap y VPS, o ubicar el servidor del CRM junto a PostgreSQL",
+    "Instalar esquema SQL, importar datos reales con escritores anteriores detenidos y validar la restauración",
+    "Configurar archivo privado de conexión, permisos y pool; instalar el CRM y el JSON de la misma versión",
+    "Conciliar sesiones históricas Telegram por identidad verificada",
+    "Registrar y aprobar propuesta de plantilla en el WABA real; verificar permisos y envío con destinatario de prueba",
+    "Importar y ejecutar en motor real n8n con credenciales",
+    "Validar Calendar, invitaciones y Gmail reales",
+    "Permisos y callbacks Meta/Instagram/Facebook/formularios",
+    "Autorizar Display API TikTok para publicaciones",
+    "Acceso y adaptador TikTok Messaging, envío bloqueado",
+    "Conciliar e importar Postgres histórico",
+    "Validación visual del CRM instalado",
+    "Registrar cumpleaños y permisos específicos de compradores verificados",
+    "Obtener aprobación de la plantilla de cumpleaños en Meta",
+    "Envío directo de archivos desde CRM y copia permanente de adjuntos siguen pendientes",
+    "Instalar 67.6.7 y comprobar el acceso técnico de la credencial del servidor a IA LOLA",
+    "PDF/video privados: sin extracción/transcripción ni envío binario automático",
+    "Probar notas de voz reales para solicitud, selección y confirmación de visita con transcripción en n8n",
+    "Aprobar en Meta la plantilla interna orok_alerta_asesor_v1 y validar ambos destinatarios",
+    "Validar alertas reales, creación de Meet y recordatorios de Calendar",
+    "Probar cadencia automática con SLA y consentimiento reales; comprobar /asesor sin mensaje al cliente"
+  ],
+  "original_telegram_sha256": "77f317e6cce031bd578aa6f9b8a18627ca914b91f9e6cfd1b82fdf5570970696",
+  "template_proposal": "orok_retomar_consulta_v1",
+  "template_actual_approval": "PENDING_ACCOUNT_SUBMISSION",
+  "real_meta_sends": 0,
+  "new_approved_template_tests": 11,
+  "birthday_template": "orok_cumpleanos_compradores_v1",
+  "birthday_default_enabled": false,
+  "birthday_template_approval": "PENDING_ACCOUNT_SUBMISSION",
+  "video_delivery": "approved links only; no invented video or binary file dispatch",
+  "drive_folder": {
+    "id": "1XzOlumWN8jPhWMCQ1yge3cZ4tBiTuU6z",
+    "name": "IA LOLA",
+    "authorization": "permanent user-confirmed Gerencia authorization",
+    "default_enabled": true,
+    "production_credential_access_verified": false,
+    "runtime_read_scope": "drive.readonly",
+    "chat_connector_folder_enumerated": true,
+    "per_file_approval_required": false,
+    "pdf_text_extraction": false,
+    "video_transcription": false
+  },
+  "showroom": {
+    "initiation": [
+      "whatsapp_text",
+      "whatsapp_audio_transcript",
+      "crm"
+    ],
+    "email_as_initiation_required": false,
+    "email_purpose": "Calendar invitation",
+    "natural_language_slot_selection": "exactly one current proposed day/time; otherwise clarification",
+    "natural_language_confirmation": "date/time restated, then explicit yes/no by text/audio/button",
+    "slot_button_confirmation": "selecting the explicit day/time button confirms selection",
+    "recheck_before_calendar_write": true,
+    "final_confirmation": "only after successful Calendar response",
+    "new_tests": 10,
+    "live_audio_transcription_tested": false
+  },
+  "memory": {
+    "short_term_turns": 16,
+    "persistent": true,
+    "customer_statement_limit": 12,
+    "topic_limit": 16,
+    "statement_topic_days": 180,
+    "separate_internal_memory": true,
+    "historic_postgres_imported": false,
+    "backend": "postgresql"
+  },
+  "automatic_followup": {
+    "default_enabled": true,
+    "max_attempts": 3,
+    "delays_minutes": [
+      120,
+      1440,
+      4320
+    ],
+    "sla_and_optin_required": true,
+    "cancel_on_any_inbound": true,
+    "outside_window_requires_approved_template": true,
+    "unknown_not_retried": true,
+    "cadence_choice": "User selected up to 3 spaced configurable follow-ups"
+  },
+  "advisor": {
+    "business_phone": "51912971742",
+    "internal_alert_phones": [
+      "51987208622",
+      "51951532021"
+    ],
+    "email": "ventas@orok.com.pe",
+    "template": "orok_alerta_asesor_v1",
+    "template_approval": "PENDING_ACCOUNT_SUBMISSION",
+    "meeting_modes": [
+      "whatsapp",
+      "meet"
+    ],
+    "minimum_notice_minutes": 120,
+    "calendar_organizer_reminders": [
+      {
+        "method": "email",
+        "minutes": 30
+      },
+      {
+        "method": "popup",
+        "minutes": 10
+      }
+    ],
+    "control_command": "/asesor",
+    "command_sent_to_customer": false,
+    "operator_and_scoped_private_alert_reply_only": true
+  },
+  "postgres_schema_applied_in_vps": false,
+  "postgres_network_from_crm_verified": false,
+  "crm_host": "Namecheap cPanel",
+  "postgres_host": "Hostinger VPS",
+  "storage": {
+    "canonical_transactional_store": "PostgreSQL",
+    "commercial_firestore_projection": true,
+    "separate_firebase_auth": true,
+    "firebase_chat_fallback": false,
+    "redis_required": false,
+    "short_term_messages": 16,
+    "context_chars_per_old_message": 600,
+    "preserves_full_stored_history": true
+  },
+  "local_sql_engine": "PGlite 0.5.10",
+  "pg_driver": "8.23.1",
+  "native_postgres_context_node": true,
+  "sql_memory_test_firebase_operations": 0,
+  "n8n_draft_imported": true,
+  "n8n_draft_url": "https://n8n-n8n.kvrq8w.easypanel.host/workflow/RaOagifGauJ9cEc6",
+  "n8n_executed": false,
+  "n8n_published": false,
+  "user_requested_download_only": true,
+  "original_crm_replaced": false,
+  "original_workflows_replaced": false,
+  "live_tests_deferred": true
+}

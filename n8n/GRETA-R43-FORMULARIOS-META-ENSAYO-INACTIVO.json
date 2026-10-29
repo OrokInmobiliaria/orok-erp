@@ -1,0 +1,473 @@
+{
+ "name": "ERP R43 · G.R.E.T.A · Formularios instantáneos Meta · ENSAYO",
+ "nodes": [
+  {
+   "id": "9abb4497-0ca3-4f69-b4ba-730c1d0ffb04",
+   "name": "Formularios · revisar cola cada 10 minutos",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "minutes",
+       "minutesInterval": 10
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "988d5c85-7cec-4da8-aa69-e9ea0bc70e9e",
+   "name": "Tomar formulario pendiente en CRM",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    240,
+    0
+   ],
+   "credentials": {
+    "httpHeaderAuth": {
+     "id": "OROKR41CRM20261028",
+     "name": "R41 CRM ensayo"
+    }
+   },
+   "parameters": {
+    "method": "POST",
+    "url": "https://lola-pruebas-crm-r41-ensayo.kvrq8w.easypanel.host/api/integrations/lola",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpHeaderAuth",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({action:'lead_form_claim'}) }}",
+    "options": {
+     "timeout": 30000
+    }
+   }
+  },
+  {
+   "id": "7d567438-45ab-4525-a9c5-3ee5d9cb275f",
+   "name": "¿Hay formulario en cola?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 1,
+   "position": [
+    480,
+    0
+   ],
+   "parameters": {
+    "conditions": {
+     "boolean": [
+      {
+       "value1": "={{ !!$json.value?.job }}",
+       "value2": true
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "31442a01-f3c7-47c0-83e7-f9773ee619fc",
+   "name": "Configuración",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    720,
+    -100
+   ],
+   "parameters": {
+    "jsCode": "// Completar antes de activar: ID numérico de la página de Facebook de ÖRÖK y versión de la Graph API.\nreturn [{json:{page_id:'CONFIGURAR_PAGE_ID', api_version:'v21.0'}}];"
+   }
+  },
+  {
+   "id": "4f9fb98c-953e-46a6-b918-0eb68a1eafb9",
+   "name": "¿Crear o archivar?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 1,
+   "position": [
+    960,
+    -100
+   ],
+   "parameters": {
+    "conditions": {
+     "boolean": [
+      {
+       "value1": "={{ $('Tomar formulario pendiente en CRM').first().json.value.job.tipo === 'crear' }}",
+       "value2": true
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "15194527-156d-4930-a756-958b535491b5",
+   "name": "Crear formulario en Meta",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1200,
+    -200
+   ],
+   "credentials": {
+    "facebookGraphApi": {
+     "id": "CONFIGURAR_META",
+     "name": "Meta · página ÖRÖK (token de página)"
+    }
+   },
+   "onError": "continueErrorOutput",
+   "parameters": {
+    "method": "POST",
+    "url": "={{ 'https://graph.facebook.com/' + $('Configuración').first().json.api_version + '/' + $('Configuración').first().json.page_id + '/leadgen_forms' }}",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "facebookGraphApi",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify($('Tomar formulario pendiente en CRM').first().json.value.job.payload) }}",
+    "options": {
+     "timeout": 60000
+    }
+   }
+  },
+  {
+   "id": "70d70e04-e489-419a-af7a-da0b659576df",
+   "name": "¿Archivar versión anterior?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 1,
+   "position": [
+    1440,
+    -260
+   ],
+   "parameters": {
+    "conditions": {
+     "boolean": [
+      {
+       "value1": "={{ !!$('Tomar formulario pendiente en CRM').first().json.value.job.archivar_anterior }}",
+       "value2": true
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "ecae3063-d413-40d3-9756-ce71d599f1dd",
+   "name": "Archivar versión anterior en Meta",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1680,
+    -340
+   ],
+   "credentials": {
+    "facebookGraphApi": {
+     "id": "CONFIGURAR_META",
+     "name": "Meta · página ÖRÖK (token de página)"
+    }
+   },
+   "onError": "continueRegularOutput",
+   "parameters": {
+    "method": "POST",
+    "url": "={{ 'https://graph.facebook.com/' + $('Configuración').first().json.api_version + '/' + $('Tomar formulario pendiente en CRM').first().json.value.job.archivar_anterior }}",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "facebookGraphApi",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({status:'ARCHIVED'}) }}",
+    "options": {
+     "timeout": 60000
+    }
+   }
+  },
+  {
+   "id": "b0aff841-fcbc-4066-9f94-9132c5b42c8c",
+   "name": "Confirmar formulario al CRM",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1920,
+    -260
+   ],
+   "credentials": {
+    "httpHeaderAuth": {
+     "id": "OROKR41CRM20261028",
+     "name": "R41 CRM ensayo"
+    }
+   },
+   "parameters": {
+    "method": "POST",
+    "url": "https://lola-pruebas-crm-r41-ensayo.kvrq8w.easypanel.host/api/integrations/lola",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpHeaderAuth",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({action:'lead_form_complete', job_id:$('Tomar formulario pendiente en CRM').first().json.value.job.id, lease_token:$('Tomar formulario pendiente en CRM').first().json.value.job.lease_token, external_id:String($('Crear formulario en Meta').first().json.id)}) }}",
+    "options": {
+     "timeout": 30000
+    }
+   }
+  },
+  {
+   "id": "f25d2124-3acf-43b6-a186-a8a69130d573",
+   "name": "Archivar formulario en Meta",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1200,
+    40
+   ],
+   "credentials": {
+    "facebookGraphApi": {
+     "id": "CONFIGURAR_META",
+     "name": "Meta · página ÖRÖK (token de página)"
+    }
+   },
+   "onError": "continueErrorOutput",
+   "parameters": {
+    "method": "POST",
+    "url": "={{ 'https://graph.facebook.com/' + $('Configuración').first().json.api_version + '/' + $('Tomar formulario pendiente en CRM').first().json.value.job.external_id }}",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "facebookGraphApi",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({status:'ARCHIVED'}) }}",
+    "options": {
+     "timeout": 60000
+    }
+   }
+  },
+  {
+   "id": "8d32c28c-487b-4ce7-9026-7c64e3fb08a3",
+   "name": "Confirmar archivo al CRM",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1440,
+    0
+   ],
+   "credentials": {
+    "httpHeaderAuth": {
+     "id": "OROKR41CRM20261028",
+     "name": "R41 CRM ensayo"
+    }
+   },
+   "parameters": {
+    "method": "POST",
+    "url": "https://lola-pruebas-crm-r41-ensayo.kvrq8w.easypanel.host/api/integrations/lola",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpHeaderAuth",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({action:'lead_form_complete', job_id:$('Tomar formulario pendiente en CRM').first().json.value.job.id, lease_token:$('Tomar formulario pendiente en CRM').first().json.value.job.lease_token}) }}",
+    "options": {
+     "timeout": 30000
+    }
+   }
+  },
+  {
+   "id": "c3ee70e1-d126-4c41-b987-a6d5b77db618",
+   "name": "Avisar fallo de formulario al CRM",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1440,
+    200
+   ],
+   "credentials": {
+    "httpHeaderAuth": {
+     "id": "OROKR41CRM20261028",
+     "name": "R41 CRM ensayo"
+    }
+   },
+   "parameters": {
+    "method": "POST",
+    "url": "https://lola-pruebas-crm-r41-ensayo.kvrq8w.easypanel.host/api/integrations/lola",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpHeaderAuth",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({action:'lead_form_fail', job_id:$('Tomar formulario pendiente en CRM').first().json.value.job.id, lease_token:$('Tomar formulario pendiente en CRM').first().json.value.job.lease_token, error:String($json.error?.message || $json.message || 'Meta rechazó el formulario').slice(0,280)}) }}",
+    "options": {
+     "timeout": 30000
+    }
+   }
+  }
+ ],
+ "connections": {
+  "Formularios · revisar cola cada 10 minutos": {
+   "main": [
+    [
+     {
+      "node": "Tomar formulario pendiente en CRM",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Tomar formulario pendiente en CRM": {
+   "main": [
+    [
+     {
+      "node": "¿Hay formulario en cola?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "¿Hay formulario en cola?": {
+   "main": [
+    [
+     {
+      "node": "Configuración",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    []
+   ]
+  },
+  "Configuración": {
+   "main": [
+    [
+     {
+      "node": "¿Crear o archivar?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "¿Crear o archivar?": {
+   "main": [
+    [
+     {
+      "node": "Crear formulario en Meta",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Archivar formulario en Meta",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Crear formulario en Meta": {
+   "main": [
+    [
+     {
+      "node": "¿Archivar versión anterior?",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Avisar fallo de formulario al CRM",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "¿Archivar versión anterior?": {
+   "main": [
+    [
+     {
+      "node": "Archivar versión anterior en Meta",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Confirmar formulario al CRM",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Archivar versión anterior en Meta": {
+   "main": [
+    [
+     {
+      "node": "Confirmar formulario al CRM",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Archivar formulario en Meta": {
+   "main": [
+    [
+     {
+      "node": "Confirmar archivo al CRM",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Avisar fallo de formulario al CRM",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "timezone": "America/Lima",
+  "executionOrder": "v1"
+ },
+ "active": false,
+ "pinData": {},
+ "versionId": "dad30843-5e95-418f-8201-369ea8b52a7c",
+ "meta": {
+  "templateCredsSetupCompleted": false
+ }
+}

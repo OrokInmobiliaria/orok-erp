@@ -1,0 +1,16 @@
+L.O.L.A COMERCIAL CON CLAUDE — ENSAYO R41 — 28/10/2026 Lima
+Flujo n8n: 5I6vMRspWFcWWlA1. 110 nodos; ninguno agregado ni eliminado; todas las conexiones conservadas, verificado con comparar conserva_todo=true.
+Modelo Lola Comercial sustituye el adaptador OpenAI por lmChatAnthropic 1.3; conserva nombre, ID y conexiones al agente y formateador. Modelo claude-haiku-5-5, máximo 1800 tokens por llamada. Gemini de apoyo conservado; transcripción y embeddings OpenAI no se eliminaron ni se cambiaron.
+Credencial nativa anthropicApi reutiliza la clave existente de M.O.R.A.; sin generar ni cambiar claves. Solo nombres/ID de credenciales en el JSON.
+HTTP apunta al host R41 con credencial restringida OROKR41CRM20261028. PostgreSQL aislado orok_r41_ensayo_20261028 con OROKR41PG20261028. Query Parameters usa un array con JSON para $1::jsonb. Se conserva lola_unified.context_for_job.
+24/24 pruebas locales de lola-policy.test.cjs y lola-integration.test.cjs aprobadas.
+Prueba completa: ejecución 97874, success, modo manual, 29/10/2026 00:21:17.009–00:21:23.482 UTC (28/10/2026 19:21 Lima), 6.473 segundos.
+Confirmados entre los nodos ejecutados: recuperar memoria PostgreSQL, aplicar memoria, evaluar apoyo Gemini, Modelo Lola Comercial (Anthropic), Lola Comercial, esquema, formatear ficha y guardar resultado en CRM.
+Pregunta interna en Gestión y seguimiento de Oroktest: «Gracias, por ahora solo estoy conociendo el proyecto. ¿Puedes acompañarme sin presionarme?».
+Respuesta visible: «Gracias por contarme, con gusto te acompaño sin presión. Puedo compartirte información general del proyecto o ayudarte a hablar con un asesor cuando lo necesites. ¿Qué te gustaría conocer primero?».
+La prueba usó el canal interno crm, no Messenger/Instagram/WhatsApp. No se enviaron mensajes al cliente, correos, eventos de agenda ni publicaciones. No cambió la etapa ni posición Kanban.
+No se habilitaron conexiones sociales de R41. Todos los disparadores automáticos y el webhook de entrada se importaron apagados; solo el disparador manual permitió la prueba.
+PUBLICADA Y COMPROBADA: el titular publicó. Verificado active=true y versionId=activeVersionId; 110 nodos, ningún nodo faltante y conexiones idénticas a la copia completa. Solo sondeo principal cada 10 segundos y disparador manual habilitados.
+Prueba automática posterior: ejecución 98008, success, modo trigger, 29/10/2026 00:28:30.071–00:28:34.560 UTC (28/10, 19:28 Lima), procesamiento 4.489 segundos. No se ejecutó n8n manualmente. La consulta «Perfecto, prefiero ir paso a paso. ¿Podemos continuar así?» recibió respuesta visible: «¡Con gusto, Oroktest! 😊 Avancemos paso a paso. ¿Qué te gustaría conocer primero: la ubicación, los acabados o las tipologías de departamentos?».
+No se enviaron mensajes externos; el diálogo es interno del CRM. Tiempo de procesamiento medido: 4.489 s, más la espera del sondeo. No se garantiza un máximo absoluto de 15 segundos.
+Voz y publicación siguen con conectores pendientes .invalid y sus ramas apagadas. No se declaran probados. No se actualizó el CRM vivo.

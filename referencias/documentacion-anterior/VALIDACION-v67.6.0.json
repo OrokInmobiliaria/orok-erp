@@ -1,0 +1,34 @@
+{
+  "version": "67.6.0",
+  "date": "2026-10-19",
+  "tests": {
+    "total": 196,
+    "passed": 196,
+    "failed": 0,
+    "provider_requests": "simulated; no live Claude inference"
+  },
+  "build": "passed",
+  "visual_browser_test": "pending; no installed browser",
+  "video_runtime_tests": "simulated MediaRecorder completion/cancellation; codec and visual testing pending",
+  "live_deployment": "not_performed",
+  "n8n_previous_flows_unchanged": true,
+  "new_flow": "08-Campanas-Claude-CRM-INACTIVO.json",
+  "campaigns_menu": [
+    "brief y análisis",
+    "propuestas y textos",
+    "recursos",
+    "gráficas",
+    "reels e historias",
+    "revisión e historial",
+    "conexión Claude"
+  ],
+  "production_actions": "no ad publication, budget change, lead move, message, email or booking",
+  "pending": [
+    "Claude key/model/API availability",
+    "n8n import and live worker test",
+    "real PNG/video/audio browser test",
+    "prior channel integrations and TikTok Messaging official adapter",
+    "hosting cleanup"
+  ],
+  "creative_media": "local browser composition with approved source assets; no synthetic image/video/voice model"
+}

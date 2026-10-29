@@ -1,0 +1,9 @@
+# Corrección de correo de aprobación · 67.6.10 smtp-r1
+
+La imagen del ensayo no dispone de /usr/sbin/sendmail. El servidor ya no presume que el correo está conectado: permite a Gerencia autenticada configurar SMTP, incluso antes de la aprobación. Los demás usuarios no pueden configurar ni leer esa conexión. No se omite la aprobación de acceso.
+
+La cuenta de soporte es un alias hacia mmontezuma@orok.com.pe, alojado en Google según el usuario. La conexión debe autenticarse con una cuenta real de Google y una contraseña de aplicación disponible para esa cuenta; la aprobación se envía exclusivamente a soportetecnologico@orok.com.pe. El remitente es la cuenta autenticada. Gmail no se ha autenticado ni se ha probado una entrega real aún.
+
+El formulario muestra el remitente real, destinatario fijo y servidor/puerto. Antes de guardar se comprueba la conexión sin enviar correo. La contraseña y la conexión se cifran con AES-256-GCM y una clave derivada de la clave privada de sesión; el archivo queda fuera del sitio público, en el volumen privado con modo 0600. Si se rota la clave de sesión, debe configurarse nuevamente el correo. El servidor exige TLS con certificado válido y no registra claves ni contenido SMTP. La comprobación de conexión no garantiza que un correo posterior llegue a la bandeja: se verifica solicitando y recibiendo un código real.
+
+Pruebas: seis nuevas de correo, cifrado, destinatario alias, rechazo de credenciales, aprobación y permisos; todas aprobadas. Tres regresiones web de sesión, aprobación y roles aprobadas. Vite compiló 1491 módulos, con aviso existente de fragmento mayor de 500 kB. Proveedor simulado. El ensayo conserva PostgreSQL y sus datos; las entregas originales se conservan. Revisar Estado-ensayo-LOLA-20261022.md y Validacion-ENSAYO-67610.json para saber si esta revisión está desplegada.

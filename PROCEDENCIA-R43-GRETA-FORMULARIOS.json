@@ -1,0 +1,41 @@
+{
+  "base": "ERP-OROK-R42b-PROYECTOS-DRIVE-ENSAYO.zip",
+  "version": "67.6.26-r43",
+  "production_deployed": false,
+  "alcance": "G.R.E.T.A: armado automático de piezas y formularios instantáneos editables. Evaluador, Contabilidad, Proyectos/Drive R42b y flujos n8n existentes sin cambios.",
+  "changed": [
+    "CHECKLIST-LANZAMIENTO-CHATGPT.md",
+    "LEEME-PRIMERO.txt",
+    "application.cjs",
+    "business/greta.js",
+    "business/omnichannel.js",
+    "dist/index.html",
+    "dist/sw.js",
+    "dist/version.json",
+    "package.json",
+    "skills/greta-marketing/SKILL.md",
+    "src/App.jsx",
+    "src/CampaignStudio.jsx",
+    "src/Greta.jsx",
+    "src/cloudBridge.js",
+    "src/greta.css",
+    "src/navModel.mjs"
+  ],
+  "added": [
+    "CAMBIOS-R43-GRETA-FORMULARIOS-2026-10-29.md",
+    "business/leadForms.js",
+    "deploy/build-greta-formularios-workflow.cjs",
+    "dist/assets/index-BOvyTh4m.js",
+    "dist/assets/index-DYcwnddj.css",
+    "n8n/GRETA-R43-FORMULARIOS-META-ENSAYO-INACTIVO.json",
+    "tests/r43-greta-formularios-ui-smoke.cjs",
+    "tests/r43-greta-formularios.test.cjs"
+  ],
+  "removed_only_rebuilt_dist_assets": [
+    "dist/assets/index-D5LqblDD.js",
+    "dist/assets/index-sh2zdknh.css"
+  ],
+  "tests": "592/592 (npm test) + tests/r43-greta-formularios-ui-smoke.cjs escritorio y celular",
+  "n8n_nuevo_inactivo": "n8n/GRETA-R43-FORMULARIOS-META-ENSAYO-INACTIVO.json",
+  "fecha": "2026-10-29"
+}

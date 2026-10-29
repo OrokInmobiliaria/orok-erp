@@ -1,0 +1,21 @@
+M.O.R.A R41 — CONEXIÓN COMPROBADA — 28/10/2026 (Lima)
+Ámbito: ensayo aislado, no CRM vivo.
+Flujo: wnZ3Hz49jf6YsgR7 · 40 nodos y todas las conexiones originales conservados.
+Destino HTTP: lola-pruebas-crm-r41-ensayo.kvrq8w.easypanel.host/api/integrations/lola.
+PostgreSQL: orok_r41_ensayo_20261028; credencial separada OROKR41PG20261028, sin cambiar la contraseña de la base ni editar credenciales anteriores.
+Autorización CRM: credencial separada OROKR41CRM20261028, limitada al host R41 y reutilizando el secreto existente. No hay claves en este paquete.
+Consulta parametrizada como array de un JSON para $1::jsonb. La función mora.context_for_job ya existía; no se repitió la migración.
+M.O.R.A habilitada en administración del ERP; lectura semanal desactivada.
+Zona horaria America/Lima. Historial de la versión guardada verificado antes de publicar.
+11/11 pruebas locales de tests/r33-mora.test.cjs aprobadas. El primer intento local fue bloqueado por permisos de red; tras concederlos, se ejecutaron correctamente.
+Prueba integral: ejecución n8n 97664, success, 29/10/2026 00:08:26.723–00:08:31.004 UTC (28/10, 19:08 Lima), duración 4.281 segundos.
+Pregunta desde Gerencia en la pantalla del ERP, lectura de memoria PostgreSQL, llamadas a Claude y respuesta guardada en el ERP: utilidad neta S/ 485,547, TIR del proyecto 18.54% anual. La TIR del accionista que muestra la ficha es 17.93%; son indicadores distintos.
+No se modificó la evaluación ni se aplicaron propuestas; no hubo mensajes a clientes ni publicaciones externas.
+La primera ejecución falló por restricción de dominio de la credencial antigua, antes de consumir el trabajo. Se resolvió con la conexión exclusiva R41; se procesó la misma consulta pendiente.
+PUBLICACIÓN CONFIRMADA: el titular pulsó Publish. Verificado directamente active=true y versionId=activeVersionId. Sondeo automático cada 10 segundos en ejecución; semanal y mercado apagados.
+PRUEBA POSTERIOR: se envió desde el ERP una segunda consulta sobre la TIR del accionista sin ejecutar n8n manualmente. El proceso automático respondió y guardó: 17.93% anual. La respuesta quedó visible en pantalla. Las ejecuciones programadas comprobadas finalizaron correctamente.
+Al publicar: solo procesar consultas cada 10 segundos. Lectura semanal y mercado automáticos siguen desactivados. El tiempo de 4.281 s corresponde al procesamiento manual medido; la espera del sondeo se añade y no constituye garantía de 15 segundos.
+C.L.A.R.A y el CRM vivo no se modificaron. Las versiones anteriores se conservan hasta verificar la activación definitiva.
+L.O.L.A interna ya funciona con Claude; L.O.L.A comercial de 110 nodos continúa pendiente por separado.
+Respaldo privado del flujo: /root/orok-pre-final-20261028-222655/MORA-R41-40-NODOS-VERIFICADO.json.
+El JSON adjunto se exporta inactivo, sin ID, sin datos fijados y sin claves.

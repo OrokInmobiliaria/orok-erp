@@ -1,0 +1,38 @@
+GUÍA DE LANZAMIENTO: CHECKLIST-LANZAMIENTO-CHATGPT.md (lista de comprobación paso a paso para usar con ChatGPT).
+R43 · 29-oct-2026 · G.R.E.T.A arma las piezas (elige tus fotos y clips por escena y genera las que faltan) y crea formularios instantáneos editables para anuncios de Facebook, Instagram y TikTok. Ver CAMBIOS-R43-GRETA-FORMULARIOS-2026-10-29.md.
+R42 · 28-oct-2026 · Marketing sale del CRM y es un módulo propio con G.R.E.T.A (tendencias, Estudio, publicar o exportar al editor de cada red, pauta y KPIs) enlazada con L.O.L.A; G.R.E.T.A es asistente flotante del módulo, como L.O.L.A, M.O.R.A y C.L.A.R.A. Ver CAMBIOS-R42-MARKETING-GRETA-2026-10-28.md y la Fase 4b del checklist.
+R41 · 28-oct-2026 · Jefe de Obra por obra (cambia con historial y reasigna lo pendiente) y órdenes de Gerencia sin firma de jefaturas. Ver CAMBIOS-R41-JEFATURAS-2026-10-28.md.
+R40 · 28-oct-2026 · Fernando Amiquero es Jefe de Proyecto (MZA y BMG), no Jefe de Obra; empresas permitidas por persona. Ver CAMBIOS-R40-JEFE-PROYECTO-2026-10-28.md.
+R39 · 28-oct-2026 · Equipo ÖRÖK en la skill (correos, áreas y cargos de aprobación) y vinculación con los usuarios del CRM. Ver CAMBIOS-R39-EQUIPO-2026-10-28.md.
+R38 · 28-oct-2026 · Órdenes OC/OS por cualquier área habilitada, cadenas de aprobación obligatorias con aviso por correo y campanita de pendientes. Ver CAMBIOS-R38-APROBACIONES-2026-10-28.md.
+R37 · 28-oct-2026 · Módulos Control de obra y Honorarios y cobranzas; pantalla Equipos instalados (códigos de instalación). Ver CAMBIOS-R37-OBRA-COBRANZAS-2026-10-28.md.
+R36 · 28-oct-2026 · Conexión final: skills n8n, producción e instalación; ERP instalable (PWA) con código de instalación. Ver CAMBIOS-R36-CONEXION-FINAL-2026-10-28.md.
+R35 · 28-oct-2026 · Reglas en una sola fuente: skills/erp-orok-contabilidad/SKILL.md (ERP, pantalla, IA y n8n). Ver CAMBIOS-R35-SKILLS-2026-10-28.md.
+R34 · 28-oct-2026 · ERP ÖRÖK con tres módulos: CRM (L.O.L.A), Evaluador (M.O.R.A) y Contabilidad y Finanzas (C.L.A.R.A).
+Leer primero: CAMBIOS-R34-ERP-CONTABILIDAD-2026-10-28.md y LEEME-CLARA-DRIVE-R34.md. Preproducción: no reemplaza el CRM vivo.
+
+LOLA CRM · PAQUETE COMPLETO DE PREPRODUCCIÓN
+Versión interna: 67.6.17-r32c
+Revisión del paquete: r32c-login-clear2
+Fecha de cierre: 26/10/2026 (America/Lima)
+
+CONTENIDO
+- Código fuente completo del CRM.
+- dist/ construido y listo para la imagen Docker.
+- Corrección del inicio borroso aplicada en código fuente y versión construida.
+- Flujos n8n dentro de n8n/; todos se entregan INACTIVOS.
+- Memoria técnica R32 y documentación anterior.
+- Notas de estado, pendientes, migración y restauración sin pérdida.
+- Pruebas, scripts de respaldo y comprobaciones PostgreSQL del paquete original.
+
+FLUJO N8N PRINCIPAL
+Importar solamente, como copia nueva e inactiva:
+n8n/LOLA-ENSAYO-67.6.13-r30-MARKETING-CONEXIONES-INACTIVO.json
+Los demás JSON de n8n/ se conservan para comparación o recuperación; no deben importarse todos a la vez.
+
+REGLA OBLIGATORIA DE DATOS
+Este ZIP contiene aplicación y estructura, no una copia de los datos privados en ejecución. Al conectarlo o promoverlo debe conservarse íntegramente la información de la versión que esté funcionando: PostgreSQL, leads, historial, conversaciones, responsables, enlaces, vínculos, archivos privados, conexiones, configuraciones y posiciones exactas del Kanban.
+
+No activar n8n ni sustituir la versión oficial directamente. Primero desplegar en una copia, respaldar, comparar conteos y ejecutar las pruebas indicadas en la documentación.
+
+No se incluyen contraseñas, tokens de acceso, claves privadas ni datos privados de clientes. El código conserva la configuración pública necesaria del cliente Firebase, valores ficticios de pruebas y referencias de credenciales sin sus secretos.

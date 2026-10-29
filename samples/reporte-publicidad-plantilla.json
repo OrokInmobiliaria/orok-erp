@@ -1,0 +1,26 @@
+{
+  "provider": "meta",
+  "account_id": "REEMPLAZAR_ID_CUENTA",
+  "from": "2026-10-01",
+  "to": "2026-10-01",
+  "rows": [
+    {
+      "provider": "meta",
+      "account_id": "REEMPLAZAR_ID_CUENTA",
+      "ad_id": "REEMPLAZAR_ID_ANUNCIO",
+      "campaign_id": "REEMPLAZAR_ID_CAMPANA",
+      "campaign_name": "Nombre confirmado",
+      "adset_id": "",
+      "adset_name": "",
+      "ad_name": "Nombre confirmado del anuncio",
+      "date": "2026-10-01",
+      "platform": "facebook",
+      "currency": "PEN",
+      "timezone": "America/Lima",
+      "spend": null,
+      "impressions": null,
+      "clicks": null,
+      "platform_leads": null
+    }
+  ]
+}

@@ -1,0 +1,368 @@
+[
+  {
+    "archivo": "LOLA-R41-CONEXION-FINAL-INACTIVO.json",
+    "nombre": "LOLA - ENSAYO 955318057 - 67.6.13 r30 - MARKETING Y CONEXIONES - INACTIVO",
+    "nodos": 110,
+    "activo": false,
+    "bloqueos": [],
+    "advertencias": [
+      "Nodo suelto, sin conexiones: Caracteristicas_comerciales_Supabase",
+      "Nodo suelto, sin conexiones: Comprobar conexión sin escritura",
+      "Valor por configurar en «CONECTAR · Generar voz con el proveedor».",
+      "Valor por configurar en «CONECTAR · Publicar en Meta o TikTok».",
+      "Apunta a hosts de ENSAYO: lola-pruebas-crm.kvrq8w.easypanel.host. Para producción usa «preparar» con el mapa."
+    ],
+    "info": [
+      "Nodo desactivado: Caracteristicas_comerciales_Supabase"
+    ],
+    "credenciales": [
+      {
+        "tipo": "httpHeaderAuth",
+        "nombre": "LOLA ENSAYO 955318057 - CRM",
+        "id": "QOZ8TLw3xEwtpAyz",
+        "nodos": [
+          "Tomar trabajo CRM",
+          "Descargar audio desde CRM",
+          "Guardar resultado en CRM",
+          "Autorizar operación en CRM",
+          "Registrar gestión y preparar confirmación",
+          "Seguimiento 24 horas y conciliación",
+          "Clasificar audio para agenda",
+          "Consulta o formulario normalizado",
+          "Registrar entrada en el núcleo CRM",
+          "Comprobar conexión sin escritura",
+          "Preparar recuperación con plantilla Meta",
+          "Leer publicaciones instagram y actualizar dashboard",
+          "Leer publicaciones facebook y actualizar dashboard",
+          "Leer publicaciones tiktok y actualizar dashboard",
+          "Modelo Claude analizar publicaciones y guardar en CRM",
+          "LOLA posventa · verificar comprador y felicitar cumpleaños",
+          "Ejecutar hasta tres seguimientos · SLA y Meta",
+          "Tomar propuesta creativa del CRM",
+          "Claude · ejecutar propuesta y guardar revisión en CRM",
+          "Sincronizar pauta pagada y actualizar dashboard",
+          "Preparar resumen diario en CRM",
+          "Confirmar envío del resumen",
+          "Tomar voz pendiente en CRM",
+          "Entregar voz al CRM",
+          "Avisar fallo de voz al CRM",
+          "Tomar publicación pendiente en CRM",
+          "Traer archivo de la pieza",
+          "Confirmar publicación al CRM",
+          "Avisar fallo de publicación al CRM",
+          "Pedir al CRM el ciclo creativo"
+        ]
+      },
+      {
+        "tipo": "openAiApi",
+        "nombre": "OpenAi account",
+        "id": "ChaiAoQiqDBarX1Y",
+        "nodos": [
+          "Transcribir audio",
+          "Modelo Lola Comercial",
+          "Embeddings comercial WhatsApp"
+        ]
+      },
+      {
+        "tipo": "googleSheetsOAuth2Api",
+        "nombre": "Google Sheets account",
+        "id": "hXer3e306xHpQvAc",
+        "nodos": [
+          "Catalogo_comercial_Sheets"
+        ]
+      },
+      {
+        "tipo": "supabaseApi",
+        "nombre": "Supabase account",
+        "id": "c5DoxILNtkEesJPb",
+        "nodos": [
+          "Caracteristicas_comerciales_Supabase"
+        ]
+      },
+      {
+        "tipo": "googleCalendarOAuth2Api",
+        "nombre": "Google Calendar account 3",
+        "id": "CXtKguigWGQBWpmo",
+        "nodos": [
+          "Calendar consultar disponibilidad y verificar cita",
+          "Calendar crear cita e invitar por email",
+          "Calendar reprogramar e informar cambio",
+          "Calendar cancelar y avisar invitados"
+        ]
+      },
+      {
+        "tipo": "gmailOAuth2",
+        "nombre": "Gmail account",
+        "id": "WQgi7GqgDJuxN445",
+        "nodos": [
+          "Avisar ventas por correo",
+          "Enviar resumen diario por correo"
+        ]
+      },
+      {
+        "tipo": "postgres",
+        "nombre": "LOLA ENSAYO 955318057 - PostgreSQL",
+        "id": "LUvGNJCqttq6q3Xy",
+        "nodos": [
+          "Recuperar memoria e historial · PostgreSQL"
+        ]
+      },
+      {
+        "tipo": "googlePalmApi",
+        "nombre": "Google Gemini(PaLM) Api account",
+        "id": "JCvURqIIQgjLeYiM",
+        "nodos": [
+          "Google Gemini Chat Model"
+        ]
+      }
+    ],
+    "hosts": {
+      "lola-pruebas-crm.kvrq8w.easypanel.host": [
+        "Tomar trabajo CRM",
+        "Descargar audio desde CRM",
+        "Guardar resultado en CRM",
+        "Autorizar operación en CRM",
+        "Registrar gestión y preparar confirmación",
+        "Seguimiento 24 horas y conciliación",
+        "Clasificar audio para agenda",
+        "Registrar entrada en el núcleo CRM",
+        "Comprobar conexión sin escritura",
+        "Preparar recuperación con plantilla Meta",
+        "Leer publicaciones instagram y actualizar dashboard",
+        "Leer publicaciones facebook y actualizar dashboard",
+        "Leer publicaciones tiktok y actualizar dashboard",
+        "Modelo Claude analizar publicaciones y guardar en CRM",
+        "LOLA posventa · verificar comprador y felicitar cumpleaños",
+        "Ejecutar hasta tres seguimientos · SLA y Meta",
+        "Tomar propuesta creativa del CRM",
+        "Claude · ejecutar propuesta y guardar revisión en CRM",
+        "Sincronizar pauta pagada y actualizar dashboard",
+        "Preparar resumen diario en CRM",
+        "Confirmar envío del resumen",
+        "Tomar voz pendiente en CRM",
+        "Entregar voz al CRM",
+        "Avisar fallo de voz al CRM",
+        "Tomar publicación pendiente en CRM",
+        "Traer archivo de la pieza",
+        "Confirmar publicación al CRM",
+        "Avisar fallo de publicación al CRM",
+        "Pedir al CRM el ciclo creativo"
+      ],
+      "configurar-proveedor-de-voz.invalid": [
+        "CONECTAR · Generar voz con el proveedor"
+      ],
+      "configurar-red-social.invalid": [
+        "CONECTAR · Publicar en Meta o TikTok"
+      ]
+    },
+    "webhooks": [
+      {
+        "nodo": "Consulta o formulario normalizado",
+        "ruta": "lola-ensayo-955318057-9e589694ed80",
+        "autenticacion": "headerAuth"
+      }
+    ],
+    "disparadores": [
+      "Consultar cola cada 10 segundos (scheduleTrigger)",
+      "Consultar cola manualmente (manualTrigger)",
+      "Revisar ofertas y tareas cada minuto (scheduleTrigger)",
+      "Consulta o formulario normalizado (webhook)",
+      "Leer publicaciones cada día (scheduleTrigger)",
+      "Revisar cumpleaños de compradores cada día (scheduleTrigger)",
+      "Revisar seguimiento automático según SLA (scheduleTrigger)",
+      "Revisar propuestas creativas pendientes (scheduleTrigger)",
+      "Actualizar pauta Meta y TikTok cada día (scheduleTrigger)",
+      "Resumen diario de gestión · 7:30 (scheduleTrigger)",
+      "Voz IA · revisar cola cada 2 minutos (scheduleTrigger)",
+      "Publicación · revisar cola cada 5 minutos (scheduleTrigger)",
+      "Ciclo creativo · lunes 9:00 (scheduleTrigger)"
+    ],
+    "listo": true
+  },
+  {
+    "archivo": "MORA-R41-CONEXION-FINAL-INACTIVO.json",
+    "nombre": "M.O.R.A - ENSAYO 955318057 - 67.6.17 - EVALUADOR CONVERSACIONAL - INACTIVO",
+    "nodos": 40,
+    "activo": false,
+    "bloqueos": [],
+    "advertencias": [
+      "Apunta a hosts de ENSAYO: lola-pruebas-crm.kvrq8w.easypanel.host. Para producción usa «preparar» con el mapa."
+    ],
+    "info": [],
+    "credenciales": [
+      {
+        "tipo": "httpHeaderAuth",
+        "nombre": "LOLA ENSAYO 955318057 - CRM",
+        "id": "QOZ8TLw3xEwtpAyz",
+        "nodos": [
+          "Tomar consulta M.O.R.A del CRM",
+          "Guardar respuesta de M.O.R.A en CRM",
+          "Pedir lectura semanal al CRM",
+          "Guardar lectura semanal en CRM",
+          "Tomar lectura de mercado del CRM",
+          "Guardar lectura de mercado en CRM"
+        ]
+      },
+      {
+        "tipo": "postgres",
+        "nombre": "LOLA ENSAYO 955318057 - PostgreSQL",
+        "id": "LUvGNJCqttq6q3Xy",
+        "nodos": [
+          "Recuperar evaluación, permisos e historial · PostgreSQL"
+        ]
+      },
+      {
+        "tipo": "httpHeaderAuth",
+        "nombre": "M.O.R.A. · Anthropic API",
+        "id": "ElhGTnrym9YW7GB6",
+        "nodos": [
+          "Claude Haiku · entender consulta y escenarios",
+          "Claude · redactar respuesta de M.O.R.A",
+          "Claude · redactar lectura semanal",
+          "Claude · extraer avisos de departamentos"
+        ]
+      }
+    ],
+    "hosts": {
+      "lola-pruebas-crm.kvrq8w.easypanel.host": [
+        "Tomar consulta M.O.R.A del CRM",
+        "Guardar respuesta de M.O.R.A en CRM",
+        "Pedir lectura semanal al CRM",
+        "Guardar lectura semanal en CRM",
+        "Tomar lectura de mercado del CRM",
+        "Guardar lectura de mercado en CRM"
+      ],
+      "api.anthropic.com": [
+        "Claude Haiku · entender consulta y escenarios",
+        "Claude · redactar respuesta de M.O.R.A",
+        "Claude · redactar lectura semanal",
+        "Claude · extraer avisos de departamentos"
+      ]
+    },
+    "webhooks": [],
+    "disparadores": [
+      "Consultar cola M.O.R.A cada 10 segundos (scheduleTrigger)",
+      "Consultar cola M.O.R.A manualmente (manualTrigger)",
+      "Lectura semanal M.O.R.A · lunes 8:10 (scheduleTrigger)",
+      "Consultar lecturas de mercado cada 15 segundos (scheduleTrigger)"
+    ],
+    "listo": true
+  },
+  {
+    "archivo": "CLARA-R41-CONEXION-FINAL-INACTIVO.json",
+    "nombre": "C.L.A.R.A · Drive contable · ENSAYO 67.6.18",
+    "nodos": 69,
+    "activo": false,
+    "bloqueos": [],
+    "advertencias": [
+      "Credencial por crear o vincular en n8n: «C.L.A.R.A - Google Drive (cuenta de contabilidad)»",
+      "Credencial por crear o vincular en n8n: «C.L.A.R.A - Webhook CRM»",
+      "Apunta a hosts de ENSAYO: lola-pruebas-crm.kvrq8w.easypanel.host. Para producción usa «preparar» con el mapa."
+    ],
+    "info": [],
+    "credenciales": [
+      {
+        "tipo": "googleDriveOAuth2Api",
+        "nombre": "C.L.A.R.A - Google Drive (cuenta de contabilidad)",
+        "id": "CONFIGURAR_CLARA_GDRIVE",
+        "nodos": [
+          "Buscar subcarpeta",
+          "Crear subcarpeta",
+          "Listar archivos sueltos en Contabilidad",
+          "Buscar carpeta de destino",
+          "Buscar carpeta del mes",
+          "Crear carpeta del mes",
+          "Mover a su carpeta",
+          "Ubicar Entrada y Procesados",
+          "Listar archivos de Entrada",
+          "Descargar archivo de Entrada",
+          "Buscar CLARA-BANDEJA.json",
+          "Descargar bandeja",
+          "Actualizar bandeja",
+          "Crear bandeja",
+          "Renombrar y archivar",
+          "Listar raíz de Contabilidad",
+          "Listar contenido de subcarpeta",
+          "Guardar inventario en Contabilidad",
+          "Subir a Contabilidad"
+        ]
+      },
+      {
+        "tipo": "httpHeaderAuth",
+        "nombre": "LOLA ENSAYO 955318057 - CRM",
+        "id": "QOZ8TLw3xEwtpAyz",
+        "nodos": [
+          "Reglas · ordenar",
+          "Reglas · leer entrada",
+          "Enviar lecturas al CRM"
+        ]
+      },
+      {
+        "tipo": "postgres",
+        "nombre": "LOLA ENSAYO 955318057 - PostgreSQL",
+        "id": "LUvGNJCqttq6q3Xy",
+        "nodos": [
+          "Bitácora de archivos · PostgreSQL",
+          "Guardar lecturas · PostgreSQL"
+        ]
+      },
+      {
+        "tipo": "httpHeaderAuth",
+        "nombre": "M.O.R.A. · Anthropic API",
+        "id": "ElhGTnrym9YW7GB6",
+        "nodos": [
+          "Claude · leer comprobante o voucher"
+        ]
+      },
+      {
+        "tipo": "httpHeaderAuth",
+        "nombre": "C.L.A.R.A - Webhook CRM",
+        "id": "CONFIGURAR_CLARA_WEBHOOK",
+        "nodos": [
+          "Recibir archivo del CRM"
+        ]
+      }
+    ],
+    "hosts": {
+      "www.googleapis.com": [
+        "Buscar subcarpeta",
+        "Crear subcarpeta",
+        "Listar archivos sueltos en Contabilidad",
+        "Buscar carpeta de destino",
+        "Buscar carpeta del mes",
+        "Crear carpeta del mes",
+        "Ubicar Entrada y Procesados",
+        "Listar archivos de Entrada",
+        "Buscar CLARA-BANDEJA.json",
+        "Crear bandeja",
+        "Listar raíz de Contabilidad",
+        "Listar contenido de subcarpeta",
+        "Guardar inventario en Contabilidad"
+      ],
+      "lola-pruebas-crm.kvrq8w.easypanel.host": [
+        "Reglas · ordenar",
+        "Reglas · leer entrada",
+        "Enviar lecturas al CRM"
+      ],
+      "api.anthropic.com": [
+        "Claude · leer comprobante o voucher"
+      ]
+    },
+    "webhooks": [
+      {
+        "nodo": "Recibir archivo del CRM",
+        "ruta": "clara-drive-guardar",
+        "autenticacion": "headerAuth"
+      }
+    ],
+    "disparadores": [
+      "Preparar carpetas (ejecutar una vez) (manualTrigger)",
+      "Ordenar cada 10 minutos (scheduleTrigger)",
+      "Leer Entrada cada 15 minutos (scheduleTrigger)",
+      "Leer Entrada manualmente (manualTrigger)",
+      "Inventario de carpetas (manualTrigger)",
+      "Recibir archivo del CRM (webhook)"
+    ],
+    "listo": true
+  }
+]

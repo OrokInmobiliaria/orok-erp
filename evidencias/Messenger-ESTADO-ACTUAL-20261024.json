@@ -1,0 +1,80 @@
+{
+  "fecha_lima": "2026-10-24",
+  "postgresql": {
+    "consulta_json_ejecuta": true,
+    "ultimo_trabajo": "trabajo real recuperado en ejecución 58902",
+    "hay_trabajo": "ejecutado correctamente, salida false; en UI usar {{ ... }} sin = inicial",
+    "recuperacion_real_vigente": "APROBADA: ok=true, memory.storage=postgresql, history con mensaje entrante real, nodo Success39ms"
+  },
+  "messenger": {
+    "pagina": "745193628688500",
+    "recepcion_habilitada": true,
+    "envios_habilitados": true,
+    "automatico": false,
+    "consultas_nuevas": "Solo registro",
+    "contactos_autorizados": [
+      "26128144696823748",
+      "25505909242384087"
+    ],
+    "ultimo_mensaje_observado_bandeja_lima": "2026-10-24 01:06:14",
+    "mensaje_nuevo_titular": "LOLA MEMORIA MESSENGER 24OCT guardado en Bandeja social",
+    "perfil_facebook_personal_del_titular": "nombre no identificado",
+    "frase_diagnostico_guardada": "LOLA MEMORIA MESSENGER 24OCT",
+    "aviso_ui": "Configuracion guardada",
+    "ampliacion_contactos": true,
+    "proximo": "Recepción, salida manual, PostgreSQL y borrador en Sugerencias aprobados. No repetir tokens ni estas pruebas. LOLA automática permanece apagada.",
+    "nuevo_contacto_autorizado_por_titular": true,
+    "lista_persistida_releida_del_servidor": true,
+    "entrega_meta_comprobada": {
+      "registro": "LOLA_CONTACTO_ENSAYO",
+      "channel": "messenger",
+      "account_id": "745193628688500",
+      "contact_id": "25505909242384087",
+      "at_utc": "2026-10-24T06:03:28.054Z"
+    },
+    "causa_mensaje_no_guardado": "El identificador del Facebook personal no estaba en la lista del ensayo. Meta SI entrego la frase al receptor. Se descartaba antes de guardar lead/mensaje/job.",
+    "prueba_salida": {
+      "resultado": "APROBADA DE EXTREMO A EXTREMO",
+      "destinatario": "Facebook personal autorizado del titular",
+      "fecha_lima": "2026-10-24 13:54:33",
+      "texto": "Hola, Martín. Esta es una prueba controlada de salida desde el CRM de ÖRÖK por Messenger. No requiere respuesta.",
+      "confirmacion_crm": "Envío confirmado por la plataforma.",
+      "modo": "Manual",
+      "recepcion_confirmada_por_titular": true
+    }
+  },
+  "instagram": {
+    "recepcion_real": "pendiente",
+    "lista_contactos": [],
+    "envios": false,
+    "automatico": false
+  },
+  "sin_cambios_codigo_servidor": true,
+  "sin_ejecucion_modelos": false,
+  "produccion_modificada": false,
+  "prueba_borrador": {
+    "ejecucion": "58902",
+    "workflow": "cug2qcwguB6mYfnO",
+    "fecha_lima": "2026-10-24 12:06:14",
+    "estado_crm": "complete",
+    "modo": "suggest",
+    "enviado": false,
+    "solicitudes": 1,
+    "ejecuciones_manuales": 1,
+    "gemini_invocado": false,
+    "openai_autorizado": true,
+    "formateador_calidad": "saludo aprobado protegido con guardia determinista, probado con datos previos; no certifica todas las respuestas"
+  },
+  "correccion_saludo_gemini": {
+    "instalado": true,
+    "modelo": "models/gemini-3.5-flash-lite",
+    "gemini_prueba_real": "accepted",
+    "datos_fijados_restantes": 0,
+    "llamadas_openai_nuevas": 0,
+    "enviado": false,
+    "flujo_nodos": 84,
+    "flujo_active": false,
+    "exportacion": "LOLA-N8N-SERVIDOR-SALUDO-GEMINI35-20261024.json",
+    "informe": "LOLA-SALUDO-GEMINI35-RESULTADO-20261024.txt"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "base": "ERP-OROK-R41-CIERRE-TRES-IAS-20261028.zip",
+  "base_sha256": "40eb652144f8ca4e467708e6866836f3dd6dab16406f26d8f832f103be8122b9",
+  "changes": [
+    "contabilidad-src/clara-contabilidad.html",
+    "contabilidad/app.js",
+    "contabilidad/index.html",
+    "tests/r41-firma-pantalla.test.cjs"
+  ],
+  "approval_test": "passed; fictitious order annulled, history retained",
+  "n8n_files_unchanged": true,
+  "live_crm_updated": false
+}

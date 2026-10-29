@@ -1,0 +1,35 @@
+LOLA n8n · LEER ANTES DE IMPORTAR
+
+FLUJO PRINCIPAL
+LOLA-ENSAYO-67.6.13-r30-MARKETING-CONEXIONES-INACTIVO.json
+- 110 nodos.
+- active=false e id vacío: se importa como copia nueva.
+- Incluye el recorrido anterior y las conexiones de marketing preparadas.
+
+NO IMPORTAR TODOS LOS JSON
+Los otros archivos son versiones anteriores o referencias. Conservarlos, pero no activarlos simultáneamente.
+Por seguridad, `LOLA-N8N-VIGENTE-20261024.json` fue normalizado en este paquete a `active:false` y sin ID, porque la exportación original contradecía su nombre INACTIVO.
+
+ESTADO DE MODELOS
+- «Modelo Lola Comercial»: OpenAI.
+- «Google Gemini Chat Model»: apoyo condicional.
+- Conectores Claude de marketing: solicitudes HTTP preparadas y apagadas.
+Revisar costos y decidir el modelo final antes de activar.
+
+COMPROBACIONES ANTES DE ACTIVAR
+1. Zona horaria de n8n: America/Lima.
+2. Credenciales PostgreSQL, CRM, Gmail y modelos asignadas sin pegarlas dentro del JSON.
+3. «Recuperar memoria e historial · PostgreSQL»: SQL fijo y parámetros válidos; no colocar JSON dentro del campo Query.
+4. «Hay trabajo»: condición booleana real, no el texto `=false`.
+5. Si el CRM devuelve `job:null`, el flujo debe terminar sin intentar recuperar memoria.
+6. Ejecutar un solo trabajo ficticio de punta a punta y revisar que no envíe mensajes ni publique piezas sin autorización.
+7. Mantener apagados los nodos CONECTAR cuya URL termina en `.invalid`.
+
+El paquete no incluye valores secretos de credenciales. Las referencias de credenciales de n8n deben vincularse con las ya existentes en el servidor de ensayo.
+M.O.R.A · EVALUADOR INMOBILIARIO (R33)
+MORA-ENSAYO-67.6.17-EVALUADOR-CONVERSACIONAL-INACTIVO.json
+- 40 nodos, flujo independiente del de LOLA; active=false e id vacío.
+- R33c: rama "Estudio de mercado" (lecturas de avisos cada 15 s con mora_market_claim / mora_market_complete).
+- Requiere migrations/002-mora-postgres.sql y la credencial "M.O.R.A ENSAYO - Anthropic API" (Header Auth x-api-key).
+- Usa las mismas credenciales CRM y PostgreSQL de ensayo. Ver MEMORIA-R33-MORA.md.
+- Importar una sola copia; puede convivir activo junto al flujo principal de LOLA.

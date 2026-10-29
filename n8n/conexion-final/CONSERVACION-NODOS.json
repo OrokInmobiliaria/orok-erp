@@ -1,0 +1,35 @@
+[
+  {
+    "archivo": "LOLA-ENSAYO-67.6.13-r30-MARKETING-CONEXIONES-INACTIVO.json",
+    "quitados": [],
+    "agregados": [],
+    "cambiados": [],
+    "conexiones_quitadas": [],
+    "conexiones_agregadas": [],
+    "conserva_todo": true,
+    "conexiones_completas_iguales": true,
+    "nodos": 110
+  },
+  {
+    "archivo": "MORA-ENSAYO-67.6.17-EVALUADOR-CONVERSACIONAL-INACTIVO.json",
+    "quitados": [],
+    "agregados": [],
+    "cambiados": [],
+    "conexiones_quitadas": [],
+    "conexiones_agregadas": [],
+    "conserva_todo": true,
+    "conexiones_completas_iguales": true,
+    "nodos": 40
+  },
+  {
+    "archivo": "CLARA-ENSAYO-67.6.18-DRIVE-CONTABLE-INACTIVO.json",
+    "quitados": [],
+    "agregados": [],
+    "cambiados": [],
+    "conexiones_quitadas": [],
+    "conexiones_agregadas": [],
+    "conserva_todo": true,
+    "conexiones_completas_iguales": true,
+    "nodos": 69
+  }
+]

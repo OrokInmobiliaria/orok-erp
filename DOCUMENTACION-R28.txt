@@ -1,0 +1,87 @@
+LOLA CRM 67.6.11-r28 · CIERRE DEL ENSAYO
+Fecha: 24/10/2026
+Estado: COMPILADO LOCALMENTE · NO DESPLEGADO · NO ALTERA EL CRM VIVO
+
+1. REGLA DE CONSERVACIÓN
+Esta versión se preparó como una copia aislada. No se publicó en Easypanel, no ejecutó migraciones sobre PostgreSQL y no modificó leads, fichas, documentos, conversaciones, cotizaciones, separaciones ni el orden actual del Kanban.
+
+Antes de una futura subida oficial es obligatorio ejecutar el respaldo PostgreSQL incluido, revisar restore-check.json y comparar los conteos. Si la comprobación falla, la subida se cancela.
+
+2. FLUJO COMERCIAL INCORPORADO
+Flujo operativo: Cita Asistida → Calificado → Evaluación GNB (solo compra hipotecaria) → Separación → Inicial → Minuta → Venta.
+Compra Directa y Contado omiten Evaluación GNB.
+Las etapas sensibles se confirman por una persona y quedan auditadas.
+
+3. EVALUACIÓN BANCO GNB
+La ficha registra uno o más solicitantes:
+- Nombre
+- DNI
+- Estado civil
+- Ingreso bruto mensual
+- Antigüedad laboral
+- Primera vivienda
+- Cuota inicial
+- Correo electrónico
+- Número de teléfono
+- Costo del departamento tomado de la cotización vigente
+
+Estados: Datos pendientes, Pendiente confirmación, Ficha completa, Lista para enviar, Enviada a GNB, Observada, Aprobada, No aprobada y Desistimiento.
+LOLA recibe la lista de datos conocidos y faltantes, reutiliza lo ya confirmado y solicita solamente lo faltante. No puede inventar el precio ni comunicar aprobación bancaria si el CRM no registra “Aprobada”.
+
+4. DOCUMENTOS LEGALES EN GOOGLE DRIVE
+Las plantillas se leen en modo solo lectura desde una carpeta privada. Deben existir con estos nombres exactos:
+- 01 - Acuerdo de reserva preferente
+- 02A - Minuta de compraventa bancaria
+- 02B - Minuta de compraventa directa
+
+El cuerpo completo de esas plantillas no se guarda en la base del CRM. Se guarda la referencia, versión, fecha de modificación y documentos generados.
+El acuerdo conserva la identificación aprobada:
+BMG Desarrolladora Inmobiliaria S.A.C., que utiliza ÖRÖK como nombre comercial, RUC 20615227685, con domicilio legal en Calle Puquina 138, Maranga, San Miguel, Lima, Perú,
+
+La separación y la minuta admiten titular, cónyuge y coevaluados.
+
+5. CIERRE DOCUMENTAL
+Después de confirmar la separación:
+- El CRM genera la minuta bancaria o directa según el financiamiento.
+- Permite cargar la minuta firmada por todas las partes.
+- Permite cargar el voucher de notaría.
+- Solo entonces habilita Cerrar venta.
+Al cerrar, el lead pasa a Venta, la unidad queda SOLD, se eliminan próxima acción y fecha, y el movimiento queda auditado.
+Se retiró el cierre inseguro “Marcar vendida” sin documentos.
+
+6. KANBAN Y PANTALLAS
+- Se incluye panel GNB dentro de la ficha del lead.
+- Se incorporan Evaluación GNB y Minuta al flujo.
+- Un lead Desestimado queda sin próxima acción ni fecha.
+- Bandeja Social figura como acceso principal entre Kanban Leads y Nuevo Lead.
+- El ingreso permite mostrar u ocultar contraseña.
+- Branding ofrece cinco combinaciones de color y selección libre del color de marca.
+- El formulario de separación permite firmantes adicionales.
+
+7. DASHBOARD TIPO POWER BI
+Vistas nativas: Gerencia, Marketing, Ventas, Evaluación GNB, Documentos y cierre, Asesores, Inventario y Calidad de datos.
+Filtros: fechas, proyecto, fuente, campaña, responsable, etapa, subestado, financiamiento, estado GNB y unidad.
+El análisis semanal incluye resúmenes GNB y documentales.
+
+8. N8N INCLUIDO
+Archivo: n8n/LOLA-ENSAYO-67.6.11-r28-PG-GEMINI-INACTIVO.json
+- 84 nodos.
+- PostgreSQL recibe un único parámetro JSON válido.
+- Incluye Google Gemini Chat Model según la última versión entregada.
+- Incorpora evaluacion_gnb en el contexto de LOLA.
+- Se entrega con active=false. Importarlo no debe activarlo automáticamente.
+
+9. VALIDACIÓN REALIZADA
+- Compilación Vite de producción: correcta.
+- 30 pruebas dirigidas de embudo, GNB, separación, minuta, cierre, analítica y respaldo: correctas.
+- Verificación sintáctica del servidor y servicios: correcta.
+- El paquete no contiene node_modules ni claves privadas.
+
+10. PENDIENTE ANTES DE PRODUCCIÓN
+- Crear o seleccionar la carpeta privada de plantillas legales y dar lectura a la cuenta de servicio.
+- Configurar esa carpeta en el CRM de ensayo.
+- Hacer prueba integral con documentos ficticios.
+- Ejecutar el respaldo PostgreSQL justo antes del despliegue.
+- Comprobar conteos y posiciones Kanban.
+- Desplegar código sin reinicializar datos.
+- Hacer prueba de humo y comparar nuevamente conteos.

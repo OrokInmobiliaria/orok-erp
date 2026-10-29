@@ -1,0 +1,212 @@
+{
+  "name": "ÖRÖK · 08 Campañas Claude CRM · 67.6.0",
+  "nodes": [
+    {
+      "id": "38ff7178-d889-472e-80e9-280bed4fae90",
+      "name": "Revisar solicitudes cada minuto",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "99f39094-9bde-4173-8543-45a345f6b0ff",
+      "name": "Revisar solicitudes manualmente",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        180
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "17becc43-ea8b-42e4-a667-8996c35399af",
+      "name": "Tomar solicitud creativa CRM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://crm.orok.com.pe/api/integrations/lola",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({action:\"creative_job_claim\"}) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5PAGEfNsGTSyVlRq",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "id": "98fe4a6c-91a4-465a-92c0-faba3fed6855",
+      "name": "Hay solicitud creativa",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "55de1a2d-6996-421a-be75-326b83cef2ee",
+              "leftValue": "={{ !!$json.value?.job }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "183ec773-bb75-4df7-989d-ac418636fd27",
+      "name": "Generar propuesta Claude en servidor",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        780,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://crm.orok.com.pe/api/integrations/lola",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({action:\"creative_job_run\",job_id:$json.value.job.id,lease_token:$json.value.job.lease_token}) }}",
+        "options": {
+          "timeout": 55000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5PAGEfNsGTSyVlRq",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "id": "269b56d6-ca1e-4ab8-9586-c3f427865eb0",
+      "name": "LEER CAMPANAS CLAUDE",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -320
+      ],
+      "parameters": {
+        "content": "## Campañas IA · 67.6.0 · INACTIVO\nComplementa 04 WhatsApp y 05 Social. No los reemplaza. Selecciona Header Auth X-Orok-Webhook-Secret. La clave de Claude se configura solo en CRM → Campañas IA → Conexión Claude. Procesa solicitudes explícitas de Gerencia, con métricas agregadas y hechos confirmados. No recibe teléfonos, correos ni conversaciones. No publica ni cambia pauta. No reintenta llamadas de generación inciertas. Gráficas y videos se editan/exportan en el navegador del CRM con recursos aprobados.",
+        "height": 260,
+        "width": 760
+      }
+    }
+  ],
+  "connections": {
+    "Revisar solicitudes cada minuto": {
+      "main": [
+        [
+          {
+            "node": "Tomar solicitud creativa CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revisar solicitudes manualmente": {
+      "main": [
+        [
+          {
+            "node": "Tomar solicitud creativa CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tomar solicitud creativa CRM": {
+      "main": [
+        [
+          {
+            "node": "Hay solicitud creativa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hay solicitud creativa": {
+      "main": [
+        [
+          {
+            "node": "Generar propuesta Claude en servidor",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "active": false,
+  "pinData": {},
+  "settings": {
+    "executionTimeout": 180,
+    "timezone": "America/Lima",
+    "saveManualExecutions": true
+  }
+}

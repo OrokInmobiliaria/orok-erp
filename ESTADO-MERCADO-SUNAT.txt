@@ -1,0 +1,25 @@
+ERP ÖRÖK — Actualización de prueba: mercado, altura y SUNAT — 26/10/2026
+
+CONTENIDO
+- Radio editable (7 cuadras iniciales; aproximación: 100 m por cuadra, distancia en línea recta) o todo el distrito.
+- Filtro por altura del edificio, incluso cuando todavía falta calcular la distancia.
+- Comparables fuera del alcance separados e inclusión manual.
+- Cálculo de distancias mediante Nominatim, a petición del usuario y con caché.
+- Actualizar TC SUNAT: venta USD/PEN, fecha y proveedor APIs.net.pe visibles. Sin valor fijo de respaldo ante errores.
+- Conserva todos los módulos, las integraciones y los flujos n8n incluidos. No se activa ni reemplaza ningún flujo automáticamente.
+
+VERIFICACIÓN LOCAL
+14 pruebas aprobadas. Consulta real: fuente reportada SUNAT, proveedor APIs.net.pe, venta 3.451, fecha 2026-10-26. La página directa SUNAT rechazó la consulta automatizada; el botón identifica el intermediario y permite abrir la fuente oficial.
+
+DESPLIEGUE
+Destino autorizado: únicamente lola_pruebas / crm-r28-preprod.
+Reemplazar el archivo de código de Source/Upload y desplegar con el Dockerfile existente.
+Conservar exactamente variables de entorno, volumen privado, conexión PostgreSQL, identificador de proyecto y credenciales.
+No inicializar otra base ni importar datos vacíos. No modificar n8n.
+Respaldo de prueba verificado: /app/private/pre-update-backups/orok-v67.6.17-r32c-pre-update-2026-10-27T04-02-00-071Z
+Conteos previos: 2 leads, 1 unidad, 1 cotización, 1 separación, 0 gastos de marketing.
+Verificar nuevamente esos conteos y posiciones del Kanban después de instalar.
+
+ESTADO AL EMPAQUETAR
+Pendiente la carga permanente y la comprobación visual de esta revisión en el servidor. No afirmar que está desplegado por tener el ZIP.
+En caso de fallo, restaurar el código previo conservando datos y conexiones. Restaurar registros selectivamente por ID únicamente cuando sea necesario; nunca borrar información posterior.

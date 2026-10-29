@@ -1,0 +1,24 @@
+{
+  "base": "ERP-OROK-R41-INTEGRAL-CIERRE-20261028.zip",
+  "version": "67.6.24-r41-sheets",
+  "production_deployed": false,
+  "all_original_files_preserved": true,
+  "changed": [
+    "safe-network.cjs",
+    "contabilidad-src/clara-contabilidad.html",
+    "contabilidad/app.js",
+    "contabilidad/index.html",
+    "n8n/conexion-final/CLARA-R41-CONEXION-FINAL-INACTIVO.json"
+  ],
+  "clara_nodes": 82,
+  "operational_connections_complete": false,
+  "read_first": "LEER-PRIMERO-CIERRE-R41.txt",
+  "live_credentials_in_zip": false,
+  "clara_enabled_trigger": "Recibir archivo del CRM",
+  "clara_companies_tested": [
+    "BMG",
+    "MZA",
+    "MAAS"
+  ],
+  "clara_permanent_activation_verified": true
+}

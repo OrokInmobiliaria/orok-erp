@@ -1,0 +1,156 @@
+/* R31 · Tema "cristal": tokens, superficies translúcidas y componentes unificados.
+   Se carga después de los estilos base: no cambia funciones ni permisos, solo apariencia. */
+:root{
+ --r-xs:8px;--r-sm:10px;--r-md:14px;--r-lg:20px;--r-xl:26px;
+ --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:24px;--sp-6:32px;
+ --ink-1:#1c1917;--ink-2:#57534e;--ink-3:#8a817c;--hair:rgba(120,96,80,.16);
+ --glass-bg:rgba(255,255,255,.62);--glass-strong:rgba(255,255,255,.78);--glass-border:rgba(255,255,255,.65);
+ --glass-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 12px 40px -12px rgba(60,35,20,.25);
+ --blur:saturate(180%) blur(22px);
+ --orok-dark:#35190f;
+ --ease:cubic-bezier(.2,.8,.2,1);
+}
+body{background:
+ radial-gradient(1100px 600px at 8% -10%,rgba(235,104,52,.10),transparent 60%),
+ radial-gradient(900px 600px at 100% 0%,rgba(42,120,214,.08),transparent 60%),
+ radial-gradient(900px 700px at 50% 110%,rgba(133,68,42,.08),transparent 60%),
+ #f7f3ef fixed;color:var(--ink-1);text-rendering:optimizeLegibility}
+
+/* Superficie de cristal reutilizable */
+.glass{background:var(--glass-bg);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow)}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.glass{background:rgba(255,255,255,.95)}}
+
+/* Componentes base, radios y sombras uniformes */
+.orok-card{border-radius:var(--r-lg)!important;border:1px solid var(--hair);box-shadow:0 1px 2px rgba(60,35,20,.04),0 8px 24px -16px rgba(60,35,20,.18)}
+.orok-btn,.orok-nav-btn{border-radius:var(--r-sm)!important;transition:background .2s var(--ease),transform .12s var(--ease),box-shadow .2s var(--ease)}
+.orok-btn:active{transform:scale(.98)}
+.orok-btn{min-height:40px}
+.orok-btn-primary{background:var(--orok-dark);box-shadow:0 6px 16px -8px rgba(53,25,15,.6)}
+.orok-btn-primary:hover{background:#4a2417}
+.orok-btn-secondary{background:rgba(133,68,42,.08);color:var(--orok-dark);border:1px solid rgba(133,68,42,.10)}
+.orok-btn-secondary:hover{background:rgba(133,68,42,.13)}
+.orok-input{border-radius:var(--r-sm)!important;background:rgba(255,255,255,.7);border-color:var(--hair)}
+.orok-btn:focus-visible,.orok-nav-btn:focus-visible,.orok-input:focus-visible,button:focus-visible,select:focus-visible{outline:3px solid rgba(42,120,214,.45);outline-offset:2px}
+
+/* Ventanas que se abren: velo suave + panel de cristal (sin tocar cada componente) */
+div[style*="position: fixed"][style*="inset: 0"],div[style*="position: fixed"][style*="top: 0px"][style*="bottom: 0px"]{background:rgba(40,28,22,.26)!important;-webkit-backdrop-filter:blur(10px) saturate(140%)!important;backdrop-filter:blur(10px) saturate(140%)!important}
+div[style*="position: fixed"] > [role="dialog"],div[style*="position: fixed"] > .orok-card,div[style*="position: fixed"] > form.orok-card,div[style*="position: fixed"] > section{background:var(--glass-strong)!important;-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:1px solid var(--glass-border)!important;box-shadow:0 30px 80px -20px rgba(40,20,10,.45)!important;border-radius:var(--r-xl)!important;animation:sheet-in .22s var(--ease)}
+.whatsapp-panel{background:var(--glass-strong)!important;-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
+@keyframes sheet-in{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:none}}
+
+/* Navegación agrupada */
+.nav-shell{display:flex;align-items:center;gap:6px;padding:6px;border-radius:18px;position:relative;z-index:60;flex-wrap:wrap}
+.nav-group{position:relative}
+.nav-top{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px;border:0;border-radius:12px;background:transparent;font:inherit;font-size:14px;font-weight:600;color:var(--ink-2);cursor:pointer}
+.nav-top:hover{background:rgba(120,96,80,.08);color:var(--ink-1)}
+.nav-top[aria-current="true"]{background:var(--orok-dark);color:#fff;box-shadow:0 6px 16px -8px rgba(53,25,15,.6)}
+.nav-top .chev{font-size:10px;opacity:.6}
+.nav-menu{position:absolute;top:calc(100% + 8px);left:0;min-width:260px;padding:8px;border-radius:18px;display:flex;flex-direction:column;gap:2px;animation:sheet-in .18s var(--ease)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:0;border-radius:11px;background:transparent;font:inherit;font-size:14px;font-weight:500;color:var(--ink-1);cursor:pointer;text-align:left;min-height:42px}
+.nav-item:hover{background:rgba(120,96,80,.08)}
+.nav-item[aria-current="page"]{background:rgba(133,68,42,.12);color:var(--orok-dark);font-weight:700}
+.nav-item small{display:block;font-size:11.5px;color:var(--ink-3);font-weight:400}
+.nav-sep{height:1px;background:var(--hair);margin:6px 8px}
+
+/* Barra inferior y hoja en celular */
+.tabbar{display:none}
+@media (max-width:760px){
+ .nav-shell.desktop-only{display:none}
+ .tabbar{display:flex;position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:1500;border-radius:22px;padding:6px;justify-content:space-around}
+ .tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;border:0;background:transparent;font:inherit;font-size:10.5px;font-weight:600;color:var(--ink-2);padding:6px 2px;border-radius:14px;min-height:50px}
+ .tabbar button[aria-current="true"]{color:var(--orok-dark);background:rgba(133,68,42,.12)}
+ .app-content{padding-bottom:110px!important}
+ .sheet-veil{position:fixed;inset:0;z-index:1600;background:rgba(40,28,22,.26);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+ .sheet{position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:1601;max-height:78vh;overflow:auto;border-radius:24px;padding:10px;animation:sheet-up .24s var(--ease)}
+ .sheet h4{margin:10px 12px 4px;font-size:12px;color:var(--ink-3);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+ .mobile-navigation{display:none!important}
+}
+@keyframes sheet-up{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Exportar leads (Kanban) */
+.export-pop{position:absolute;right:0;top:calc(100% + 8px);width:min(380px,92vw);padding:16px;border-radius:20px;z-index:80;animation:sheet-in .18s var(--ease)}
+.export-actions{display:flex;gap:8px;margin:12px 0}
+.export-actions .orok-btn{flex:1}
+.export-sheet{border-top:1px solid var(--hair);padding-top:12px;display:flex;flex-direction:column;gap:8px}
+.export-note{font-size:11.5px;color:var(--ink-3);margin:6px 0 0}
+.export-ok{font-size:13px;color:#166534;margin:10px 0 0}.export-err{font-size:13px;color:#b91c1c;margin:10px 0 0}
+@media (max-width:760px){.export-pop{position:fixed;left:8px;right:8px;top:auto;bottom:calc(84px + env(safe-area-inset-bottom));width:auto}}
+/* Los menús anidados dentro de otra superficie de cristal no pueden desenfocar la página: se les da más opacidad. */
+.nav-menu{background:rgba(255,255,255,.9)!important}
+.nav-shell{background:rgba(255,255,255,.7)}
+.export-pop{background:rgba(255,255,255,.92)!important}
+.export-pop>strong{display:block}
+.sheet .nav-item{width:100%}
+
+/* Interruptores tipo iOS */
+input[type=checkbox].switch{appearance:none;-webkit-appearance:none;width:44px;height:26px;border-radius:13px;background:#d9d2cc;position:relative;vertical-align:middle;margin:0 8px 0 0;cursor:pointer;transition:background .2s var(--ease);flex:none}
+input[type=checkbox].switch::before{content:"";position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s var(--ease)}
+input[type=checkbox].switch:checked{background:#2fb36b}
+input[type=checkbox].switch:checked::before{transform:translateX(18px)}
+label:has(> input.switch){display:inline-flex;align-items:center;min-height:36px;margin-right:14px}
+/* Secciones de marketing */
+.mk-section > .orok-card > h3:first-child{display:none}
+.mk-section fieldset{border:1px solid var(--hair);border-radius:16px;padding:16px 18px;background:rgba(255,255,255,.55)}
+.mk-section legend{font-weight:700;font-size:15px;padding:0 6px;color:var(--ink-1)}
+.bi-filter-toggle{background:rgba(255,255,255,.88)!important}
+
+/* R32 · Canales de chat */
+.ch-icon{display:inline-flex;align-items:center;gap:5px;color:var(--ch)}
+.ch-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;min-width:40px;padding:6px 10px;border-radius:10px;border:1px solid color-mix(in srgb,var(--ch) 30%,transparent);background:color-mix(in srgb,var(--ch) 10%,white);color:var(--ch);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.ch-btn:hover{background:color-mix(in srgb,var(--ch) 18%,white)}
+.ch-btn .dot{width:7px;height:7px;border-radius:50%;background:var(--ch)}
+.ch-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.inbox-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:4px;border-radius:14px;background:rgba(120,96,80,.08)}
+.inbox-tab{display:inline-flex;align-items:center;gap:7px;border:0;background:transparent;padding:9px 14px;border-radius:11px;font:inherit;font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer;min-height:40px}
+.inbox-tab[aria-selected=true]{background:#fff;color:var(--ink-1);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.inbox-tab .n{font-size:11px;background:rgba(120,96,80,.14);border-radius:999px;padding:1px 7px}
+.inbox-list{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.inbox-row{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;text-align:left;border:1px solid var(--hair);background:rgba(255,255,255,.8);border-radius:14px;padding:12px 14px;cursor:pointer;font:inherit;color:inherit}
+.inbox-row:hover{border-color:rgba(133,68,42,.35);background:#fff}
+.inbox-avatar{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--ch) 12%,white);color:var(--ch)}
+.inbox-row strong{display:block;font-size:14px}.inbox-row span.p{display:block;font-size:12.5px;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60ch}
+.inbox-row small{font-size:11px;color:var(--ink-3);white-space:nowrap}
+.inbox-unlinked{font-size:10.5px;font-weight:700;color:#92400e;background:#fef3c7;border-radius:999px;padding:1px 7px;margin-left:6px}
+.whatsapp-overlay{background:rgba(40,28,22,.22)!important;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+@media (max-width:760px){.inbox-tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}.inbox-tab{flex:none}}
+.inbox-unlinked{white-space:nowrap;display:inline-block}
+/* R32: el botón de WhatsApp pasó a la fila de redes; las acciones quedan en 1 o 2 columnas */
+.kanban-card-actions{grid-template-columns:minmax(0,1fr)!important}
+.kanban-card-actions.has-schedule{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
+
+/* R32c · Buscador global */
+.search-veil{position:fixed;inset:0;z-index:2300;background:rgba(40,28,22,.24);-webkit-backdrop-filter:blur(10px) saturate(140%);backdrop-filter:blur(10px) saturate(140%);display:flex;justify-content:center;align-items:flex-start;padding:10vh 16px 16px}
+.search-palette{width:min(720px,100%);max-height:76vh;display:flex;flex-direction:column;border-radius:22px;background:rgba(255,255,255,.86)!important;overflow:hidden;animation:sheet-in .18s var(--ease)}
+.search-input{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--hair);color:var(--ink-2)}
+.search-input input{flex:1;border:0;background:transparent;font:inherit;font-size:17px;color:var(--ink-1);outline:none;min-width:0}
+.search-close{border:0;background:rgba(120,96,80,.1);border-radius:10px;width:34px;height:34px;display:grid;place-items:center;cursor:pointer;color:var(--ink-2)}
+.search-results{overflow-y:auto;padding:6px}
+.search-row{display:flex;gap:8px;align-items:center;border-radius:12px;padding:4px 6px}
+.search-row.on{background:rgba(133,68,42,.09)}
+.search-main{flex:1;min-width:0;text-align:left;border:0;background:transparent;font:inherit;color:inherit;cursor:pointer;padding:8px 6px;display:flex;flex-direction:column;gap:2px}
+.search-main strong{font-size:15px}.search-main span{font-size:12.5px;color:var(--ink-2)}.search-main small{font-size:11px;color:var(--ink-3)}
+.search-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.search-hint{color:var(--ink-3);font-size:13px;padding:14px 12px;margin:0}
+.search-foot{margin:0;padding:8px 16px;border-top:1px solid var(--hair);font-size:11.5px;color:var(--ink-3)}
+.nav-search{margin-left:auto;display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 14px;border-radius:12px;border:1px solid var(--hair);background:rgba(255,255,255,.7);font:inherit;font-size:13px;color:var(--ink-3);cursor:pointer;min-width:240px}
+.nav-search kbd{margin-left:auto;font:inherit;font-size:11px;border:1px solid var(--hair);border-radius:6px;padding:1px 6px;background:#fff}
+@media (max-width:760px){.search-veil{padding:12px 8px}.search-palette{max-height:88vh}.search-row{flex-direction:column;align-items:stretch}.search-actions{justify-content:flex-start;padding:0 6px 8px}}
+/* R33b · Selector de módulo de ÖRÖK (solo Gerencia): CRM Inmobiliario o Evaluador Inmobiliario con M.O.R.A */
+.module-switch{display:inline-flex;gap:2px;padding:3px;border-radius:14px;background:linear-gradient(135deg,rgba(255,255,255,.55),rgba(255,255,255,.28));-webkit-backdrop-filter:blur(26px) saturate(175%);backdrop-filter:blur(26px) saturate(175%);border:1px solid rgba(255,255,255,.62);max-width:100%;overflow-x:auto;scrollbar-width:none} /* R42 · Crystal y sin desborde con 4 módulos */
+.module-switch::-webkit-scrollbar{display:none}
+.module-switch button{border:0;background:transparent;color:#57534e;font:inherit;font-size:14px;font-weight:600;padding:6px 12px;border-radius:9px;cursor:pointer;white-space:nowrap}
+.module-switch button small{font-weight:500;opacity:.75}
+.module-switch button[aria-pressed="true"]{background:rgba(255,255,255,.82);color:#85442A;box-shadow:0 1px 3px rgba(133,68,42,.15)}
+.module-switch button:focus-visible{outline:2px solid #85442A;outline-offset:1px}
+@media (max-width:640px){.module-switch button{font-size:12px;padding:5px 8px}.module-switch button small{display:none}}
+
+/* R33c · Identidad fija: ÖRÖK (rojo a marrón rojizo) y el proyecto (marrón rojizo).
+   Colores escritos en hexadecimal a propósito: ninguna combinación de colores ni el color principal libre los cambia. */
+.orok-wordmark,.orok-logo-text{color:#85442A!important;background:linear-gradient(135deg,#B3362B 0%,#9A3B27 40%,#85442A 70%,#5E2817 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.orok-wordmark{margin:0;font-size:38px;font-weight:900;letter-spacing:2px;text-transform:uppercase;line-height:1.05}
+.orok-logo{display:block;max-height:52px;max-width:200px;object-fit:contain}
+.project-wordmark{margin:0;font-size:18px;font-weight:700;letter-spacing:.2px;color:#85442A}
+.project-logo{display:block;max-height:50px;max-width:200px;object-fit:contain;margin-bottom:5px}
+@media print{.orok-wordmark,.orok-logo-text{-webkit-text-fill-color:#85442A;background:none}}
+@media (max-width:640px){.orok-wordmark{font-size:30px}}

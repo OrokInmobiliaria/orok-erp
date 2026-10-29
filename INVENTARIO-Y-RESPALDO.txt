@@ -1,0 +1,51 @@
+INVENTARIO COMPROBADO — 28/10/2026
+
+RESPALDO PRIVADO EN EL SERVIDOR
+/root/orok-pre-final-20261028-222655
+- n8n.sqlite: copia consistente de SQLite (aproximadamente 1,8 GB).
+- n8n-workflows-full.json: exportación de los 17 flujos previos a la limpieza.
+- n8n-config-private.tar.gz: configuración privada de n8n (incluye lo necesario para conservar el cifrado de credenciales).
+- postgres-cluster.sql: exportación completa de PostgreSQL.
+- crm-private-volumes.tar.gz: archivos privados de CRM actual, R28 y R41.
+- containers-private.json: configuración original de contenedores; NO divulgar.
+- backup-manifest.json: tamaños y SHA256.
+Resultado comprobado: integridad SQLite ok; exportación PostgreSQL exit 0.
+Esto NO sustituye una restauración de prueba de PostgreSQL ni el restore-check.json con conteos exigido antes de producción.
+El respaldo está en el mismo servidor. Falta guardar una copia privada fuera del host antes de la publicación oficial.
+
+SERVICIOS A CONSERVAR
+crm: 67.6.10, proyecto infinity224_pruebas_955318057, base lola_ensayo_955318057.
+crm-r41-ensayo: 67.6.24-r41, base separada orok_r41_ensayo_20261028. Gerencia pidió conservarlo para mejoras futuras.
+n8n, PostgreSQL, Easypanel y Traefik: infraestructura necesaria.
+
+SERVICIOS QUE REQUIEREN REVISIÓN ANTES DE RETIRAR
+crm-r28-preprod: versión 67.6.17-r32c, proyecto infinity224_preproduccion_r28 en la base lola_ensayo_955318057. Conserva lola-asistente.json, mora.json y conexiones privadas. MORA activo aún apunta a este servicio.
+Contenedor auxiliar bold_kepler: comparte volumen privado de R41. No se detuvo ni borró; falta confirmar propósito.
+No se borró ninguna base, volumen ni servicio. Caché de compilación identificada pero no purgada.
+
+LIMPIEZA N8N REALIZADA
+Archivados de forma recuperable, todos estaban inactivos y respaldados:
+- akFCRbFYZItmak8N — Diagnóstico PostgreSQL.
+- H90Yka33BpTGA18K — Observador WhatsApp.
+- BEz2b4wiUSibfEOc — Respaldo antiguo Telegram.
+- Q8TL68ZtRh6CnWWa — Ensayo antiguo Telegram.
+- RaOagifGauJ9cEc6 — LOLA 67.6.9.
+- Mvs4FemDAz5VEdOY — LOLA 67.6.10 duplicado.
+- 9ZlgDoQWswNwZxRb — LOLA 67.6.10 duplicado.
+- hJ9nwG78zv0GH6r8 — LOLA 67.6.10 PG/Gemini anterior.
+- cug2qcwguB6mYfnO — Flujo denominado MORA R33 (111 nodos, inactivo).
+La lista principal pasó de 17 a 8 flujos. No se eliminó ningún nodo dentro de un flujo.
+
+8 PUBLICADOS QUE SE MANTIENEN HASTA VERIFICAR SUSTITUCIÓN
+- 2tE32okBYCK8Pg22 — MORA 40 nodos (activo aunque el nombre dice INACTIVO).
+- iURiiQonpInHtOyX — Lola Telegram 147 nodos.
+- D6AJ9fGvP10WKTRN — My workflow, apunta a Kommo; candidato a retirar tras confirmar que no recibe entradas vigentes.
+- UUu54r3VvDUlGG8Y — WF01_EntradaLead.
+- 1gx5F5KnHNox0ID4 — WF02_WhatsApp_Inbound (llama a WF01 por webhook).
+- jrhxg4dQkEm8SPwo — WF03_AgendarCita.
+- IVvTzaaA4pKHm31R — WF04_RecordatoriosCitas.
+- GZYOYMYEwCLVTsFP — WF05_ActualizarEstadoCita.
+
+No se ha terminado la sustitución de estos ocho por los tres flujos definitivos.
+No se revocaron ni ampliaron permisos de cuentas externas.
+No se importó ni activó CLARA. No se actualizó el CRM actual.

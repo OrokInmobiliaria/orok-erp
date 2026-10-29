@@ -1,0 +1,66 @@
+ERP ÖRÖK — PUNTO DE CONTINUIDAD — 28/10/2026
+
+PAQUETE COMPLETO
+ERP-OROK-R41-CIERRE-OC-VALIDADA-20261028.zip
+Incluye aplicación completa, fuentes, compilados, migraciones, documentación,
+plantillas y los tres flujos finales n8n. No es solamente una parte o parche.
+Las credenciales reales y las bases de datos no se incluyen en el ZIP.
+Los flujos exportados están inactivos por seguridad; los ya publicados en n8n
+siguen siendo la referencia operativa. No importarlos sobre el activo sin comparar.
+
+CONFIRMADO
+- L.O.L.A. con Claude y memoria PostgreSQL: consulta manual y automática verificadas.
+- M.O.R.A.: consulta del ensayo con Claude verificada.
+- C.L.A.R.A.: guardado protegido en Drive y reportes Google Sheets por empresa verificados.
+- Se conservan 110 nodos L.O.L.A., 40 M.O.R.A. y 82 C.L.A.R.A., con sus conexiones.
+- Martin Montezuma vinculado como Gerencia General de BMG, MZA y MAAS solo en R41.
+- OC-BMG-2026-0001: aprobada personalmente por Gerencia, PDF en Drive con dos firmas
+  coincidentes; después anulada como ensayo. Sin compra ni pago real.
+
+CORRECCIÓN PREPARADA, TODAVÍA NO INSTALADA
+La alerta visual de firma inválida causada por la huella del borrador quedó
+corregida en fuentes y compilados. Pasaron 10/10 pruebas relacionadas.
+El ensayo que está corriendo todavía conserva el código anterior. Reabrir el módulo
+actualiza la huella mostrada; la firma guardada no estaba dañada.
+No se subió este ZIP ni se ejecutó Deploy en esta sesión.
+
+ORDEN PARA RETOMAR
+1. Recuperar terminal del VPS: la última conexión terminó desconectada. No dar por
+   creado un respaldo nuevo de este cierre; comprobar los respaldos existentes.
+2. Antes de actualizar, generar respaldo actualizado y comprobar restore-check.json
+   verified=true. Incluir PostgreSQL completo, volúmenes privados, código y flujos.
+   Conservar la orden y todos los cambios posteriores a los respaldos anteriores.
+3. Instalar la corrección solo en crm-r41-ensayo, manteniendo su base y volumen.
+   Comparar la huella visual al asignar un correlativo sin necesitar reabrir el módulo.
+4. Diagnosticar el fallo separado del test de códigos de instalación: la respuesta
+   createInstallCode no tuvo data.value.codigo. No anunciar esa función como validada.
+5. Completar las pruebas pendientes del checklist: usuarios y cadenas de aprobación
+   adicionales, especialmente Gerencia de Operaciones/Jefe de Obra en MAAS; lectura
+   contable/inventario aún desactivados; documentos legales y cierre de venta según
+   evidencia disponible. No repetir pruebas ya verificadas sin una causa concreta.
+6. Preparar promoción oficial: copia real, respaldo verificable fuera del servidor,
+   conteos y posiciones Kanban antes/después, mantenimiento y plan de retorno.
+   Mantener R41 como ensayo después del paso a producción.
+7. Limpiar servicios y flujos obsoletos solo tras confirmar dependencias y conservar
+   sus exportaciones y respaldos. No retirar nodos ni modificar integraciones por
+   suponer que están duplicadas. El CRM vivo todavía depende de su configuración.
+
+REGLA DE CONSERVACIÓN
+Al conectar o restaurar, mantener leads, historial, conversaciones, archivos,
+vínculos, enlaces de Drive, herramientas, IA, credenciales privadas, usuarios y
+posiciones Kanban de la versión que está corriendo. Cambiar código sin sustituir
+la base por una vacía. Cualquier restauración de datos debe ser selectiva por ID;
+nunca eliminar información posterior. No activar envíos sociales ni automatismos
+pendientes como consecuencia de importar un flujo.
+
+UBICACIONES
+Ensayo R41: https://lola-pruebas-crm-r41-ensayo.kvrq8w.easypanel.host/
+CRM vivo: https://lola-pruebas-crm.kvrq8w.easypanel.host/
+Respaldo previo documentado en el servidor: /root/orok-pre-final-20261028-222655
+L.O.L.A. n8n: 5I6vMRspWFcWWlA1
+M.O.R.A. n8n: wnZ3Hz49jf6YsgR7
+C.L.A.R.A. n8n: mR8Bhr8hGvtaZire
+
+La producción no se actualizó. Este documento complementa las notas anteriores;
+las validaciones de este cierre prevalecen sobre pendientes históricos contradichos
+por las pruebas registradas, pero no convierten funciones sin prueba en terminadas.

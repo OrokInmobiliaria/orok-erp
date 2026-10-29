@@ -1,0 +1,10 @@
+node_modules
+.git
+private
+**/.env*
+**/*.pem
+**/*.key
+**/*.p12
+.test-temp
+.npm-logs
+.npm-cache

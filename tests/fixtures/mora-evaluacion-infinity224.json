@@ -1,0 +1,896 @@
+{
+ "id": "infinity224-rev9",
+ "active": true,
+ "engine_version": "mora-1",
+ "project": {
+  "id": "infinity224",
+  "nombre": "Infinity 224",
+  "direccion": "Calle La Apacheta 224, San Miguel, Lima",
+  "uso": "Vivienda multifamiliar · 8 pisos + azotea + sótano"
+ },
+ "summary": {
+  "unidades_total": 11,
+  "estacionamientos": 4,
+  "vendidas": 0,
+  "separadas": 0,
+  "disponibles": 11,
+  "avance_ventas_pct": 0,
+  "avance_obra_pct": 0,
+  "hitos": [
+   {
+    "nombre": "Lanzamiento comercial",
+    "mes": "dic-25"
+   },
+   {
+    "nombre": "Inicio de obra",
+    "mes": "jun-26"
+   },
+   {
+    "nombre": "Entrega",
+    "mes": "ago-27"
+   }
+  ]
+ },
+ "analysis": {
+  "baseline": {
+   "nombre": "Evaluación inicial · Rev9 oct-2026",
+   "fecha": "2026-10-26",
+   "kpis": {
+    "ventas": 5030467,
+    "egresos": 4341748,
+    "utilidad_antes_ir": 688719,
+    "utilidad_neta": 485547,
+    "margen_sobre_ventas_pct": 13.69,
+    "tir_accionista_pct": 17.93,
+    "aporte_maximo": 1990955,
+    "ultima_venta_mes": 19
+   }
+  },
+  "current": {
+   "kpis": {
+    "ventas": 5030467,
+    "egresos": 4341748,
+    "utilidad_antes_ir": 688719,
+    "utilidad_neta": 485547,
+    "margen_sobre_ventas_pct": 13.69,
+    "tir_accionista_pct": 17.93,
+    "aporte_maximo": 1990955,
+    "ultima_venta_mes": 19
+   }
+  },
+  "estrategia": {
+   "estado": "propuesta",
+   "velocidad": 0.8,
+   "reajuste": 0.3,
+   "desc": 3,
+   "escalera": [
+    [
+     20,
+     -4
+    ],
+    [
+     40,
+     0
+    ],
+    [
+     60,
+     3
+    ],
+    [
+     80,
+     6
+    ],
+    [
+     100,
+     9
+    ]
+   ]
+  }
+ },
+ "inputs": {
+  "p": {
+   "nombre": "Infinity 224",
+   "direccion": "Calle La Apacheta 224, San Miguel, Lima",
+   "uso": "Vivienda multifamiliar · 8 pisos + azotea + sótano",
+   "inicio": "2025-06",
+   "areaTerreno": 160,
+   "precioTerrenoM2": 4350,
+   "uit": 5500,
+   "tc": 3.4,
+   "autovaluo": 771892.61,
+   "costoM2": 2288.36,
+   "supervisionM2": 65,
+   "comunTechada": 269.79,
+   "nEstac": 4,
+   "precioEstac": 56000,
+   "precioM2": 6590.34,
+   "factorLibre": 1,
+   "descProm": 0,
+   "igv": 18,
+   "baseGravada": 50,
+   "prorrata": 100,
+   "ir": 29.5,
+   "detraccion": 4,
+   "detracOn": true,
+   "alcabala": 3,
+   "contingencia": 2.5,
+   "ggPct": 17.15,
+   "utilPct": 10.19,
+   "mesLanz": 6,
+   "velocidad": 0.8,
+   "inicial": 10,
+   "inicioObra": 12,
+   "durObra": 14,
+   "indep": 3,
+   "bancoOn": true,
+   "financiaPct": 60,
+   "preventaMin": 30,
+   "tea": 11,
+   "tasaDesc": 12
+  },
+  "units": [
+   {
+    "id": "101",
+    "tipo": "Loft Garden",
+    "piso": 1,
+    "tech": 40.29,
+    "libre": 18.91,
+    "aj": 0
+   },
+   {
+    "id": "201",
+    "tipo": "Flat 3D",
+    "piso": 2,
+    "tech": 80.37,
+    "libre": 11.3,
+    "aj": 0
+   },
+   {
+    "id": "301",
+    "tipo": "Dúplex 2D",
+    "piso": 3,
+    "tech": 71.62,
+    "libre": 9,
+    "aj": 0
+   },
+   {
+    "id": "302",
+    "tipo": "Flat 2D",
+    "piso": 3,
+    "tech": 53.79,
+    "libre": 0,
+    "aj": 0
+   },
+   {
+    "id": "402",
+    "tipo": "Dúplex 1D",
+    "piso": 4,
+    "tech": 64.48,
+    "libre": 4.39,
+    "aj": 0
+   },
+   {
+    "id": "501",
+    "tipo": "Flat 1D",
+    "piso": 5,
+    "tech": 52.82,
+    "libre": 0,
+    "aj": 0
+   },
+   {
+    "id": "601",
+    "tipo": "Flat 1D",
+    "piso": 6,
+    "tech": 41.67,
+    "libre": 4.39,
+    "aj": 0
+   },
+   {
+    "id": "602",
+    "tipo": "Flat 1D",
+    "piso": 6,
+    "tech": 38.92,
+    "libre": 4.39,
+    "aj": 0
+   },
+   {
+    "id": "701",
+    "tipo": "Dúplex 2D",
+    "piso": 7,
+    "tech": 68.05,
+    "libre": 9,
+    "aj": 0
+   },
+   {
+    "id": "702",
+    "tipo": "Flat 2D",
+    "piso": 7,
+    "tech": 52.4,
+    "libre": 4.96,
+    "aj": 0
+   },
+   {
+    "id": "801",
+    "tipo": "Dúplex 2D azotea",
+    "piso": 8,
+    "tech": 78.14,
+    "libre": 20.43,
+    "aj": 0
+   }
+  ],
+  "vu": {
+   "cat": [
+    [
+     "Muros y columnas",
+     327.97
+    ],
+    [
+     "Techos",
+     166.53
+    ],
+    [
+     "Pisos",
+     163.54
+    ],
+    [
+     "Puertas y ventanas",
+     94.05
+    ],
+    [
+     "Revestimientos",
+     62.94
+    ],
+    [
+     "Baños",
+     76.34
+    ],
+    [
+     "Instalaciones EE y SS",
+     295.09
+    ]
+   ],
+   "inei": 1,
+   "f5": 1.05
+  },
+  "inm": [
+   {
+    "n": "Levantamiento topográfico",
+    "d": "m2terreno",
+    "pu": 20,
+    "igv": true,
+    "pago": "1:45,3:30,5:25"
+   },
+   {
+    "n": "Estudio de suelos",
+    "d": "m2terreno",
+    "pu": 20,
+    "igv": true,
+    "pago": "3:34,5:33,7:33"
+   },
+   {
+    "n": "Factibilidad de servicios (Pluz y Sedapal)",
+    "d": "pctConstr",
+    "pu": 0.05,
+    "igv": true,
+    "pago": "3"
+   },
+   {
+    "n": "Tasación del inmueble",
+    "d": "global",
+    "pu": 2000,
+    "igv": true,
+    "pago": "12"
+   },
+   {
+    "n": "Arquitectura",
+    "d": "m2techada",
+    "pu": 20,
+    "igv": true,
+    "pago": "2:20,4:15,5:25,6:30,8:10"
+   },
+   {
+    "n": "Especialidad Estructuras",
+    "d": "m2techada",
+    "pu": 7,
+    "igv": true,
+    "pago": "2:20,4:15,5:25,6:30,8:10"
+   },
+   {
+    "n": "Instalaciones Eléctricas",
+    "d": "m2techada",
+    "pu": 5,
+    "igv": true,
+    "pago": "6-7"
+   },
+   {
+    "n": "Instalaciones Sanitarias",
+    "d": "m2techada",
+    "pu": 5,
+    "igv": true,
+    "pago": "6-7"
+   },
+   {
+    "n": "Instalaciones Mecánicas",
+    "d": "m2techada",
+    "pu": 5,
+    "igv": true,
+    "pago": "6-7"
+   },
+   {
+    "n": "Instalaciones de Gas",
+    "d": "m2techada",
+    "pu": 0.87,
+    "igv": true,
+    "pago": "6-7"
+   },
+   {
+    "n": "Impuesto predial",
+    "d": "predial",
+    "pu": 0,
+    "igv": false,
+    "pago": "proyecto"
+   },
+   {
+    "n": "Arbitrios",
+    "d": "anios",
+    "pu": 600,
+    "igv": false,
+    "pago": "proyecto"
+   },
+   {
+    "n": "Anteproyecto en consulta",
+    "d": "global",
+    "pu": 1447.2,
+    "igv": false,
+    "pago": "5"
+   },
+   {
+    "n": "Licencia de demolición",
+    "d": "global",
+    "pu": 3700,
+    "igv": false,
+    "pago": "7"
+   },
+   {
+    "n": "Licencia de edificación",
+    "d": "global",
+    "pu": 9673.3,
+    "igv": false,
+    "pago": "7"
+   },
+   {
+    "n": "Gerencia de proyecto",
+    "d": "mesesObra",
+    "pu": 11000,
+    "igv": true,
+    "pago": "proyecto"
+   },
+   {
+    "n": "SCTR",
+    "d": "mesesObra",
+    "pu": 350,
+    "igv": true,
+    "pago": "obra"
+   },
+   {
+    "n": "Certificado de numeración",
+    "d": "unidades",
+    "pu": 86.58,
+    "igv": true,
+    "pago": "entrega"
+   }
+  ],
+  "leg": [
+   {
+    "n": "Gastos notariales",
+    "d": "unidades",
+    "pu": 450,
+    "igv": true,
+    "pago": "independizacion"
+   },
+   {
+    "n": "Conformidad de obra y declaratoria de fábrica",
+    "d": "global",
+    "pu": 1500,
+    "igv": true,
+    "pago": "entrega"
+   },
+   {
+    "n": "Inscripción declaratoria de fábrica (SUNARP)",
+    "d": "unidades",
+    "pu": 1950,
+    "igv": true,
+    "pago": "entrega"
+   },
+   {
+    "n": "Inscripción nomenclatura y numeración",
+    "d": "global",
+    "pu": 87,
+    "igv": true,
+    "pago": "entrega"
+   },
+   {
+    "n": "Independización",
+    "d": "unidades",
+    "pu": 450,
+    "igv": true,
+    "pago": "independizacion"
+   },
+   {
+    "n": "Inscripción reglamento interno",
+    "d": "global",
+    "pu": 80,
+    "igv": true,
+    "pago": "entrega"
+   },
+   {
+    "n": "Asesoría legal",
+    "d": "manual",
+    "q": 12,
+    "pu": 1200,
+    "igv": true,
+    "pago": "proyecto"
+   }
+  ],
+  "fin": [
+   {
+    "n": "Comisión de estructuración",
+    "d": "pctVentas",
+    "pu": 0.2,
+    "igv": true,
+    "pago": "banco"
+   },
+   {
+    "n": "Supervisión bancaria",
+    "d": "pctVentas",
+    "pu": 0.6,
+    "igv": true,
+    "pago": "obra"
+   },
+   {
+    "n": "Gastos bancarios",
+    "d": "global",
+    "pu": 2000,
+    "igv": true,
+    "pago": "obra"
+   },
+   {
+    "n": "Gastos notariales de banca",
+    "d": "pctVentas",
+    "pu": 0.32,
+    "igv": true,
+    "pago": "banco"
+   }
+  ],
+  "com": [
+   {
+    "cat": "Marketing",
+    "n": "Publicidad y marketing",
+    "d": "pctVentas",
+    "pu": 3.2,
+    "igv": true,
+    "pago": "ventas"
+   },
+   {
+    "cat": "Ventas",
+    "n": "Comisiones y equipo de ventas",
+    "d": "pctVentas",
+    "pu": 4.05,
+    "igv": true,
+    "pago": "cobros"
+   },
+   {
+    "cat": "Posventa",
+    "n": "Implementación de posventa",
+    "d": "pctVentas",
+    "pu": 0.45,
+    "igv": true,
+    "pago": "entrega"
+   },
+   {
+    "cat": "Posventa",
+    "n": "Atención posventa",
+    "d": "pctVentas",
+    "pu": 0.45,
+    "igv": true,
+    "pago": "posventa"
+   }
+  ],
+  "gg": [
+   {
+    "n": "Póliza CAR",
+    "u": "%",
+    "q": 0.26
+   },
+   {
+    "n": "Póliza de responsabilidad civil",
+    "u": "%",
+    "q": 0.06
+   },
+   {
+    "n": "Gastos financieros de obra",
+    "u": "%",
+    "q": 0.06
+   },
+   {
+    "n": "Carta fianza por adelantos",
+    "u": "%",
+    "q": 0.44
+   },
+   {
+    "n": "Carta fianza de fiel cumplimiento",
+    "u": "%",
+    "q": 0.22
+   },
+   {
+    "n": "Carta fianza de garantía",
+    "u": "%",
+    "q": 0.11
+   },
+   {
+    "n": "EPP del staff",
+    "u": "gbl",
+    "q": 1,
+    "pu": 3000
+   },
+   {
+    "n": "SENCICO",
+    "u": "%",
+    "q": 0.08
+   },
+   {
+    "n": "ITF",
+    "u": "%",
+    "q": 0.05
+   },
+   {
+    "n": "Gastos legales de obra",
+    "u": "%",
+    "q": 0.05
+   },
+   {
+    "n": "Oficina principal",
+    "u": "mes",
+    "link": true,
+    "q": 14,
+    "ded": 1,
+    "pu": 10000
+   },
+   {
+    "n": "Ingeniero residente",
+    "u": "mes",
+    "link": true,
+    "q": 14,
+    "ded": 0.5,
+    "pu": 4000
+   },
+   {
+    "n": "Ingeniero de producción",
+    "u": "mes",
+    "link": true,
+    "q": 14,
+    "ded": 0.5,
+    "pu": 4000
+   },
+   {
+    "n": "Ingeniero de oficina técnica",
+    "u": "mes",
+    "link": true,
+    "q": 14,
+    "ded": 0,
+    "pu": 3000
+   },
+   {
+    "n": "Asistente de producción (acabados)",
+    "u": "mes",
+    "link": false,
+    "q": 5,
+    "ded": 1,
+    "pu": 3000
+   },
+   {
+    "n": "Administrador de obra",
+    "u": "mes",
+    "link": true,
+    "q": 14,
+    "ded": 1,
+    "pu": 2300
+   },
+   {
+    "n": "Almacenero",
+    "u": "mes",
+    "link": true,
+    "q": 14,
+    "ded": 0,
+    "pu": 2500
+   },
+   {
+    "n": "Prevencionista de riesgos",
+    "u": "mes",
+    "link": true,
+    "q": 14,
+    "ded": 0,
+    "pu": 1500
+   },
+   {
+    "n": "Maestro de casco",
+    "u": "mes",
+    "link": true,
+    "q": 14,
+    "ded": 0,
+    "pu": 3600
+   },
+   {
+    "n": "Maestro de acabados",
+    "u": "mes",
+    "link": true,
+    "q": 14,
+    "ded": 0,
+    "pu": 3500
+   },
+   {
+    "n": "Técnico de laboratorio / topógrafo",
+    "u": "mes",
+    "link": true,
+    "q": 14,
+    "ded": 1,
+    "pu": 1500
+   },
+   {
+    "n": "Cuadrilla de posventa",
+    "u": "mes",
+    "link": false,
+    "q": 5,
+    "ded": 1,
+    "pu": 1800
+   },
+   {
+    "n": "Materiales y equipos de posventa",
+    "u": "%",
+    "q": 0.2
+   }
+  ],
+  "part": [
+   {
+    "n": "Obras provisionales (inc. demolición)",
+    "pct": 9.86,
+    "c": [
+     5,
+     5,
+     10,
+     12,
+     12,
+     11,
+     10,
+     10,
+     10,
+     8,
+     7,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "n": "Estructuras",
+    "pct": 28.46,
+    "c": [
+     7,
+     10,
+     10,
+     15,
+     15,
+     15,
+     10,
+     10,
+     5,
+     3,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "n": "Arquitectura obra húmeda",
+    "pct": 10.16,
+    "c": [
+     0,
+     7,
+     7,
+     10,
+     10,
+     10,
+     10,
+     10,
+     7,
+     7,
+     6,
+     6,
+     5,
+     5
+    ]
+   },
+   {
+    "n": "Arquitectura acabados",
+    "pct": 27.95,
+    "c": [
+     0,
+     7,
+     7,
+     10,
+     10,
+     10,
+     10,
+     10,
+     7,
+     7,
+     6,
+     6,
+     5,
+     5
+    ]
+   },
+   {
+    "n": "Instalaciones eléctricas",
+    "pct": 5.74,
+    "c": [
+     0,
+     5,
+     10,
+     10,
+     10,
+     10,
+     10,
+     10,
+     10,
+     10,
+     5,
+     5,
+     5,
+     0
+    ]
+   },
+   {
+    "n": "Instalaciones sanitarias",
+    "pct": 3.46,
+    "c": [
+     0,
+     5,
+     10,
+     10,
+     10,
+     10,
+     10,
+     10,
+     10,
+     10,
+     5,
+     5,
+     5,
+     0
+    ]
+   },
+   {
+    "n": "Sistema ACI",
+    "pct": 2.03,
+    "c": [
+     0,
+     5,
+     10,
+     10,
+     10,
+     10,
+     10,
+     10,
+     10,
+     10,
+     5,
+     5,
+     5,
+     0
+    ]
+   },
+   {
+    "n": "Ascensor",
+    "pct": 7.62,
+    "c": [
+     20,
+     0,
+     0,
+     0,
+     30,
+     0,
+     0,
+     0,
+     30,
+     0,
+     0,
+     0,
+     0,
+     20
+    ]
+   },
+   {
+    "n": "Instalaciones mecánicas",
+    "pct": 1.63,
+    "c": [
+     0,
+     5,
+     10,
+     10,
+     10,
+     10,
+     10,
+     10,
+     10,
+     10,
+     5,
+     5,
+     5,
+     0
+    ]
+   },
+   {
+    "n": "Comunicaciones",
+    "pct": 0.71,
+    "c": [
+     0,
+     5,
+     10,
+     10,
+     10,
+     10,
+     10,
+     10,
+     10,
+     10,
+     5,
+     5,
+     5,
+     0
+    ]
+   },
+   {
+    "n": "Seguridad",
+    "pct": 1.73,
+    "c": [
+     0,
+     5,
+     10,
+     10,
+     10,
+     10,
+     10,
+     10,
+     10,
+     10,
+     5,
+     5,
+     5,
+     0
+    ]
+   },
+   {
+    "n": "Sistema de gas",
+    "pct": 0.66,
+    "c": [
+     0,
+     5,
+     10,
+     10,
+     10,
+     10,
+     10,
+     10,
+     10,
+     10,
+     5,
+     5,
+     5,
+     0
+    ]
+   }
+  ]
+ }
+}

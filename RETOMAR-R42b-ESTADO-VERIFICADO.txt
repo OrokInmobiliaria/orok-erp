@@ -1,0 +1,75 @@
+ESTADO PARA CONTINUAR · R42b · 28/10/2026, Lima
+
+PAQUETE COMPLETO: ERP-OROK-R42b-PROYECTOS-DRIVE-ENSAYO.zip
+No se actualizó el CRM vivo. Este paquete corresponde al ensayo crm-r41-ensayo.
+
+VERIFICADO EN SERVIDOR
+- Versión 67.6.25-r42b instalada, HTTP 200, PostgreSQL y aislamiento conservados.
+- 585/585 pruebas Linux aprobadas, sin omisiones. Primer intento se bloqueó por
+  dos expectativas del orden anterior del menú; corregidas al orden pedido por Gerencia.
+- Comparación de todas las colecciones y huellas de documentos antes/después: idénticas
+  antes de agregar el registro nuevo de Drive. Leads, historial y Kanban preservados.
+- Menú comprobado en pantalla: Evaluador Inmobiliario, Marketing, CRM Inmobiliario,
+  Contabilidad y Finanzas.
+- Datos del Proyecto visible y evaluación guardada cargada sin sobrescribir sus cifras.
+- Infinity224 reconocido con sus 14 carpetas existentes: CERO trabajos de creación.
+- G.R.E.T.A respondió con Claude, sin el 404 anterior. No publicó ni cambió presupuestos.
+- Archivo de prueba confirmado por Drive dentro de 5.Marketing: estado complete.
+- Subcarpeta por campaña y archivo confirmados en Drive: ambos complete y sin errores.
+  La estructura original de 14 carpetas permanece vinculada sin cambios.
+
+RESPALDO ANTES DE R42b
+/root/orok-pre-r42b-20261029-033349
+restore-check.json: verified=true; restaurado en otra base y comparadas sus huellas.
+Incluye PostgreSQL, código, archivos privados y exportación de todos los flujos n8n.
+Las claves y los datos reales del respaldo permanecen en el servidor, no en este ZIP.
+
+DRIVE
+Configuración privada del ensayo: project-drive.json habilitado para raíz BMG/ÖRÖK.
+Infinity224: 1VpOCNS5IuSvxtZL-ORrJIZ9I8rEZs1QG.
+Marketing: 19yUjATCTmDPC955HzZmPoipYTE5CfTOt.
+Los IDs están vinculados, no se recrearon las 14 carpetas.
+Nuevos proyectos: plan aditivo raíz + 14 carpetas, probado con reservas simuladas.
+No se creó un proyecto ficticio completo de 15 carpetas en el Drive real.
+MZA y MAAS requieren configurar sus propias raíces antes de crear proyectos nuevos.
+
+N8N: ESTADO REAL
+1. Los 3 flujos anteriores siguen activos e intactos:
+   C.L.A.R.A: mR8Bhr8hGvtaZire, 82 nodos.
+   M.O.R.A: wnZ3Hz49jf6YsgR7, 40 nodos.
+   L.O.L.A: 5I6vMRspWFcWWlA1, 110 nodos.
+2. Nuevo worker R42b Proyectos y archivo Marketing: 28 nodos,
+   PUBLICADO por Gerencia. Primera ejecución automática 102793: exitosa en 315 ms,
+   28/10/2026 22:47:30 (Lima), sin trabajos pendientes. Las pruebas manuales ya
+   archivaron un archivo y una subcarpeta reales dentro de Marketing.
+   Reutiliza Google Drive account (mmontezuma@orok.com.pe) y Header Auth del ensayo.
+   Historial de versión actual verificado. Sondeo cada 30 s habilitado.
+   El JSON del paquete permanece inactivo para una importación segura.
+   URL: https://n8n-n8n.kvrq8w.easypanel.host/workflow/eI0wl0CiXCx8P5Re
+   No activar antes de revisar que no haya otra copia del mismo worker activa.
+3. n8n/LOLA-R42b-FUENTES-ENSAYO-INACTIVO.json y
+   n8n/MORA-R42b-FUENTES-ENSAYO-INACTIVO.json están PREPARADOS en el paquete,
+   NO aplicados todavía a los flujos activos. Conservan todos sus nodos y conexiones.
+   Antes de importarlos, comparar con una exportación fresca del servidor para preservar
+   las credenciales, hosts, disparadores apagados y ajustes realizados en la instalación.
+4. C.L.A.R.A no necesita reemplazarse por este cambio.
+
+PENDIENTES DE ESTE BLOQUE
+- Prueba de lectura e indexación de documentos reales, incluidos PDF y Excel;
+  la prueba de archivo de texto no valida esos lectores.
+- Gerencia debe aprobar expresamente los documentos comerciales para L.O.L.A.
+- Aplicar y probar el contexto de fuentes de Drive en n8n L.O.L.A y M.O.R.A.
+- Confirmar el archivado real de cada tipo de pieza (imagen, video, exportación),
+  no confundir la prueba de texto con una prueba de todos los formatos.
+- Guardado de un proyecto nuevo real solo cuando Gerencia indique sus datos.
+
+CONSERVACIÓN OBLIGATORIA PARA LA CONEXIÓN FINAL
+Cambiar solamente código y aplicar cambios aditivos. Conservar PostgreSQL, leads,
+conversaciones, historial, posiciones del Kanban, archivos, enlaces, vínculos de herramientas,
+credenciales, variables y volumen privado. No reemplazar una base con otra vacía.
+No desplegar en producción sin respaldo restaurado y verificado y prueba con datos reales.
+Restaurar selectivamente por ID; nunca borrar información posterior sin autorización expresa.
+
+SIGUIENTE PASO
+Retomar desde el worker de archivo R42b y sus pendientes, no repetir la instalación R42/R42b,
+la activación de usuarios, las conexiones ya verificadas ni las 585 pruebas sin cambios nuevos.

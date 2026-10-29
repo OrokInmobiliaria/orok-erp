@@ -1,0 +1,107 @@
+{
+  "version": "67.6.10",
+  "stage": "ENSAYO_PENDIENTE_CONFIGURACION",
+  "workflow": "00-Lola-ENSAYO-67.6.10-CONFIGURAR-INACTIVO.json",
+  "nodes": 84,
+  "active": false,
+  "tests": {
+    "regression": {
+      "tests": 223,
+      "pass": 223,
+      "fail": 0,
+      "skipped": 0
+    },
+    "marketing": {
+      "tests": 45,
+      "pass": 44,
+      "fail": 0,
+      "skipped": 1
+    }
+  },
+  "total_passed": 267,
+  "skipped": 1,
+  "skip_reason": "Comprobación de permisos POSIX no válida en Windows; debe comprobarse en Linux.",
+  "historical_socket_tests_excluded": 5,
+  "build": "passed",
+  "container_build": "initial image built with advisories; patched image pending verification",
+  "providers": "simulated",
+  "new_inference_calls": 0,
+  "production_deployed": false,
+  "rehearsal_deployed": false,
+  "n8n_imported": true,
+  "whatsapp_number_connected": false,
+  "claude_native_connected_in_file": true,
+  "claude_default_enabled": false,
+  "claude_model_selected": false,
+  "claude_credential_selected": false,
+  "rehearsal_project": "infinity224_pruebas_955318057",
+  "workflow_origin": "https://crm-ensayo.invalid",
+  "workflow_credentials_removed": true,
+  "paid_reports_schedule_restored_in_file": true,
+  "creative_runner_restored_in_file": true,
+  "sql_schema_applied_in_vps": false,
+  "rehearsal_source_copies_commercial_customers": false,
+  "backups": {
+    "date_lima": "2026-10-22",
+    "postgres": {
+      "status": "Success reported by EasyPanel",
+      "database": "postgres_infinity",
+      "storage": "Local Disk",
+      "path": "postgres_infinity/postgres_infinity224/2026-10-22T21:40:10.272Z.sql.gz",
+      "size_reported": "66.3 kB",
+      "completed_at_lima": "2026-10-22 16:40:11",
+      "schedule_enabled": false,
+      "restore_tested": false,
+      "proof": "Respaldo-PostgreSQL-previo-ensayo-20261022.png"
+    },
+    "n8n": {
+      "status": "Success reported by EasyPanel",
+      "volume": "data",
+      "mount": "/home/node/.n8n",
+      "backup_directory": "/etc/easypanel/backups/n8n/n8n/antes-ensayo-lola-20261022",
+      "size_reported": "1.89 GB",
+      "completed_at_lima": "2026-10-22 16:43:39",
+      "schedule_enabled": false,
+      "restore_tested": false,
+      "live_sqlite_copy": true,
+      "initial_copy_retry_observed": true,
+      "proof": "Respaldo-n8n-previo-ensayo-20261022.png"
+    },
+    "service_stops": 0,
+    "original_workflows_replaced": false,
+    "original_crm_replaced": false
+  },
+  "pending": [
+    "Confirmar el alojamiento del servicio de ensayo y preparar su origen HTTPS",
+    "Configurar archivos privados en el destino y permisos adecuados",
+    "Inicializar SQL bajo el proyecto de ensayo",
+    "Preparar JSON con origen real y seleccionar credenciales de ensayo",
+    "Elegir modelo/credencial Anthropic disponibles y comprobar consumo antes de habilitarlo",
+    "Configurar conexión oficial de WhatsApp y un interlocutor de prueba",
+    "Configurar calendario, correo y avisos de prueba",
+    "Ejecutar pruebas reales; verificar permisos Linux y restauración de respaldos",
+    "Los otros pendientes de la auditoría de 33 puntos siguen vigentes",
+    "Verificar ajustes de ejecución y ejecutar los nodos con credenciales en n8n; reconocer un nodo no valida su conexión real"
+  ],
+  "n8n_draft_url": "https://n8n-n8n.kvrq8w.easypanel.host/workflow/Mvs4FemDAz5VEdOY",
+  "n8n_native_anthropic_recognized": true,
+  "n8n_executed": false,
+  "n8n_published": false,
+  "n8n_runtime_settings_verified": false,
+  "rehearsal_service_created": true,
+  "rehearsal_service": "lola_pruebas/crm",
+  "rehearsal_source_uploaded": true,
+  "rehearsal_source_upload_note": "Primera carga realizada; este paquete corrige dependencias y requiere nueva carga y verificación Linux.",
+  "rehearsal_origin": "https://lola-pruebas-crm.kvrq8w.easypanel.host",
+  "security": {
+    "runtime_audit_known_vulnerabilities": 0,
+    "patched_versions": {
+      "@grpc/grpc-js": "1.14.6",
+      "brace-expansion": "2.1.7",
+      "nodemailer": "10.2.1"
+    },
+    "local_isolated_smoke": "passed",
+    "full_local_install": "EPERM Windows",
+    "patched_linux_build_verified": false
+  }
+}

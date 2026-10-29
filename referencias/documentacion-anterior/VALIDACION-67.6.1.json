@@ -1,0 +1,21 @@
+{
+  "version": "67.6.1",
+  "workflow": "00-Lola-Unificado-67.6.1-INACTIVO.json",
+  "workflow_active": false,
+  "workflow_nodes": 46,
+  "release_tests": {
+    "passed": 92,
+    "failed": 0,
+    "provider_responses": "simuladas",
+    "protocol": "manejador HTTP real en proceso sin sockets"
+  },
+  "frontend_build": "Vite production build correcto",
+  "production_deployed": false,
+  "pending_external_validation": [
+    "Importacion en la instancia de n8n y credenciales reales",
+    "Permisos y callbacks de las cuentas Meta",
+    "Acceso y adaptador oficial de TikTok Messaging",
+    "Conciliacion e importacion de los datos existentes de Postgres"
+  ],
+  "broader_suite_limit": "Una ejecucion mas amplia tuvo 24 casos sin validar por conexiones locales bloqueadas y un caso de permisos de archivo Linux; no se presentan como aprobados."
+}

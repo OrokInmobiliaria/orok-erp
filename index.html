@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>ERP ÖRÖK</title>
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#85442A">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="ERP ÖRÖK">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      :root { --orok-bg: #FCF9F6; --orok-brand: #85442A; --orok-accent: #B7793E; --orok-text: #292524; --orok-card-bg: #ffffff; --orok-soft: #F5EBE6; --orok-border: #E7DFD8; }
+      body { margin: 0; background-color: var(--orok-bg); color: var(--orok-text); font-family: 'Outfit', sans-serif; -webkit-font-smoothing: antialiased; }
+      * { box-sizing: border-box; }
+      .orok-card { background: var(--orok-card-bg); border-radius: 24px 24px 6px 24px; box-shadow: 0 10px 30px -10px rgba(37, 29, 25, 0.12); border: 1px solid var(--orok-border); padding: 24px; transition: transform 0.2s ease; }
+      .orok-input { width: 100%; padding: 14px 16px; margin: 6px 0 16px 0; border-radius: 16px 16px 4px 16px; border: 1px solid var(--orok-border); background: var(--orok-soft); font-family: inherit; font-size: 14px; color: var(--orok-text); transition: all 0.3s ease; }
+      .orok-input:focus { outline: none; border-color: var(--orok-brand); background: var(--orok-card-bg); box-shadow: 0 0 0 3px color-mix(in srgb, var(--orok-brand) 18%, transparent); }
+      .orok-select { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2385442A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em; }
+      .orok-btn { padding: 12px 24px; border-radius: 16px 16px 4px 16px; font-weight: 700; font-family: inherit; font-size: 14px; cursor: pointer; transition: all 0.3s ease; border: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+      .orok-btn-primary { background: var(--orok-brand); color: #ffffff; }
+      .orok-btn-secondary { background: var(--orok-soft); color: var(--orok-brand); }
+      .orok-nav-btn { padding: 12px 20px; cursor: pointer; border: none; border-radius: 16px 16px 4px 16px; font-weight: 700; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;}
+      .orok-logo-text { font-weight: 900; letter-spacing: 2px; font-size: 28px; color: #85442A; margin: 0; }
+      ::-webkit-scrollbar { width: 8px; height: 8px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 4px; }
+      .kanban-col { flex: 1 0 320px; min-width: 320px; background: var(--orok-soft); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 16px; min-height: 70vh; }
+      
+      input[type=number]::-webkit-inner-spin-button, 
+      input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+      input[type=number] { -moz-appearance: textfield; }
+
+      @media print {
+        .no-print, .orok-nav-btn, .orok-btn { display: none !important; }
+        body { background: white !important; }
+        .orok-card { box-shadow: none !important; border: 1px solid #ddd !important; page-break-inside: avoid; }
+        .kanban-col { max-width: none !important; flex: 1 1 100% !important; background: white !important; border: 1px solid #eee; page-break-after: always; }
+      }
+    </style>
+  </head>
+  <body><div id="root"></div><script type="module" src="/src/main.jsx"></script></body>
+</html>

@@ -1,0 +1,12 @@
+VALIDACION DEL PAQUETE · 26/10/2026
+resultado=OK
+version=67.6.17-r32c
+n8n_principal_nodos=110
+n8n_principal_activo=False
+n8n_archivos_validos=5/5
+n8n_archivos_activos=0
+hotfix_fuente=True
+hotfix_dist=True
+cache_bust=True
+archivos_privados_incluidos=0
+nota=La verificación completa 485/485 pertenece al paquete R32c original. Este cierre solo añade CSS/HTML, normaliza los JSON n8n a inactivos y agrega documentación; la misma corrección visual fue desplegada y verificada en preproducción.

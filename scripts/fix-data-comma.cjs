@@ -1,0 +1,1 @@
+const fs=require('fs');let s=fs.readFileSync('src/dataService.js','utf8');s=s.replace(/return result;\}\r?\n   async getBankEvaluationGuidance/,"return result;},\n   async getBankEvaluationGuidance");fs.writeFileSync('src/dataService.js',s);

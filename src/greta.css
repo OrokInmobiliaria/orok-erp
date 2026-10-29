@@ -1,0 +1,121 @@
+/* R42 · G.R.E.T.A en Crystal: usa los mismos tokens de glass.css (paleta personal del ERP). */
+.greta{display:flex;flex-direction:column;gap:18px;padding:4px 0 28px;max-width:1100px;margin:0 auto;width:100%;box-sizing:border-box}
+.greta a,.greta-config a{color:var(--orok-brand,#85442A)}
+.greta-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:14px}
+.greta-head h1{margin:4px 0 0;font-size:clamp(26px,3.2vw,36px);font-weight:700;letter-spacing:-.01em;color:var(--orok-dark,#35190f)}
+.greta-kicker{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:rgba(var(--shadow-rgb,70,35,20),.7)}
+.greta-kicker.light{color:rgba(255,255,255,.75)}
+.greta-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.greta-actions .orok-input{width:auto;min-width:150px}
+.glass-card{background:linear-gradient(135deg,rgba(255,255,255,.62),rgba(255,255,255,.34));-webkit-backdrop-filter:var(--blur,blur(26px) saturate(175%));backdrop-filter:var(--blur,blur(26px) saturate(175%));border:1px solid var(--glass-border,rgba(255,255,255,.62));box-shadow:var(--glass-shadow);border-radius:22px;padding:20px}
+.glass-card.dark{background:linear-gradient(135deg,rgba(var(--shadow-rgb,70,35,20),.82),rgba(var(--tint-rgb,133,68,42),.72));color:#fff;border-color:rgba(255,255,255,.18)}
+.glass-card.dark p{color:rgba(255,255,255,.92)}
+.glass-card h2{margin:0 0 10px;font-size:18px}
+.glass-card h3{margin:6px 0;font-size:18px}
+.greta-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.greta-stat{text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px;font:inherit;color:inherit}
+.greta-stat span{font-size:13px;opacity:.75}.greta-stat b{font-size:36px;font-weight:700}.greta-stat small{font-size:13px;opacity:.8}
+.greta-stat:hover,.greta-stat:focus-visible{outline:2px solid var(--orok-brand);outline-offset:2px}
+.greta-row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.greta-row-tight{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:10px}
+.greta-grow{flex:999 1 520px;min-width:0}
+.greta-side{flex:1 1 300px;min-width:260px;display:flex;flex-direction:column;gap:14px}
+.greta-list{list-style:none;margin:0;padding:0}
+.greta-list li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--hair,rgba(133,68,42,.14))}
+.greta-list li:last-child{border-bottom:0}
+.greta-list li .orok-btn{flex-shrink:0;white-space:nowrap}
+.greta-list small{display:block;font-size:13px;opacity:.75;margin-top:2px}
+.greta-chips{display:flex;flex-wrap:wrap;gap:8px}
+.greta-chips span,.greta-chips button{font:inherit;font-size:13px;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.14);border:0;color:inherit}
+.greta-chips.soft span,.greta-chips.soft button{background:rgba(var(--tint-rgb,133,68,42),.12);color:var(--orok-dark,#35190f)}
+.greta-chips button{cursor:pointer}
+.greta-ask{display:flex;gap:10px;align-items:center;padding:8px 8px 8px 20px;border-radius:999px;background:linear-gradient(135deg,rgba(255,255,255,.74),rgba(255,255,255,.44));-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow)}
+.greta-ask label{font-weight:600;color:var(--orok-brand);white-space:nowrap}
+.greta-ask input{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:15px;padding:10px 4px}
+.greta-answer p{margin:0 0 6px}
+.greta-muted{opacity:.75}.small{font-size:12.5px}
+.greta-msg{margin:0;font-size:14px}.greta-msg.err{color:#a32b1a}
+.greta-filters{display:flex;flex-wrap:wrap;gap:16px;align-items:center;padding:14px 18px}
+.greta-filters [role=group]{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.greta-filters [role=group]>span{font-size:12px;opacity:.75}
+.greta-filters button{font:inherit;font-size:13px;padding:7px 12px;border-radius:999px;border:1px solid rgba(var(--tint-rgb,133,68,42),.3);background:rgba(255,255,255,.55);cursor:pointer}
+.greta-filters button[aria-pressed=true]{background:var(--orok-brand);color:#fff;border-color:var(--orok-brand)}
+.greta-inline{display:flex;gap:8px;align-items:center;font-size:13px}
+.greta-inline .orok-input{width:auto}
+.greta-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.greta-trend{display:flex;flex-direction:column;gap:8px}
+.greta-trend p{margin:0;font-size:14px;line-height:1.45}
+.greta-trend .orok-btn{align-self:flex-start;margin-top:auto}
+.greta-trend-top{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.greta-badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:7px;background:rgba(var(--shadow-rgb,70,35,20),.85);color:#fff}
+.greta-fit{font-size:12px;font-weight:600}.greta-fit.alto{color:#1f5130}.greta-fit.medio{color:#7a4f00}.greta-fit.bajo{color:#6b5a50}
+.greta-signal{font-size:12.5px!important;opacity:.8}
+.greta-links{display:flex;flex-wrap:wrap;gap:10px;font-size:13px}
+.greta-sources{margin:0;padding-left:18px;font-size:13px;display:flex;flex-direction:column;gap:6px}
+.greta-img{margin-bottom:16px;display:flex;flex-direction:column;gap:10px}
+.greta-img-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.greta-img label,.greta-config label{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.greta-check{display:flex!important;flex-direction:row!important;gap:8px;align-items:center;font-size:14px;margin-top:6px}
+.greta-pub{display:flex;flex-wrap:wrap;gap:18px}
+.greta-pub-media{flex:0 0 220px}
+.greta-pub-media img,.greta-pub-media video{width:220px;max-height:390px;object-fit:cover;border-radius:18px;background:#1e1611}
+.greta-ph{width:220px;height:300px;border-radius:18px;display:grid;place-items:center;text-align:center;padding:16px;box-sizing:border-box;background:rgba(var(--tint-rgb,133,68,42),.12);font-size:13px}
+.greta-pub-body{flex:999 1 360px;min-width:0;display:flex;flex-direction:column;gap:10px}
+.greta-caption{white-space:pre-line;font-size:14px;margin:0;padding:12px;border-radius:14px;background:rgba(255,255,255,.45)}
+.greta-dest{display:grid;grid-template-columns:90px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--hair,rgba(133,68,42,.14))}
+.greta-dest span{font-size:13px;opacity:.8}
+.greta-dest div{display:flex;gap:8px;flex-wrap:wrap}
+.greta-tiles{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+.greta-tiles .glass-card{padding:14px 16px;border-radius:18px}
+.greta-tiles span{display:block;font-size:12px;opacity:.75}.greta-tiles b{font-size:22px}
+.greta-table{overflow-x:auto}
+.greta-table table{width:100%;border-collapse:collapse;font-size:14px}
+.greta-table th{font-size:12px;font-weight:600;text-align:left;opacity:.75;padding:8px 6px}
+.greta-table td{padding:10px 6px;border-top:1px solid var(--hair,rgba(133,68,42,.14))}
+.greta-table .n{text-align:right;white-space:nowrap}
+.greta-reco{font-size:12px;font-weight:700;padding:4px 8px;border-radius:8px}
+.greta-reco.up{background:rgba(46,107,63,.15);color:#1f5130}.greta-reco.down{background:rgba(176,62,40,.15);color:#8a2e1c}.greta-reco.flat{background:rgba(110,90,78,.15);color:#4a3a30}
+.greta-config{display:flex;flex-direction:column;gap:10px;margin:16px auto;max-width:1100px;box-sizing:border-box}
+@media (max-width:1100px){.greta-tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:760px){.greta-stats{grid-template-columns:1fr}.greta-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.greta-dest{grid-template-columns:1fr}.greta-ask{flex-wrap:wrap;border-radius:22px;padding:12px}.greta-ask label{width:100%}.greta-ask input{flex-basis:100%}.greta-ask .orok-btn{width:100%}.greta-pub-media{flex:1 1 100%}.greta-pub-media img,.greta-pub-media video,.greta-ph{width:100%}}
+/* R42 · botón flotante de G.R.E.T.A: mismo panel que L.O.L.A, M.O.R.A y C.L.A.R.A, tono cobre de Marketing */
+.lola-fab.greta-fab{background:linear-gradient(135deg,#b5654a,#85442A)}
+/* R43 · Formularios instantáneos (Crystal) */
+.greta-forms{display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px;align-items:start}
+.greta-forms-list{display:flex;flex-direction:column;gap:10px}
+.greta-form-item{text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px;font:inherit;color:inherit;padding:14px 16px}
+.greta-form-item.on{outline:2px solid var(--orok-brand,#85442A)}
+.greta-form-item small{font-size:12.5px;opacity:.8}
+.greta-estado{font-weight:700}.greta-estado.creado{color:#1f5130}.greta-estado.error{color:#a32b1a}.greta-estado.aprobado{color:#7a4f00}
+.greta-form-cols{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+.greta-form-fields{display:flex;flex-direction:column;gap:14px;min-width:0}
+.greta-form-fields fieldset{border:1px solid var(--hair,rgba(133,68,42,.16));border-radius:16px;padding:12px 14px;margin:0;display:flex;flex-direction:column;gap:10px;min-width:0}
+.greta-form-fields legend{font-weight:700;padding:0 6px}
+.greta-form-fields label{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.greta-form-fields label small{opacity:.6;font-size:11px}
+.greta-q{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:12px;background:rgba(255,255,255,.4)}
+.greta-q .orok-input{width:auto}
+.greta-opts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.greta-opts span{display:inline-flex;align-items:center;gap:2px}
+.greta-opts span .orok-input{width:150px}
+.greta-opts span button{border:0;background:transparent;font-size:18px;cursor:pointer;color:inherit}
+.greta-form-actions{border-top:1px solid var(--hair,rgba(133,68,42,.14));padding-top:12px;margin-top:14px}
+.greta-phone{position:sticky;top:12px;width:300px;border-radius:34px;padding:14px;background:linear-gradient(160deg,rgba(53,25,15,.92),rgba(133,68,42,.82));box-shadow:var(--glass-shadow);color:#fff;display:flex;flex-direction:column;gap:10px;min-height:520px;box-sizing:border-box}
+.greta-phone-top{display:flex;flex-direction:column;padding:6px 8px}.greta-phone-top small{opacity:.75;font-size:11px}
+.greta-phone-body{flex:1;background:rgba(255,255,255,.94);color:#2b1a12;border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:10px;overflow:auto}
+.greta-phone-body h4{margin:0;font-size:18px}.greta-phone-body p{margin:0;font-size:13.5px;line-height:1.45}
+.greta-phone-q{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.greta-phone-opt,.greta-phone-in{border:1px solid rgba(133,68,42,.25);border-radius:10px;padding:8px 10px;font-size:13px}
+.greta-phone-in{color:#8a817c}
+.greta-phone-btn{margin-top:auto;text-align:center;background:#85442A;color:#fff;border-radius:12px;padding:11px;font-weight:700}
+.greta-phone-steps{display:flex;gap:4px}
+.greta-phone-steps button{flex:1;border:0;border-radius:10px;padding:7px 2px;font:inherit;font-size:11px;background:rgba(255,255,255,.12);color:#fff;cursor:pointer}
+.greta-phone-steps button[aria-selected=true]{background:rgba(255,255,255,.85);color:#5a2b18;font-weight:700}
+@media (max-width:1100px){.greta-form-cols{grid-template-columns:1fr}.greta-phone{position:static;width:100%;max-width:340px;margin:0 auto}}
+@media (max-width:760px){.greta-forms{grid-template-columns:1fr}.greta-opts span .orok-input{width:120px}}
+.greta-q>.orok-input{width:100%;box-sizing:border-box}
+.greta-q-ctrl{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.greta-q-ctrl .orok-btn{padding:6px 10px;min-height:0}
+.greta-q-ctrl select.orok-input{width:auto;padding-top:6px;padding-bottom:6px}
+.greta-opts span .orok-input{padding-top:6px;padding-bottom:6px}
+.greta-q .orok-input,.greta-q-ctrl .orok-btn,.greta-opts .orok-input,.greta-opts .orok-btn{margin:0}

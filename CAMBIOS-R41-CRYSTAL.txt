@@ -1,0 +1,23 @@
+R41 ENSAYO - APARIENCIA CRYSTAL - 2026-10-28
+
+Cambios:
+- Apariencia disponible en el menu superior de todo el ERP.
+- El resto de Herramientas permanece en Configuracion.
+- Crystal y esquinas interiores redondeadas en Evaluador y Contabilidad.
+- Contabilidad sigue la paleta personal del ERP.
+- Ingreso (usuario y contrasena): fondo y campos solidos, sin Crystal.
+
+Validacion local:
+- Compilacion completa correcta.
+- Cuatro comprobaciones de navegacion y aislamiento aprobadas.
+- JavaScript generado de Evaluador y Contabilidad: sintaxis correcta.
+- Vista visual local pendiente: el navegador no pudo acceder al servidor local.
+- Este paquete no demuestra que el servidor ya fue actualizado.
+
+Destino: exclusivamente crm-r41-ensayo.
+Conservar volumen privado, variables, base PostgreSQL, credenciales, enlaces,
+historial y posiciones Kanban. No importar ni sustituir flujos activos n8n.
+Incluye los flujos n8n del paquete sin cambios.
+
+Produccion: no autorizada por esta entrega. Sigue pendiente verificar el respaldo
+restaurable y sus conteos antes de cualquier publicacion oficial.

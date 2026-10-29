@@ -1,0 +1,1127 @@
+{
+  "version": "67.6.10",
+  "revision": "instagram-facebook-login-r23",
+  "deployment_status": "prepared_not_deployed",
+  "files": [
+    {
+      "path": ".dockerignore",
+      "sha256": "069c54338692697c9b4ef5f43aef17e19525eb0182a30e9bb1e047e5b278b271"
+    },
+    {
+      "path": "CALENDARIO-ENSAYO-r9.json",
+      "sha256": "92cb267b820d2111029074288212d0bf28e88fbdce7a7a764cefa39d6099fb8a"
+    },
+    {
+      "path": "CAMBIOS-ENSAYO-r10.md",
+      "sha256": "15f98f4b974b48dcb0094ce7d326111a9d0228ae93800840364877a4d7c7381d"
+    },
+    {
+      "path": "CAMBIOS-ENSAYO-r11.md",
+      "sha256": "298380c643af8988de9405d542daf4cab975c5a1415f96d1d2bf408b2a61cfc4"
+    },
+    {
+      "path": "CAMBIOS-ENSAYO-r12.md",
+      "sha256": "2527b899072e75c60ce732dd27e9e18554a1894961ba2947c1247fc26e7a1224"
+    },
+    {
+      "path": "CAMBIOS-ENSAYO-r13.md",
+      "sha256": "e2dc968e8839d6bd11e6c6c772206745c103d0fa7a12ed0c928c4890a73a7320"
+    },
+    {
+      "path": "CAMBIOS-ENSAYO-r9.md",
+      "sha256": "c207da77a016459904077f207718b0812b17584f3ac74bbc518f24c469298180"
+    },
+    {
+      "path": "CAMBIOS-r14.md",
+      "sha256": "c5bd2c8c0dd4608b333af81929231ba2c5d2ea8807c2a7eaed3189c766fdfa1e"
+    },
+    {
+      "path": "CAMBIOS-r15.md",
+      "sha256": "541bfb9e41bf1b35390b8faaa0ae8cd2f13f383d6f72f05d8cf08c2024a3fef6"
+    },
+    {
+      "path": "CAMBIOS-r16.md",
+      "sha256": "20a8bfbb4f482c5eed27b27d4e0d2205827fa49e3194688a2f3214e7cba69ee8"
+    },
+    {
+      "path": "CAMBIOS-r17.md",
+      "sha256": "0d82e15daedbfe0d341ecce130a8854db3d3d2af019f102869a81d5055d281a0"
+    },
+    {
+      "path": "CAMBIOS-r18.md",
+      "sha256": "8e54d3539252ff1c168d8b87ddc1d5d205395093c1e5349fcc0cc248dc288031"
+    },
+    {
+      "path": "CAMBIOS-r19.md",
+      "sha256": "c20125085b5b08475737ad39cc2a604ee6746c503aa1c2a694fde3497d4b1c12"
+    },
+    {
+      "path": "CAMBIOS-r20.md",
+      "sha256": "ae73ee8b564b87b904e93cb7c908b0eac04ad55963d1d43f01764bfdab44c69a"
+    },
+    {
+      "path": "CAMBIOS-r21.md",
+      "sha256": "8e08dc9b5e6d1da7e58255aa257f266fb96bb998dbd1b5c392783a2be5c4e4e6"
+    },
+    {
+      "path": "CAMBIOS-r22.md",
+      "sha256": "01b5d50f0ede8e068ac4f1ec67567bc7aafbee703201594b6f09a2b530e07f74"
+    },
+    {
+      "path": "COMPARACION-ORIGINAL.md",
+      "sha256": "c632d5332bf939633f02ed370344e2c113078e1cadcd32f00be4df76c7f62da6"
+    },
+    {
+      "path": "CORRECCION-ACCESO-DRIVE-r6.md",
+      "sha256": "470a2d995fa9c8fb82195b4320d3607a65104fe443ee613b8882fbcdd74c8f3c"
+    },
+    {
+      "path": "CORRECCION-ATENCION-ASESOR-r7.md",
+      "sha256": "2f25e96406d07fd7e5d387aad41ece32716a2a7be981d15f29e3a22b0ed1f04d"
+    },
+    {
+      "path": "CORRECCION-CORREO-smtp-r1.md",
+      "sha256": "27f4395d00903e0dbc21fc3ad2df9247b4c8b670e186cf7b6ddc1985d210967f"
+    },
+    {
+      "path": "CORRECCION-EVIDENCIA-TEXTO-r8.md",
+      "sha256": "2c1a2f1fc83e03573e048ef39a82530ce15d8083def1d82c48842fdc8dde33d6"
+    },
+    {
+      "path": "DESTINOS-VIGENTES-LOLA.json",
+      "sha256": "7524ce7bd93c13bd78e69603de7a1d0a4880bb8842b78f004587e2e41adff2fe"
+    },
+    {
+      "path": "DIAGNOSTICO-CORREO-smtp-r2.md",
+      "sha256": "8b3acbf9e286289c85bdcbeabf33fd5bc1c4ec4ca09858317340b91d50bf95b3"
+    },
+    {
+      "path": "Dockerfile",
+      "sha256": "673ecb5a020e6b1ca5a2d2f1cd0be6d37c51811f79e8ba5e7d8155ef591ab88f"
+    },
+    {
+      "path": "ENSAYO-LEER-PRIMERO.md",
+      "sha256": "01e45b662e361dc1e1851ce06b02b11d7bfcccc8276822ed25f3438ad38af166"
+    },
+    {
+      "path": "FUENTE-DRIVE-IA-LOLA.md",
+      "sha256": "2fd7822ed814c728c5c6fd3d4c114f73585ff704524a0d0ea4d129677373d643"
+    },
+    {
+      "path": "MEMORIA-SEGUIMIENTO-Y-ASESOR.md",
+      "sha256": "f96fd78903139ac333b8dd76b28179892a33257f80fd31c3610dbcde13392f34"
+    },
+    {
+      "path": "MIGRACION-POSTGRESQL-67.6.9.md",
+      "sha256": "164ff43076ace65f11e6a83e4dbb9a7ce59526b518ed49ed48a3105dc20dba3e"
+    },
+    {
+      "path": "PLANTILLA-META-RECUPERACION.md",
+      "sha256": "9e184ab69e5488cc2d8ed83c936a092773b6546d5e5ce553289703a90c5cf0ab"
+    },
+    {
+      "path": "POLITICA-LOLA-67.6.9.md",
+      "sha256": "d31ad14528892c640c437498fd18c0d567a73f5fc6303e6abe350f032947bb47"
+    },
+    {
+      "path": "VALIDACION-ENSAYO-67.6.10.json",
+      "sha256": "ef0dd54a238d4eebacee47edee83cc07750ff819e96f48c53db91dcf93aa23c9"
+    },
+    {
+      "path": "VALIDACION-INSTAGRAM-FACEBOOK-r23.json",
+      "sha256": "f65846becb75efa0cfb0a5543aa0b2ec954bd3136c5409400b78232f38d0736d"
+    },
+    {
+      "path": "VISITAS-SHOWROOM-WHATSAPP.md",
+      "sha256": "5f848dd04ac46625258608af158bcc76bf242546401033748bd1b8e66d5bfcc0"
+    },
+    {
+      "path": "analytics-worker.cjs",
+      "sha256": "93e1b9bcbbf60cd209c2060f8afbc44f3bbdbb94648d778e23d2350ab435b01f"
+    },
+    {
+      "path": "app.js",
+      "sha256": "c936e7d3af0f4d0cfcdcf7cb7588cbadbfe6530eabc8915fa413a2cc95c65227"
+    },
+    {
+      "path": "application.cjs",
+      "sha256": "e26d4384b462958cccd5d447b84f0dabced4c2d60bab3375bef01089ba8cc001"
+    },
+    {
+      "path": "assets.cjs",
+      "sha256": "3b66320788172738faaedfe600fdc5791b701e6ebb9cb91919315dc9d338ac1f"
+    },
+    {
+      "path": "backup-scheduler.cjs",
+      "sha256": "92b8dc9649623ab8861740a5afef2985da986f85f1717c4da460bf6224570786"
+    },
+    {
+      "path": "build.mjs",
+      "sha256": "b3cb98378b5f652d926b7ad0c8010dbe93acd2211eb3f1e455e967ab40a9a9ef"
+    },
+    {
+      "path": "business/adsAnalytics.js",
+      "sha256": "3ea5d4a7249bef02519f69c0f402db84274574d0bcc3420da522bd15a58bc223"
+    },
+    {
+      "path": "business/advisorRouting.js",
+      "sha256": "733b13cfc25545d2248b4a118733a2d7dd1349711968bead4b8195d7a9984fab"
+    },
+    {
+      "path": "business/analyticsPDF.js",
+      "sha256": "107b78feecb4c447984227d225c94cd932517f5616aa6767521bcaab726f9277"
+    },
+    {
+      "path": "business/analyticsService.js",
+      "sha256": "9de78f039a0e470eb501bd9886454be930e8199d7119522187fdd634d073c636"
+    },
+    {
+      "path": "business/analyticsService.original.js",
+      "sha256": "676bc98e1089d338258df3ec9ecdc11887e349d23d1ea59ea8061a14d05fcc65"
+    },
+    {
+      "path": "business/appointmentChoice.js",
+      "sha256": "d82cac483697cd3726f0d95c1a90b43803dd17c4bcba373e7c3501f86093b9e4"
+    },
+    {
+      "path": "business/approvalMail.js",
+      "sha256": "93d1ff48b69d5768fb696a1595e62ae751fa2b33f4c151440c4ba57cc568f89e"
+    },
+    {
+      "path": "business/approvedRecovery.js",
+      "sha256": "4770c3f43e8fae9f337586a006c667dde463ad7e84e21f680bfbaf06fb5aae2c"
+    },
+    {
+      "path": "business/authService.js",
+      "sha256": "666b79b361f8f1e935ce48a2ac1f73efc881b713059a1f00f911ce071e4a5929"
+    },
+    {
+      "path": "business/automaticFollowup.js",
+      "sha256": "c3b3f30775f9425de2a10fd7045c9a44b1fa3d477d143d91666c1d7058f650a9"
+    },
+    {
+      "path": "business/calendarIdentity.js",
+      "sha256": "a8d428d0e3b6223b317b55822fb06cb20fbac2a955de01948ccf1cd39ce0d4fe"
+    },
+    {
+      "path": "business/calendarService.js",
+      "sha256": "36db81e2f42470d71c591d4767baf93cb362a72010bca4543bb3812cf95f705e"
+    },
+    {
+      "path": "business/channelHistory.js",
+      "sha256": "da460c07fdafef201fd94d55623fe0837c78ce22e0a8565cc6e57a39dd552af5"
+    },
+    {
+      "path": "business/conversationMemory.js",
+      "sha256": "08126a107a6a43c33770f693b4bf4f9b3ba6de3fcf6bad4d010abf7ef98f8162"
+    },
+    {
+      "path": "business/creativeCampaigns.js",
+      "sha256": "bcfdeb7e4e1694414d077745e5691ea7d3f207d923fe524093e43a054b75bf32"
+    },
+    {
+      "path": "business/crmConversation.js",
+      "sha256": "8f852eaf19313117a7cf34659c192da8499478fb623e67a6843e4c34c2607c73"
+    },
+    {
+      "path": "business/customerCare.js",
+      "sha256": "6d85994367941e210949bc5e1de97628fafb2baac36bd5ed6a4179b15463288b"
+    },
+    {
+      "path": "business/documentRecognition.js",
+      "sha256": "2405eb2022a254beddb58f29baa69aea105cc04591e7abc924f3f8f9f1362f42"
+    },
+    {
+      "path": "business/driveDocumentStore.js",
+      "sha256": "a3ccb3a1bf8b61172ef01e1d4d5e54c8447709898eb5df101d9b5c856a8ce5dd"
+    },
+    {
+      "path": "business/firestoreValueGuard.js",
+      "sha256": "421ecc5465fbe5715880f036e586ea48dda48fdfa53887949c9dde1f27062b56"
+    },
+    {
+      "path": "business/funnelService.js",
+      "sha256": "179f7f2f993ea5ac7002d3aedcea65af88b565228fc863c3bfe187e2eec872d6"
+    },
+    {
+      "path": "business/geminiService.js",
+      "sha256": "7af97647c8ca36857aabeac1524d17966bba827ec607d7136d5eb40a7782d2c5"
+    },
+    {
+      "path": "business/insightService.js",
+      "sha256": "7491b2b12dddb45df75da232dc12e07c702ed204fdf9d64d62bba8196bf46a13"
+    },
+    {
+      "path": "business/leadComments.js",
+      "sha256": "4224d99525dbaa55d854165f853788d620e11dd0eacfad063eeb6753afec3ec1"
+    },
+    {
+      "path": "business/leadImport.js",
+      "sha256": "e390634d831279d09b228fc737dc60721fef1a2e0b7809e85b5b61f64780080b"
+    },
+    {
+      "path": "business/lifecycle.js",
+      "sha256": "198dc3a173ffd77965b2e0ad3098410b53b34f0ca56a72a6808bf5de90c86c31"
+    },
+    {
+      "path": "business/lolaDrive.js",
+      "sha256": "e23e06e157ce42f0fe8ca332c06136bd0cd0ea54d4cc5efebe15c801862530d6"
+    },
+    {
+      "path": "business/lolaIntegration.js",
+      "sha256": "47caf547a150afc6da25300b9dc3a04f2d0a808f681d3185b7b9ebcd2d6de27c"
+    },
+    {
+      "path": "business/lolaPolicy.js",
+      "sha256": "aced63658d303180466d9dd1c32542155ef6a679463723b83e662eb5da5442ea"
+    },
+    {
+      "path": "business/omnichannel.js",
+      "sha256": "60525df34a72db816161ed5c36e86ce4e8ead8de5c04c88ddfa46d5efc7c8ef1"
+    },
+    {
+      "path": "business/planService.js",
+      "sha256": "76cf665bd089370382d420ef97f7ce8c8815ecc9a7377fee4ae78bdc972eb5ad"
+    },
+    {
+      "path": "business/projectLocation.js",
+      "sha256": "ce38e95c15b91dc97e519a1d4c7369ce9b5ff13cb320f06adb3c7504d6fb904b"
+    },
+    {
+      "path": "business/publicationAnalytics.js",
+      "sha256": "e39b4bf16a7c8eed3a0bb8ff9bd18829175d6eff80599bc40083b9b921c4acd4"
+    },
+    {
+      "path": "business/queries.js",
+      "sha256": "f530a045ecd1c1a4bb99db34c44f83212e17e91607460b79561e355e0be4a6ad"
+    },
+    {
+      "path": "business/quotePDF.js",
+      "sha256": "feb97a953f61f75a4c5ff3960d9f7b8c0aa337a48af3f94b460eb0782e866988"
+    },
+    {
+      "path": "business/quoteRecords.js",
+      "sha256": "1f781cd20cd08d116a8654e51df1d5db378e6ac916f73eb66cf0f022386e7321"
+    },
+    {
+      "path": "business/recoveryTemplate.js",
+      "sha256": "412f970cb522bbbf9863ada3b8c3687c9e96ecdeda26ae906c4751c5fc9650cd"
+    },
+    {
+      "path": "business/salesService.js",
+      "sha256": "d44c4e8a3aedee5337133f4c993f8b458eafecd126760e82a20d01743a1ea7cc"
+    },
+    {
+      "path": "business/separationPDF.js",
+      "sha256": "65d31238ad9a6c508807cbbc16169185c77a9b4c63970dd00dd0b0c164ba834e"
+    },
+    {
+      "path": "business/separationService.js",
+      "sha256": "b956267d419fb02c375b1f553ea90d18ac03546f8dc2d39bd1895bbdf2bd9ee2"
+    },
+    {
+      "path": "business/sheetAccess.js",
+      "sha256": "659ab1700c2962e9ef1cd68d332717d8a50b390424c6d78ed15ccd8e20606f26"
+    },
+    {
+      "path": "business/slaScheduler.cjs",
+      "sha256": "24bae484259b2f9866ab2862751db61c4e77a2273b2e26ff6a4951d63b5f0f21"
+    },
+    {
+      "path": "business/slaService.js",
+      "sha256": "be8a551a861eb496ffbbad69d648e543be1e1d85f257058f8427e4193ab59fcf"
+    },
+    {
+      "path": "business/socialGateway.js",
+      "sha256": "6546c83d08d8b24923fb68a8dbc02bbec77340509b198e08b3bfa2c031e23479"
+    },
+    {
+      "path": "business/socialInbox.js",
+      "sha256": "0a31548c20e9337aa9865797043e24efc5f652e4282c38dc4dc639d0c6e0336f"
+    },
+    {
+      "path": "business/toolLinks.js",
+      "sha256": "59b0e1786617db2ddee85a667ec459a48a8775e5a769699981fa24388e800bcd"
+    },
+    {
+      "path": "business/weeklyAnalyticsPDF.js",
+      "sha256": "5686fbcab7b4ec9ab1b5ed892483b9e42b4b4123ad4cfd5287b18c9623b4f9f4"
+    },
+    {
+      "path": "business/whatsappAgenda.js",
+      "sha256": "4b680eda3fcf3db620a36e47f198e59f4def1491d24e0501f8e0b8de1b367c09"
+    },
+    {
+      "path": "business/whatsappAttachment.js",
+      "sha256": "1b581628f7658d5a41a55379a5defa42d2cf590b61f8128f30dffc260d86fc28"
+    },
+    {
+      "path": "business/whatsappGateway.js",
+      "sha256": "a859a0a057cd91bc0f034b0e0cee7dcfb3b00a10762a180d1a931d20109b0dba"
+    },
+    {
+      "path": "business/whatsappInbox.js",
+      "sha256": "ec9e275b90c32ccdc687ead28d13d21eb90f62d7f3488c872980c2cb8ba9264d"
+    },
+    {
+      "path": "business/whatsappRecovery.js",
+      "sha256": "a90726101e2ba990b5771eea796452111ced3d4ad3a3f7c5e0219d51a4eeb13d"
+    },
+    {
+      "path": "business/whatsappService.js",
+      "sha256": "7d966444d42b4122ae9f4d6ebae9992c1c5711d34acd590acb60f91c55946d09"
+    },
+    {
+      "path": "cloud-approval-mail.cjs",
+      "sha256": "de052a1c9e9f46253926c1850e51ba4dd464f1c21be2f8bf92ab213033bd332d"
+    },
+    {
+      "path": "cloud-auth.cjs",
+      "sha256": "f7d0cd7245588edfba0f9934a09165344f59c89f16d4780364c0277b5dcf70d1"
+    },
+    {
+      "path": "config.cjs",
+      "sha256": "3e917a4a9441d8df4c8cd9362aaf47cfe100d2a6d9344c8f454dcb0dc5178a55"
+    },
+    {
+      "path": "deploy/check-postgres.cjs",
+      "sha256": "5e988ae37551d1bd980d60dee7f3bd23d67cdae68de7291965149bd38e656648"
+    },
+    {
+      "path": "deploy/create-preupdate-snapshot.cjs",
+      "sha256": "3c4e21fa9143404a15f72edd400bc33ed1ca91fbc349e1ca633fcbf55e9b4d15"
+    },
+    {
+      "path": "deploy/init-rehearsal.cjs",
+      "sha256": "a5082d1b84742b559a6979e497fee1ed2abe8a8d4bcc7881520d9b736d1dbdc8"
+    },
+    {
+      "path": "deploy/migrate-postgres.cjs",
+      "sha256": "be0f5764cf24d9c8ae0d468ff6d2ad84e7478c89aa211d43d0716846e6d898d9"
+    },
+    {
+      "path": "deploy/prepare-rehearsal-workflow.cjs",
+      "sha256": "8a9668fd1f7f8a60bb22daeb885a797a2276849e0566f79d61e075dd60cdf1d3"
+    },
+    {
+      "path": "deploy/rehearsal.cjs",
+      "sha256": "56373f998c7bf119f7eedecc3e41f3fef61574beb30da04cc9d8e337933a7d0c"
+    },
+    {
+      "path": "dist/assets/index-D6YaNvxu.js",
+      "sha256": "aae237e47af595c388146b0e47ff675d0d6ad676553cbdd60d43fb883c83c4b8"
+    },
+    {
+      "path": "dist/assets/index-DVtlJtzk.css",
+      "sha256": "08f9bcbf39424c2eed9f0210776bcef53b1e27ea1742740d8c39a9c23f22d9a6"
+    },
+    {
+      "path": "dist/index.html",
+      "sha256": "00b9f3a32a7592692705f17a4ca8fa8367df31e478ac29d94f32c816eceb5105"
+    },
+    {
+      "path": "firestore-project.cjs",
+      "sha256": "3b249cb3d2c80db621de6e5436f8f1e12c7377bab6e602e25833a87e00457ebb"
+    },
+    {
+      "path": "index.html",
+      "sha256": "23e3d253d3c6d2f5871a668da922cd33991fdb15b8d59b78367ef7c5498b30d4"
+    },
+    {
+      "path": "migrations/001-lola-postgres.sql",
+      "sha256": "188de275fe0655a9052de4ecc932e797d749d151f8df016688b5b32d250609f0"
+    },
+    {
+      "path": "n8n/00-Lola-ENSAYO-67.6.10-CONFIGURAR-INACTIVO.json",
+      "sha256": "0644b3814eba857a879f9ff0919bc15332f9cabc03f2ab85722f8e67b99f99ad"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "50d1c436487ecebf3ecb35137e83a3471ea2caa9c61a7df9f219c3c9ae1f8cf8"
+    },
+    {
+      "path": "package.json",
+      "sha256": "0de906af2d3e9a038ff56096ecc9d7a37a03b805ecffdf99453140cbdbb74ceb"
+    },
+    {
+      "path": "postgres-documents.cjs",
+      "sha256": "98d66595141fdb76a074943c7d7d90f691e50838dffb8b90bf6fe302af190394"
+    },
+    {
+      "path": "postgres-project.cjs",
+      "sha256": "f3b0447ecd372535ecf90359f76564f06370a166fbe852aad29233aff8ce82ae"
+    },
+    {
+      "path": "referencias/67.6.9/LEER-PRIMERO-67.6.9.md",
+      "sha256": "7d6ffd49aebef0c33ca178df6bf1fa58de946d1ddbac2d4a1f82b6861d29df6f"
+    },
+    {
+      "path": "referencias/67.6.9/MANIFEST-67.6.9.json",
+      "sha256": "38a59ec37591fdc5f617ae567b75a3233492f39f9fead6c87554d675b4da76aa"
+    },
+    {
+      "path": "referencias/67.6.9/VALIDACION-67.6.9.json",
+      "sha256": "369ce23865ba05a5afafc6eedea572bc6f8fa8df2f47cc46dea267a9c29f999b"
+    },
+    {
+      "path": "referencias/documentacion-anterior/COMPARACION-ORIGINAL-67.6.2.md",
+      "sha256": "5432631bc3d2b0057afa05d4a1523ac8f65d9e4166fb24c4967dffdbbb60e605"
+    },
+    {
+      "path": "referencias/documentacion-anterior/COMPARACION-ORIGINAL-67.6.3.md",
+      "sha256": "c4d66672b2a0cdf585887743d520aceafc860d784b39f76a2698af798b5e79f3"
+    },
+    {
+      "path": "referencias/documentacion-anterior/CORRESPONDENCIA-96-NODOS-67.6.2.csv",
+      "sha256": "c3cde8b123262db35ceab7b9846264506579d28be473f3d554218fe14b00a0d6"
+    },
+    {
+      "path": "referencias/documentacion-anterior/LEEME-PRIMERO-v67.5.0.md",
+      "sha256": "9f2d31793e2ffaafd36b5f056b9e572fda599b0a158c5a5552d70f33ce6c9a6c"
+    },
+    {
+      "path": "referencias/documentacion-anterior/LEEME-PRIMERO-v67.6.0.md",
+      "sha256": "461008d5878b234d9431e1cc5f3de94066838a9cd613ff9e73b54da61af37eb8"
+    },
+    {
+      "path": "referencias/documentacion-anterior/LEEME-v67.4.1-WHATSAPP-COMPLETO.md",
+      "sha256": "6408be1283e8f94008f223218e73648a534361bbc3938f3ecd8def759aad4fc1"
+    },
+    {
+      "path": "referencias/documentacion-anterior/LEER-PRIMERO-67.6.1.md",
+      "sha256": "819a46abdb033bc6611080092edc3bdc75ef5065f0f481a86011c6a488afa0f8"
+    },
+    {
+      "path": "referencias/documentacion-anterior/LEER-PRIMERO-67.6.2.md",
+      "sha256": "9c98297a545eb8c82e85ac14a6bf4b3959a816ca9924e0e6ba08188b29233f6a"
+    },
+    {
+      "path": "referencias/documentacion-anterior/LEER-PRIMERO-67.6.3.md",
+      "sha256": "57c23b8d17b307b32dd24ae8b97ec2a47c161e86b18b10929d465684c859bb4f"
+    },
+    {
+      "path": "referencias/documentacion-anterior/LEER-PRIMERO-67.6.4.md",
+      "sha256": "3fcbb20fea858f1d6ae9cf3d8c487028f33000acb3f2f0321694d37276dabf15"
+    },
+    {
+      "path": "referencias/documentacion-anterior/LEER-PRIMERO-67.6.5.md",
+      "sha256": "10755777619e1d001709a26b75609faf86ff1cb3553102f917555bfb08d8a654"
+    },
+    {
+      "path": "referencias/documentacion-anterior/LEER-PRIMERO-67.6.6.md",
+      "sha256": "f9ea278783c833417d89dbae57d9bfe05e30756569511848623a916f630a02be"
+    },
+    {
+      "path": "referencias/documentacion-anterior/LEER-PRIMERO-67.6.7.md",
+      "sha256": "3a501d7784f96c907f7443b7230e50f17b5377dd3c5af7439d33820320756149"
+    },
+    {
+      "path": "referencias/documentacion-anterior/MANIFEST-67.6.1.json",
+      "sha256": "7e8eb75b2360de9573b1d8f9d7d4ddf1a61649575de2459274dbe39d4ffa32d4"
+    },
+    {
+      "path": "referencias/documentacion-anterior/MANIFEST-67.6.2.json",
+      "sha256": "d5fb1c272f4a64e93cb6025fe7b8d59c0b8c10192bb0d7f6d6ea1ead71c07554"
+    },
+    {
+      "path": "referencias/documentacion-anterior/MANIFEST-67.6.3.json",
+      "sha256": "b97177063692bcb82b3712f60393ca9128f45fd1897e8a3aa48582858ca39e32"
+    },
+    {
+      "path": "referencias/documentacion-anterior/MANIFEST-67.6.4.json",
+      "sha256": "5d6335357657aecc86800d4b50e3b17c5e979366ea4dbd59d7dcbabdc2f3f62a"
+    },
+    {
+      "path": "referencias/documentacion-anterior/MANIFEST-67.6.5.json",
+      "sha256": "19568dbe73d86f2a0f49d05c4816eccd5a33f151db84bef5f5ec054e946b9bc6"
+    },
+    {
+      "path": "referencias/documentacion-anterior/MANIFEST-67.6.6.json",
+      "sha256": "60d7cac60d0945d91c68fe4685ff9f00fbc551a8a32380882a3681cd91c158d1"
+    },
+    {
+      "path": "referencias/documentacion-anterior/MANIFEST-67.6.7.json",
+      "sha256": "77f4a26a64b023e59a9c3033b41e074683f868f724103b269e6da2e66a3aa224"
+    },
+    {
+      "path": "referencias/documentacion-anterior/MANIFEST-v67.6.0.json",
+      "sha256": "b4b5383bbe407cd44beb893450c5faf8e14adc66f6738c4cf8fb2db18f8b719b"
+    },
+    {
+      "path": "referencias/documentacion-anterior/MEMORIA-SEGUIMIENTO-Y-ASESOR-67.6.7.md",
+      "sha256": "3e7d0d0cde6f0b0fee518fbd0559f06413d020278accd9017e34ceffdfa6ed05"
+    },
+    {
+      "path": "referencias/documentacion-anterior/PLANTILLA-META-RECUPERACION-67.6.3.md",
+      "sha256": "9e184ab69e5488cc2d8ed83c936a092773b6546d5e5ce553289703a90c5cf0ab"
+    },
+    {
+      "path": "referencias/documentacion-anterior/PLANTILLA-RECUPERACION-67.6.2.md",
+      "sha256": "3f0c33f1c408498f31b627c7176c4f3dd65915bff4002aea1ad8fcf6bd74b949"
+    },
+    {
+      "path": "referencias/documentacion-anterior/POLITICA-LOLA-67.6.4.md",
+      "sha256": "deb8ea2cbf3c17c62aad042042d8a00ca6ad6313599a24ee7e38a6d5338c5387"
+    },
+    {
+      "path": "referencias/documentacion-anterior/POLITICA-LOLA-67.6.5.md",
+      "sha256": "f638ca68c83c76cc91c4f46306a8dec2df3d55591abc5e564adc1423acb9ec51"
+    },
+    {
+      "path": "referencias/documentacion-anterior/POLITICA-LOLA-67.6.6.md",
+      "sha256": "4970eb2fef81e91782a47bfada384044db96fd4a8d8cb810942d47f42f9ce770"
+    },
+    {
+      "path": "referencias/documentacion-anterior/POLITICA-LOLA-67.6.7.md",
+      "sha256": "9bb8bfaf9ee8233d1ce1c900b61887eebc9de5c96623c5b46d7b6eb5cb7cbc85"
+    },
+    {
+      "path": "referencias/documentacion-anterior/VALIDACION-67.6.1.json",
+      "sha256": "e7cde57e3b086bf57a4bf96fe90aec9d78ec6f8fd1ecfa162d9507fc3cfffdf3"
+    },
+    {
+      "path": "referencias/documentacion-anterior/VALIDACION-67.6.2.json",
+      "sha256": "d70d9a1f7960910362c0a1da3b4604534d87e2a6ff644587741a182455674e61"
+    },
+    {
+      "path": "referencias/documentacion-anterior/VALIDACION-67.6.3.json",
+      "sha256": "94198231938d893100fc2b69c6b6fca126d4aa3ef31ec3dcb4294c453545a256"
+    },
+    {
+      "path": "referencias/documentacion-anterior/VALIDACION-67.6.4.json",
+      "sha256": "3e70bc723b5bc2a5b59e4620cdd2401986ba90da1a49a993c8b00dc4a535302c"
+    },
+    {
+      "path": "referencias/documentacion-anterior/VALIDACION-67.6.5.json",
+      "sha256": "865b564afea817cf2920a1d1897871cd5193fc8011889a4895c1cb03b519a7af"
+    },
+    {
+      "path": "referencias/documentacion-anterior/VALIDACION-67.6.6.json",
+      "sha256": "cbc33c7ec2717e858a0526531347d4973dbb14595e4bd260ece01457bb975c4a"
+    },
+    {
+      "path": "referencias/documentacion-anterior/VALIDACION-67.6.7.json",
+      "sha256": "28be9d125420e0de013831b3b1600ef467e47758a072521087dd2ce3f797c51b"
+    },
+    {
+      "path": "referencias/documentacion-anterior/VALIDACION-v67.6.0.json",
+      "sha256": "cd56d081589be6af410cecc1be84079babdc5302b58f46369e947984169df492"
+    },
+    {
+      "path": "referencias/documentacion-anterior/VALIDACION-v67.6.0.txt",
+      "sha256": "1c4204f9ed27e7ee329e806a44b6bc17f248d3c00ba025e3b15391bc5be1d04b"
+    },
+    {
+      "path": "referencias/n8n-anteriores/00-Lola-Unificado-67.6.1-INACTIVO.json",
+      "sha256": "98f96832615e59e1fcff3e3d51c2304aee19acef15044136660d1d015d3a4f85"
+    },
+    {
+      "path": "referencias/n8n-anteriores/00-Lola-Unificado-67.6.2-INACTIVO.json",
+      "sha256": "36ff4ab527962b6fee7c507beb4e0ade1839730704c34d0cc795ff31223c6ac7"
+    },
+    {
+      "path": "referencias/n8n-anteriores/00-Lola-Unificado-67.6.3-INACTIVO.json",
+      "sha256": "9917cb1d3d903de5f88e2842ebc15f03727c40c0d662e8ff0c1d0a2d34e2c38b"
+    },
+    {
+      "path": "referencias/n8n-anteriores/00-Lola-Unificado-67.6.5-INACTIVO.json",
+      "sha256": "dd35538b96da8f23f8cdd97808158c4add5073a3c76830b3df624de245bc3044"
+    },
+    {
+      "path": "referencias/n8n-anteriores/00-Lola-Unificado-67.6.6-INACTIVO.json",
+      "sha256": "5c2d30ab76a0002f41fdd96c5f877c9e5b94e0e0830347f70bd57099912052ca"
+    },
+    {
+      "path": "referencias/n8n-anteriores/01-Lola-Telegram-Revision-07-INACTIVO.json",
+      "sha256": "8553b1a5429a4fb8a757ed49fa6bc3ec822bd74b6385b85511961d0ec8ef91e7"
+    },
+    {
+      "path": "referencias/n8n-anteriores/02-WhatsApp-Observador-Diagnostico-INACTIVO.json",
+      "sha256": "310fc1c3a6fe7c95abc2d833af51e0cc1f7e91d6369be4d6e0c32d26d7a02b51"
+    },
+    {
+      "path": "referencias/n8n-anteriores/04-Lola-WhatsApp-COMPLETO-02-Agenda-CRM-INACTIVO.json",
+      "sha256": "77b05b179fe4bdfa7f15482730ad5f73acddd6e181064492c9bfae212b601127"
+    },
+    {
+      "path": "referencias/n8n-anteriores/05-Lola-Social-Sugerencias-INACTIVO.json",
+      "sha256": "4243cccb0fac92c8c6681e7134aa3c5e26f796903d093f76ca787e5f15f5c6d5"
+    },
+    {
+      "path": "referencias/n8n-anteriores/06-Reportes-Meta-TikTok-INACTIVO.json",
+      "sha256": "1e6acd9d6e4a7c1efd5f06c2e38c31ecc7257e89d74e341bb3fcf29a6f9c0f67"
+    },
+    {
+      "path": "referencias/n8n-anteriores/07-TikTok-Entrada-Normalizada-PENDIENTE.json",
+      "sha256": "51b6f5fb72509aaaca670eef49df2332204f5e6b0a8cd15c9d75310a9296f00f"
+    },
+    {
+      "path": "referencias/n8n-anteriores/08-Campanas-Claude-CRM-INACTIVO.json",
+      "sha256": "85e55a916ab5c1b957c0852f37bdc81d4be19006a7906e20a2eb9d5b50bcdf10"
+    },
+    {
+      "path": "safe-network.cjs",
+      "sha256": "dbd3e03ab632662a105cb2e6aaf48c22d6c7dd04dbadbf017158377ee82d9cef"
+    },
+    {
+      "path": "samples/publicaciones-normalizadas.json",
+      "sha256": "63a096b717097cd7487df23ce2fe00afa521a25ec0250c448821ddcd1328c3be"
+    },
+    {
+      "path": "samples/reporte-publicidad-plantilla.json",
+      "sha256": "37320a3731a09d3b2b07919e9f0b9d5ab243f6331228899e1f5af81d8942dfec"
+    },
+    {
+      "path": "samples/tiktok-normalizado.json",
+      "sha256": "f9524aab940015737aff2e6a494468aca0baba72dc301ce373866def4bd5c5b5"
+    },
+    {
+      "path": "scripts/build-multichannel-flows.py",
+      "sha256": "731a9555226752c8e6434d30a567de63bca6bcf2e8cd26b121f1d106ee5e68aa"
+    },
+    {
+      "path": "server.cjs",
+      "sha256": "5edb5d35f459f673bcd35e16cbe67842a473c73770d52152201273472690a5a3"
+    },
+    {
+      "path": "sheet-sync.cjs",
+      "sha256": "908e4fbba96d01d5473949648b154b19a4675e4ac4831e648ea04b644648bc88"
+    },
+    {
+      "path": "sql/01-consultar-funciones-instaladas-SOLO-LECTURA.sql",
+      "sha256": "daafa45cb64705d3744311745f4c7aeb04bc563fa2f1cfecc0bcdc75e9f1d007"
+    },
+    {
+      "path": "sql/02-exportar-estado-Telegram-SOLO-LECTURA.sql",
+      "sha256": "a2f0d1ce5441cca9e4f17c0efb1b2820d09230689bcfd5a5a55388fc5d70a9d3"
+    },
+    {
+      "path": "src/Access.jsx",
+      "sha256": "c5998be7c8ddeff338ca62139fd92e94fa180d2f424bb25096bb9be5192da37e"
+    },
+    {
+      "path": "src/AccessValidation.jsx",
+      "sha256": "8bd06ebafb72516a72b0da7c927fb00be129c20984875c2114c286e35d1a0adf"
+    },
+    {
+      "path": "src/AdsDashboard.jsx",
+      "sha256": "b85260734c79a60c7a6060dddc72edcf2d0eac56a6f867b406591b44675473b3"
+    },
+    {
+      "path": "src/App.jsx",
+      "sha256": "ad15933f1443952b6e390113d1bf20a29a3702716f0341386d7407fe18658377"
+    },
+    {
+      "path": "src/BusinessDashboard.jsx",
+      "sha256": "42070ef5c7d00e2d61365cc2d1313986a79794c991f013e41695480dd175accf"
+    },
+    {
+      "path": "src/CampaignStudio.jsx",
+      "sha256": "fd08202adc74bf4ccc292ea79c9976ebf01e1a92b315a8884dbbf6b78ed81273"
+    },
+    {
+      "path": "src/CrmLolaPanel.jsx",
+      "sha256": "97cd2b4ab72f6568565dcafbe81b93925f00b7aa6fd362b6917228bb7354e123"
+    },
+    {
+      "path": "src/DashboardCharts.jsx",
+      "sha256": "a3b06d6bc9ca90011c792f1b9df1b1b4abd97157e9a14dd2cbf437588c9f5019"
+    },
+    {
+      "path": "src/HelpCenter.jsx",
+      "sha256": "918920482e25b163976059bf7555f5a73dda1b4462c8cb9fdf49e68e44a0ee0e"
+    },
+    {
+      "path": "src/LeadComments.jsx",
+      "sha256": "f5f74806bb42a2c5e6205866a4dc42d2dfb5e56560b270fa8ab214049b10ee42"
+    },
+    {
+      "path": "src/LeadLifecycle.jsx",
+      "sha256": "074415156bedb4be1024dc946f2e8e168f48560319427ddbe54af603ffd547c1"
+    },
+    {
+      "path": "src/LolaCare.jsx",
+      "sha256": "bee87b5391f8fa6d113c72c419c521b71f8565ef4c6f8b998cf80b1cbd4df480"
+    },
+    {
+      "path": "src/MarketingExpenses.jsx",
+      "sha256": "78cc9adcc7bb12339cf5fc37cf6349ed3cd16579d80bc32e4d20d1eee8d11554"
+    },
+    {
+      "path": "src/PublicationDashboard.jsx",
+      "sha256": "072172d761558296a79f6389aac02da76e9e546431a23c460e04b2abb192a099"
+    },
+    {
+      "path": "src/SocialConnections.jsx",
+      "sha256": "3aafba469006a3e2f8832001d45a25ac2e8f5cb5572bf1c4a126d23c71b03f9a"
+    },
+    {
+      "path": "src/SocialInbox.jsx",
+      "sha256": "ca4de3f524ce90b2ab51036c631fd66a3642bc567ac1821916154c3172ac1ac3"
+    },
+    {
+      "path": "src/WeeklyAnalysis.jsx",
+      "sha256": "16eacc837d2c33185d0a560354a564dac92afc01d0ad904adc43c2b5b6c03734"
+    },
+    {
+      "path": "src/WhatsAppConsent.jsx",
+      "sha256": "e5d13f21bb9fe64f4911fb5965b6a668c2f9b12626351e153d25a0747433d0b5"
+    },
+    {
+      "path": "src/WhatsAppConversation.jsx",
+      "sha256": "a315075517b47be759fc76c3cf41c0997bf69abfc2881d40c73d906792ca42b9"
+    },
+    {
+      "path": "src/WhatsAppRecovery.jsx",
+      "sha256": "8b56c55b8445e68e9a177f1a1ce8116da612cbead8e42a68dfab6dc4aed93a82"
+    },
+    {
+      "path": "src/calendarInvite.mjs",
+      "sha256": "a1e23a1fe49194d9504110f548d3edf552d7dd9f6cafb5e98e3e20817864ecfe"
+    },
+    {
+      "path": "src/cloudBridge.js",
+      "sha256": "3acde5510eb4dff23dd36765f2b7580840402ab9d98f0c841831a80b882fbe65"
+    },
+    {
+      "path": "src/creativeRenderer.mjs",
+      "sha256": "a4a7335c747fe4528282d8d4839b28714e54a715fcaff90dfdf1aa927b738031"
+    },
+    {
+      "path": "src/dataService.js",
+      "sha256": "7b178291d4dd8a261bbed85d6b7a015b981cb8c2cf86a6fe8171d0ba57d771cf"
+    },
+    {
+      "path": "src/firebase.js",
+      "sha256": "241f424d2776753f708fb037e3b9c47c0dc3d5850f94428e7cfa4a9ab3ca8aaa"
+    },
+    {
+      "path": "src/main.jsx",
+      "sha256": "cdb646c1ec3e1b5c28878d6f68c6a556326a5296e45fb1742003dabd9273f622"
+    },
+    {
+      "path": "src/operationalTraffic.js",
+      "sha256": "ede700762157fafc5a1c95a7a4adaaf6014b7e3730ff7488c1711b385887322d"
+    },
+    {
+      "path": "src/responsive.css",
+      "sha256": "44c535fe5713992533991c008579eaa7546b45246030c29de3306c532f71a06a"
+    },
+    {
+      "path": "src/useToolLinks.js",
+      "sha256": "cb6caf859b361e55feecb7c8c62d459b5f6121b68867bc811abfbf3b3b23bd4c"
+    },
+    {
+      "path": "src/whatsappInbox.css",
+      "sha256": "f405838b2c6cc67623a5400c1012a326bdd168c56b57e7f2a83d88934d61584d"
+    },
+    {
+      "path": "templates/Plantilla-Meta-alerta-asesor-PARA-APROBACION.json",
+      "sha256": "714468551c5e13efa3768b50590d9b722f7696aac6cdcff480d77391e61f262b"
+    },
+    {
+      "path": "templates/Plantilla-Meta-cumpleanos-compradores-PARA-APROBACION.json",
+      "sha256": "86fdd4adff58675a7b4727d8f400877f7b1ae2ab595b7993a74e74da9b7215b8"
+    },
+    {
+      "path": "templates/Plantilla-Meta-retomar-consulta-PARA-APROBACION.json",
+      "sha256": "1172509e0c04fd5ab8b21bb997d7bbc640bb105c94ef6e2c479ebbea08fd17fd"
+    },
+    {
+      "path": "templates/Plantilla_Separacion_Infinity224_Google_Docs.docx",
+      "sha256": "b068362fa18d1e331ca4b9530e8b13fa1b252bcd1a2174b507916fd7b82b9efd"
+    },
+    {
+      "path": "templates/separacion-base.txt",
+      "sha256": "0d610fca690228446394b883e6a47b38d40f6dd2f9efc2b30aec8f161b75e179"
+    },
+    {
+      "path": "tests/advisor-after-slots.test.cjs",
+      "sha256": "a045e0e2ae2007b287e48407029026c9e5fc782d98d55a8623679c85e8edcef8"
+    },
+    {
+      "path": "tests/appointment-choice.test.cjs",
+      "sha256": "8dff722f10bc03c97d281ec2e6a7923475f4b31c6de8b5357b62aadaad870135"
+    },
+    {
+      "path": "tests/appointment-tone.test.cjs",
+      "sha256": "64051a8d09d7db037f4a6f54384ad540c5839acb668d4b1afb31986358de82b8"
+    },
+    {
+      "path": "tests/approved-recovery.test.cjs",
+      "sha256": "2439b37c7b2c86c3caa7ed12baedd51219d025ba6624f8c55f765a20ddeb1106"
+    },
+    {
+      "path": "tests/backup-scheduler.test.cjs",
+      "sha256": "173bb258db07e1694e17fad73175a77ae835e21870d285c4b62f38654cebf6b9"
+    },
+    {
+      "path": "tests/calendar-invite.test.cjs",
+      "sha256": "3aa2008c588653db150d8d79ad688cf9ae1a0b1432b8264af2b71bc8c164dce9"
+    },
+    {
+      "path": "tests/calendar-isolation.test.cjs",
+      "sha256": "a960a6960ffd0f55f5a61dfd098946c9cb313fe2c2683b204aae5657878b3be7"
+    },
+    {
+      "path": "tests/cloud-approval-mail.test.cjs",
+      "sha256": "fdcb82909371fdaf8028c2c24f007e041eac94b54d2fc67eba54468efb5b1a85"
+    },
+    {
+      "path": "tests/creative-campaigns.test.cjs",
+      "sha256": "8f4d2911343ea8be3861c2342c5f44c432f2d3a3284c73b722046dbb165418a3"
+    },
+    {
+      "path": "tests/creative-renderer.test.cjs",
+      "sha256": "6a3f2a857545ac31e18dea5414bf78e078aec702d71614bddc8e17a861e75a77"
+    },
+    {
+      "path": "tests/creative-web.test.cjs",
+      "sha256": "db60db36117dd8bdd569dbde933f77fe4de613942a562e04cee1181a3652314d"
+    },
+    {
+      "path": "tests/crm-recovery.test.cjs",
+      "sha256": "fb708632801ee95610f8a1460e124914e2f6b942d6a4d02eaefa22e09ada4c8b"
+    },
+    {
+      "path": "tests/customer-care.test.cjs",
+      "sha256": "449e734387f97c9c4ca30c57d6e7c46022cf3e98a082a7fcc049d7a18b11a2d6"
+    },
+    {
+      "path": "tests/document-recognition.test.cjs",
+      "sha256": "1843c6b0f61efa478053ab0b5feee9157723756f94f25a8e38e3f9f6f65b0060"
+    },
+    {
+      "path": "tests/fixtures/funnel.cjs",
+      "sha256": "7f881bec217582f7cb7ccb38e5d84f45d2657d6cae77afb01cf7e3272f92d06d"
+    },
+    {
+      "path": "tests/fixtures/lola-drive.docx",
+      "sha256": "af81d27e2bb1141c566bc2369ebce746f16d74e74cc7e1cbc7c9cb44c681db82"
+    },
+    {
+      "path": "tests/fixtures/lola-drive.xlsx",
+      "sha256": "c422646b4417442325e116b522a220602d40001cd072bf41f51b5ffcf7e4a2e2"
+    },
+    {
+      "path": "tests/funnel.test.cjs",
+      "sha256": "00b499ca43eb643cf868c6a8a66a3cee12b7bca7dc31db52b85d420534039e85"
+    },
+    {
+      "path": "tests/gemini-service.test.cjs",
+      "sha256": "2f485013db936b3c5a7ebf9a71dc18e005faf01749caf329bdfcc52d39817b21"
+    },
+    {
+      "path": "tests/instagram-login-provider.test.cjs",
+      "sha256": "ee98458675a34025e62ac81f25dd55da2ce9b29e9209494969457d811976a157"
+    },
+    {
+      "path": "tests/lola-drive.test.cjs",
+      "sha256": "8bf14401dda9a6289ca2cf26a3b91323cd4c03bea0e3de50c142598f07737568"
+    },
+    {
+      "path": "tests/lola-integration.test.cjs",
+      "sha256": "8a3b61e3dea048439f0be2709327dc04a016cef770f9171982dab62433517c77"
+    },
+    {
+      "path": "tests/lola-policy.test.cjs",
+      "sha256": "51c06ba9db0dd7c8ce21566fbf55fb790f575bd0de2a2d9de8289ffbae22da57"
+    },
+    {
+      "path": "tests/memory-firestore.cjs",
+      "sha256": "558653e13b2e37bbc9bf6e901db4bc19295ca1328a2ff6864333eb1d605d3b67"
+    },
+    {
+      "path": "tests/memory-followup.test.cjs",
+      "sha256": "db70e0ed8f501e7b4b52d515601037d0ffe784eab69a72dfbc88c30e36dd453c"
+    },
+    {
+      "path": "tests/n8n-flows.test.cjs",
+      "sha256": "f37c8be3ca80342adc23dd55329702b939caa82d416a416dd2692a6ab7857814"
+    },
+    {
+      "path": "tests/omnichannel.test.cjs",
+      "sha256": "a8db35e07f17e349835d2b14f8353181385bc7c40e1df773d4eb3011d325724c"
+    },
+    {
+      "path": "tests/postgres-storage.test.cjs",
+      "sha256": "380061f5a46a688445251b3d062ed62332b260f6b1f1058394876021f09eb19b"
+    },
+    {
+      "path": "tests/publications.test.cjs",
+      "sha256": "bd752d7b244085120cb4be481d46dfeeaf6bcaf12e67a4ff38d4d1e79ad84fac"
+    },
+    {
+      "path": "tests/quote.test.cjs",
+      "sha256": "092110bfd3435917a8f2b0b437df3aec68835b64fffa38d44c8378f0fb778556"
+    },
+    {
+      "path": "tests/rehearsal.test.cjs",
+      "sha256": "c024e8d082fe3de632ec9b4bd274803ea9062ea441320f6b07355d9e701e3385"
+    },
+    {
+      "path": "tests/separation.test.cjs",
+      "sha256": "596062615d7e1646c50f91b058ca80d1cb2c2653e04d68f6627933d047d1364d"
+    },
+    {
+      "path": "tests/shared-crm-protocol.test.cjs",
+      "sha256": "71cf0fd4862f59820500f9457bd5a25a16e5243f3d2c8d60a71cd329c5131853"
+    },
+    {
+      "path": "tests/social-ads.test.cjs",
+      "sha256": "788d907817e1a1b6dfff17677dad1738b74703f7d510997c14f94963863ee2b3"
+    },
+    {
+      "path": "tests/social-rehearsal-guard.test.cjs",
+      "sha256": "b3e9b96e14607a65085e70c601779cb76d20879f13ebc6e33dd9e5d2bcd885b5"
+    },
+    {
+      "path": "tests/social-web.test.cjs",
+      "sha256": "b6aa343e9ded7c5521641d015d3100f4fd6be0af05815298c600218933dcd0fb"
+    },
+    {
+      "path": "tests/sql-auth-integration.test.cjs",
+      "sha256": "850d6741e57d62d318ece2c4468bd9b03909e33613888d0abce284754bbf9029"
+    },
+    {
+      "path": "tests/storage.test.cjs",
+      "sha256": "f976529270e69a4a91b46446769cd3bd205d8949fcf23223746867dea4c52d47"
+    },
+    {
+      "path": "tests/test-advisor-setup.test.cjs",
+      "sha256": "40607bff3d62a25b89c6540c025f357baca0f703677796e525a168511f16ff17"
+    },
+    {
+      "path": "tests/unified-protocol.test.cjs",
+      "sha256": "aeec1002cfc5e14da7a74184f46dcfd94acdf3f144f7ff83db60ed08583dbb3b"
+    },
+    {
+      "path": "tests/unified-workflow.test.cjs",
+      "sha256": "7314bd6ce58f121aa911b185c9af5977cc7ede9da0fe5529e08fcd3bb68bb8db"
+    },
+    {
+      "path": "tests/updates.test.cjs",
+      "sha256": "40711284561ee4faf82802486d35c0edf568fe3086a2972ab85db9d0e31f5694"
+    },
+    {
+      "path": "tests/web.test.cjs",
+      "sha256": "8ab35cd4c7be93956d849c8730437ece29b3870ab3d7076aef0abfad890a648f"
+    },
+    {
+      "path": "tests/whatsapp-agenda.test.cjs",
+      "sha256": "646edb37d81e3d4965f9d4d7386302f08ac3e99056b2db069e151e611b190f73"
+    },
+    {
+      "path": "tests/whatsapp-attachments.test.cjs",
+      "sha256": "0dd38764402072dabe6c9c501a0f1d3387ffe45ee20c9d4652534d36d6972230"
+    },
+    {
+      "path": "tests/whatsapp-audio-codec.test.cjs",
+      "sha256": "0576a3e5f98c76c4d32cbe699d30636d1165b355ca7e9288363e4bd510da6f41"
+    },
+    {
+      "path": "tests/whatsapp-inbox.test.cjs",
+      "sha256": "fe54749d861f750c8f29bf55078bb465b36504d384a4f5b0c05088c256d8db7c"
+    },
+    {
+      "path": "tests/whatsapp-service.test.cjs",
+      "sha256": "54231bca19fcc6124a8b0597c34604d74ebb0ca932f36651035c43afcef3c1ae"
+    },
+    {
+      "path": "tests/whatsapp-ui-smoke.cjs",
+      "sha256": "c78ffdd3dbec0fe8b01ec1c736f5b2d5ed678d9adfd65a7260d515c89eec5b56"
+    },
+    {
+      "path": "tests/whatsapp-web.test.cjs",
+      "sha256": "518849c0e5b2fcb86130d0d59c12b6a5acde8622640a5e28b67cd574e87f6715"
+    },
+    {
+      "path": "tsconfig.json",
+      "sha256": "ede5cce958365bda5dbc435921405bd15fd74ac5f3e335d53f765a3a921c2972"
+    },
+    {
+      "path": "validacion/67610-ensayo-build.txt",
+      "sha256": "ee3a618dabde88aabd7690765f9a304ea4b6109a844ec2ae79e7931ece3f348f"
+    },
+    {
+      "path": "validacion/67610-ensayo-marketing.txt",
+      "sha256": "2dc7dbccd3af7f4872e23d2a5feed0c8d4a129f1443c3eaa41d6e29e479126c6"
+    },
+    {
+      "path": "validacion/67610-ensayo-regresiones.txt",
+      "sha256": "a0a364ca498bf7e1c298a5ce5c2e935d12c6df6ca0c755061e085bfcfe8dec1a"
+    },
+    {
+      "path": "validacion/67610-smtp-r1-tests.txt",
+      "sha256": "233c7e962fa5ab6861ee956ce9e70f86d9f3f49792d9f0187095513b460177b8"
+    },
+    {
+      "path": "validacion/67610-smtp-r2-tests.txt",
+      "sha256": "7778eb30ffcf68abc906ee5873622b2e8bc67866daf53d69804b49690bff4978"
+    },
+    {
+      "path": "validacion/6762-broader-tests-with-socket-limits.txt",
+      "sha256": "f08afbc103d39e04d9624dd1bd59f35dab2116267759b91577b102cdff4d6b1b"
+    },
+    {
+      "path": "validacion/6762-release-tests.txt",
+      "sha256": "80fb601aff30b196c21a0052ac3aa6e32945650c7ebd216bc9fdbcdd1108dff2"
+    },
+    {
+      "path": "validacion/6763-release-tests.txt",
+      "sha256": "d09e335a5033bb35f1dbc3f95ac372b93bcfe536eefcd9fe23f091b237f5c599"
+    },
+    {
+      "path": "validacion/6764-release-tests.txt",
+      "sha256": "3a477368c2d05bc8196c1c5a21c6bc2a2592eac23a6139d8fbed9737671511e3"
+    },
+    {
+      "path": "validacion/6765-release-tests.txt",
+      "sha256": "f92b077c74bb31be4f2f29b0b5ff3628f6e8022057f8990af2b190b6269eccde"
+    },
+    {
+      "path": "validacion/6765-socket-limited-tests.txt",
+      "sha256": "fbae0b8c5f801dde052c5fd8ba34550826212e939e9df48c7312ae78db56b805"
+    },
+    {
+      "path": "validacion/6766-release-tests.txt",
+      "sha256": "7697665f481e959a8fd807bde7baa0c46b4daadb0e76acd5e9a4be6824a2564d"
+    },
+    {
+      "path": "validacion/6767-release-tests.txt",
+      "sha256": "5c873625d21abca046af19613e7cbf9bb70943ad3cd29f1b539aea78bdd4e4cc"
+    },
+    {
+      "path": "validacion/6769-release-tests.txt",
+      "sha256": "a7c326d77303bd11e9026625cb538b6b72b471188a641ceac7697265add24b03"
+    },
+    {
+      "path": "validacion/seguridad-20261022/67610-ensayo-marketing-security.txt",
+      "sha256": "02d50ad28ee1213147f9e729480ce785cda1443154e088fb301521e5b0357ec7"
+    },
+    {
+      "path": "validacion/seguridad-20261022/67610-ensayo-regresiones-security.txt",
+      "sha256": "8fa0f302fd76802b058b0442fdfc74ecadd3567d33357b5cc59e64c6fc7dc388"
+    },
+    {
+      "path": "validacion/seguridad-20261022/67610-npm-audit-after.json",
+      "sha256": "f0bcf875d8ab326bd038700749bbc36693620c2b3dda9aa10c81914500a7f0f3"
+    },
+    {
+      "path": "validacion/seguridad-20261022/67610-npm-audit-before.json",
+      "sha256": "e4e8c09c4aa90fb3d2813dd02fdac82d79643fc894c543de2ba80c11da2feb0a"
+    },
+    {
+      "path": "validacion/seguridad-20261022/67610-security-smoke.txt",
+      "sha256": "4c8de8ef2d376b714f2e34f83ee76c96dd716ea2de633d1d20ccd8e45176fbd9"
+    },
+    {
+      "path": "validacion/seguridad-20261022/LEER.md",
+      "sha256": "81b55411efc300c00f7e6b0237d8ff32d3d023e436296f1e3d1a92cffd7f7248"
+    },
+    {
+      "path": "vite.config.js",
+      "sha256": "abccbeaa1ae5a5f7b7f4b20cca58debaf81b48615789a12dd0c4def0621a1e8a"
+    }
+  ]
+}

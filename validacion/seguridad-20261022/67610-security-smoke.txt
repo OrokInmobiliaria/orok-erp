@@ -1,0 +1,4 @@
+@grpc/grpc-js 1.14.6
+brace-expansion 2.1.7
+nodemailer 10.2.1
+MIME con calendario generado en memoria; sin conexión SMTP ni envío.

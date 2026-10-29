@@ -1,0 +1,10 @@
+R41 ENSAYO - EVALUADOR INMOBILIARIO - 2026-10-28
+
+Nombre unificado: Evaluador Inmobiliario.
+SUNAT venta: consulta automatica al ingresar; cache del dia, sin intervalos ni boton de activacion. Sin conexion conserva el ultimo valor y avisa. Actualiza p.tc y mercado.tc en el borrador; guardar evaluacion en CRM conserva el flujo existente.
+Costos: se puede editar S/m2 de cada partida o su incidencia. Cambiar S/m2 conserva otras partidas y recalcula total e incidencias. Cambiar incidencia conserva total y redistribuye las demas. Total por m2 tambien editable.
+Supuestos: fechas mensuales para diseno, lanzamiento, construccion, independizacion y posventa. Hitos adicionales con nombre y mes; hitos principales derivados de las fases. No inventa pagos por agregar un hito.
+Flujo: escenarios Base/Optimista/Pesimista con velocidades editables. Recalcula unidades, cobranza, fondeo y ultima venta. Precios y costos no cambian al alternar velocidad. Ventas reales siguen en Seguimiento.
+
+Validacion: 11 pruebas aprobadas; los 65 resultados del modelo base anterior son identicos. Compilacion correcta. Verificacion visual del despliegue pendiente al crear este paquete.
+Destino exclusivo: crm-r41-ensayo. Se conservan base, volumen, variables, usuarios, vinculos e historial. Los flujos n8n no se modifican ni se importan. Produccion aun requiere respaldo verificable y autorizacion de conexion final.

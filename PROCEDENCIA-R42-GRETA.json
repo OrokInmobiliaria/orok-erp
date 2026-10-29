@@ -1,0 +1,45 @@
+{
+  "base": "ERP-OROK-R41-CIERRE-OC-VALIDADA-20261028.zip",
+  "version": "67.6.25-r42",
+  "production_deployed": false,
+  "alcance": "Solo módulo Marketing con G.R.E.T.A (asistente flotante como L.O.L.A, M.O.R.A y C.L.A.R.A). Contabilidad, Evaluador, n8n, safe-network y validaciones R41 sin cambios.",
+  "changed": [
+    "CHECKLIST-LANZAMIENTO-CHATGPT.md",
+    "LEEME-PRIMERO.txt",
+    "application.cjs",
+    "business/conversationMemory.js",
+    "business/pipelines.js",
+    "dist/index.html",
+    "dist/sw.js",
+    "dist/version.json",
+    "package.json",
+    "src/App.jsx",
+    "src/CampaignStudio.jsx",
+    "src/GroupedNav.jsx",
+    "src/MarketingAssistant.jsx",
+    "src/cloudBridge.js",
+    "src/navModel.mjs",
+    "src/theme.css",
+    "tests/r31-nav.test.cjs",
+    "tests/r33-mora.test.cjs",
+    "tests/r34-clara-erp.test.cjs",
+    "tests/r36-produccion-n8n-pwa.test.cjs"
+  ],
+  "added": [
+    "CAMBIOS-R42-MARKETING-GRETA-2026-10-28.md",
+    "business/greta.js",
+    "dist/assets/index-C0381tLS.js",
+    "dist/assets/index-sh2zdknh.css",
+    "skills/greta-marketing",
+    "src/Greta.jsx",
+    "src/greta.css",
+    "tests/r42-greta-ui-smoke.cjs",
+    "tests/r42-greta.test.cjs"
+  ],
+  "removed_only_rebuilt_dist_assets": [
+    "dist/assets/index-D744TJYt.css",
+    "dist/assets/index-r8oSkDQ7.js"
+  ],
+  "tests": "576/576 (npm test) + tests/r42-greta-ui-smoke.cjs escritorio y celular",
+  "fecha": "2026-10-28"
+}

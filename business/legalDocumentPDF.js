@@ -1,0 +1,23 @@
+'use strict';
+const fs=require('node:fs/promises');
+const {PDFDocument,StandardFonts,rgb}=require('pdf-lib');
+const {applyTemplate,money,moneyWords}=require('./separationPDF');
+
+const clean=value=>String(value??'').replace(/[\u0000-\u001f]/g,' ').replace(/[\u2010-\u2015]/g,'-').replace(/[^\u0020-\u00ff\u20ac]/g,'');
+function signerText(signers=[]){return signers.map((item,index)=>((index?'Asimismo, ':'')+(item.name||'Participante')+', identificado(a) con DNI N° '+(item.dni||'pendiente')+', de estado civil '+(item.marital_status||'pendiente')+', con domicilio en '+(item.address||'pendiente')+'.')).join('\n\n');}
+function templateValues({minute,separation,unit,settings={}}){
+ const signers=minute.signers||[],buyer1=signers[0]||{},buyer2=signers[1]||{},finalPrice=money(separation.final_price),finalPriceWords=moneyWords(separation.final_price),today=new Date();
+ return {COMPANY_NAME:settings.companyName||'BMG Desarrolladora Inmobiliaria S.A.C.',COMPANY_RUC:settings.companyRuc||'20615227685',COMPANY_ADDRESS:settings.companyAddress||'Calle Puquina 138, Maranga, San Miguel, Lima, Perú',COMPANY_REPRESENTATIVE:settings.companyRepresentative||'Marcos Martin Montezuma Chirinos',COMPANY_REPRESENTATIVE_DNI:settings.companyRepresentativeDni||'10797023',COMPANY_RECORD:settings.companyRecord||'16083215',SIGNERS:signerText(signers),UNIT_NUMBER:unit.unit_number,APARTMENT_NUMBER:unit.unit_number,APARTMENT_TYPE_AND_NUMBER:unit.unit_number,FINAL_PRICE:finalPrice,TOTAL_SALE_PRICE:finalPrice,SALE_PRICE:finalPrice,FINAL_PRICE_WORDS:finalPriceWords,TOTAL_SALE_PRICE_WORDS:finalPriceWords,SALE_PRICE_WORDS:finalPriceWords,CURRENCY:'S/',SEPARATION_CODE:separation.code,FINANCING_TYPE:minute.type==='bank_minute'?'crédito hipotecario':'compra directa',BUYER_NAME:buyer1.name||'',BUYER_DNI:buyer1.dni||'',BUYER_MARITAL_STATUS:buyer1.marital_status||'',BUYER_ADDRESS:buyer1.address||'',BUYER_1_NAME:buyer1.name||'',BUYER_1_ID:buyer1.dni||'',BUYER_1_MARITAL_STATUS:buyer1.marital_status||'',BUYER_1_ADDRESS:buyer1.address||'',BUYER_2_NAME:buyer2.name||'',BUYER_2_ID:buyer2.dni||'',BUYER_2_MARITAL_STATUS:buyer2.marital_status||'',BUYER_2_ADDRESS:buyer2.address||'',BUYERS_COMMON_ADDRESS:buyer1.address||buyer2.address||'',SIGNING_DATE:today.toLocaleDateString('es-PE'),DAY:today.toLocaleDateString('es-PE',{day:'2-digit'}),MONTH:today.toLocaleDateString('es-PE',{month:'long'}),YEAR:today.toLocaleDateString('es-PE',{year:'numeric'})};
+}
+async function generateLegalPDF({templateText,minute,separation,unit,settings={},targetFilePath}){
+ const doc=await PDFDocument.create(),font=await doc.embedFont(StandardFonts.Helvetica),bold=await doc.embedFont(StandardFonts.HelveticaBold),width=595.28,height=841.89,x=42,w=511;
+ const hex=String(settings.brandColor||'#85442A').match(/^#([0-9a-f]{6})$/i)?.[1]||'85442A',brand=rgb(...[0,2,4].map(i=>parseInt(hex.slice(i,i+2),16)/255)),ink=rgb(.12,.11,.1),muted=rgb(.4,.37,.35);
+ const values=templateValues({minute,separation,unit,settings});
+ const content=applyTemplate(templateText,values);let page,y,pages=[];
+ const add=()=>{page=doc.addPage([width,height]);pages.push(page);y=755;page.drawText('ÖRÖK',{x,y:795,size:27,font:bold,color:brand});page.drawText(clean('MINUTA DE COMPRAVENTA · Dpto '+unit.unit_number),{x:x+150,y:799,size:10,font:bold,color:muted});page.drawLine({start:{x,y:780},end:{x:x+w,y:780},color:brand,thickness:1.2});};
+ const draw=(line,boldLine=false)=>{const size=8.8,f=boldLine?bold:font,words=clean(line).split(/\s+/).filter(Boolean);let row='';for(const word of words){if(row&&f.widthOfTextAtSize(row+' '+word,size)>w){if(y<85)add();page.drawText(row,{x,y,size,font:f,color:ink});y-=12.8;row=word;}else row+=(row?' ':'')+word;}if(row){if(y<85)add();page.drawText(row,{x,y,size,font:f,color:ink});y-=12.8;}y-=boldLine?7:4;};
+ add();for(const block of content.split(/\n\s*\n/).map(v=>v.trim()).filter(Boolean)){const heading=block.length<120&&block===block.toUpperCase();for(const line of block.split('\n'))draw(line,heading);}
+ for(const [i,p] of pages.entries()){p.drawLine({start:{x,y:60},end:{x:x+w,y:60},color:brand,thickness:.5});p.drawText('BMG Desarrolladora Inmobiliaria S.A.C. · RUC 20615227685',{x,y:42,size:7.5,font,color:muted});p.drawText((i+1)+' / '+pages.length,{x:520,y:42,size:7.5,font,color:muted});}
+ doc.setTitle('Minuta '+separation.code+' - Dpto '+unit.unit_number);doc.setAuthor('BMG Desarrolladora Inmobiliaria S.A.C.');doc.setSubject('Minuta de compraventa');await fs.writeFile(targetFilePath,await doc.save());return {success:true,filePath:targetFilePath,pages:pages.length};
+}
+module.exports={generateLegalPDF,signerText,templateValues};

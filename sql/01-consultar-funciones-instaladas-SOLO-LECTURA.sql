@@ -1,0 +1,1 @@
+SELECT n.nspname AS esquema, p.proname AS funcion, pg_get_functiondef(p.oid) AS definicion_instalada FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN ('orok_lola_ensayo03_apply','orok_lola_ensayo04_selection','orok_lola_ensayo04_book_appointment','orok_lola_ensayo05_reschedule','orok_lola_ensayo05_cancel') ORDER BY p.proname;

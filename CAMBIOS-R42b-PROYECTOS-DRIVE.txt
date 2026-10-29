@@ -1,0 +1,30 @@
+R42b · Datos del Proyecto, estructura Drive y archivo de Marketing
+
+ALCANCE: ensayo aislado crm-r41-ensayo. No cambia el CRM vivo.
+Orden de módulos: Evaluador Inmobiliario, Marketing, CRM Inmobiliario, Contabilidad y Finanzas.
+
+Evaluador: Datos del Proyecto contiene identificación, empresa, dirección y responsable.
+Guardar en CRM reconoce Infinity224 por los catorce IDs existentes: no crea ni borra su estructura.
+Nuevo proyecto inicia otro borrador y prepara raíz más catorce carpetas para la empresa configurada.
+No se asignan carpetas de MZA/MAAS por suposición: requieren raíz propia configurada.
+
+G.R.E.T.A usa el mismo modelo predeterminado que L.O.L.A. Redes: Facebook, Instagram y TikTok.
+Consultas, propuestas, imágenes y exportaciones se conservan localmente y se encolan para Drive,
+dentro de 5.Marketing del proyecto. Las versiones no se sobrescriben. Pendiente no significa archivado.
+El worker confirma carpeta, nombre y padre antes de dar el archivo por guardado.
+
+Las IA reciben fuentes por módulo. L.O.L.A solo recibe documentos comerciales aprobados
+por Gerencia; nunca documentos contables o financieros. Los archivos son datos, no instrucciones.
+La lectura se solicita explícitamente y conserva un índice: no relee todo Drive cada segundo.
+
+n8n: se agrega PROYECTOS-R42b-DRIVE-ENSAYO-INACTIVO.json con 28 nodos.
+Los flujos M.O.R.A (40) y L.O.L.A (110) conservan todos sus nodos y conexiones.
+Sus exportaciones con contexto Drive están inactivas y requieren prueba antes de publicación humana.
+C.L.A.R.A no se reemplaza. No hay nodos para eliminar, mover o compartir carpetas.
+
+Configuración privada del ensayo: project-drive.json, enabled y roots por empresa.
+Las credenciales siguen en n8n y el servidor: no se incluyen claves en el paquete.
+
+VERIFICACIÓN: pruebas de lógica de reconocimiento, no duplicación, leases, destinos,
+separación por rol, aprobación comercial y orden del menú. Las pruebas reales de Drive
+quedan registradas en el acta de despliegue, no se dan por hechas por compilar.

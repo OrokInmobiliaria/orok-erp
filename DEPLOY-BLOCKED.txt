@@ -1,0 +1,9 @@
+BLOQUEO DE DESPLIEGUE r28
+
+Esta carpeta es una entrega local revisable.
+NO fue cargada al CRM vivo.
+NO se ejecutó contra PostgreSQL vivo.
+NO se activó el workflow n8n.
+NO contiene un respaldo de datos vivos porque la subida oficial todavía no se realizará.
+
+Antes de cualquier publicación debe ejecutarse deploy/create-preupdate-snapshot.cjs en el servidor operativo y verificarse restore-check.json.

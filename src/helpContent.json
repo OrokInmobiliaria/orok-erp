@@ -1,0 +1,134 @@
+{
+ "manual": [
+  {
+   "title": "Kanban Leads",
+   "tags": "kanban columnas filtros encabezados sticky desplazamiento",
+   "text": "El tablero conserva visibles los filtros, el buscador y los encabezados de columna al desplazarte. Arrastra una tarjeta para cambiarla de etapa y confirma la acción antes de aplicarla."
+  },
+  {
+   "title": "Gestión y seguimiento",
+   "tags": "ficha datos calificación próxima acción dni teléfono correo dirección origen",
+   "text": "La ficha es el registro maestro. Aquí se completan proyecto, responsable, DNI, teléfono, correo, dirección, origen, presupuesto, tipología, horizonte de compra, próxima acción y fecha."
+  },
+  {
+   "title": "Cotizaciones y datos cruzados",
+   "tags": "cotización presupuesto dni ficha datos cruzados pdf",
+   "text": "Al generar una cotización, se reutilizan los datos de la ficha. Si la cotización aporta información que falta, el CRM completa solo los campos vacíos; nunca borra ni sobrescribe un dato ya registrado. Las cotizaciones anteriores quedan como resumen histórico."
+  },
+  {
+   "title": "Cancelar una cita",
+   "tags": "cita cancelar anular seguimiento cita no concretada próxima acción",
+   "text": "En Citas showroom, pulsa Cancelar cita, elige el motivo y confirma. El CRM desactiva la cita, conserva su motivo e historial y lleva el lead a Seguimiento / Cita no concretada con la acción “Proponer nueva fecha de showroom”. Cancelar una cita nunca clasifica por sí solo un lead como perdido."
+  },
+  {
+   "title": "Comentarios e historial",
+   "tags": "comentarios historial trazabilidad usuario fecha hora",
+   "text": "Registra cada llamada, mensaje, acuerdo y compromiso en comentarios. El historial conserva quién hizo la acción, fecha, hora y motivo; la lista es desplazable para no ocupar toda la ficha."
+  },
+  {
+   "title": "Registrar gestión",
+   "tags": "gestión intento contacto cita visita showroom seguimiento pérdida comentario",
+   "text": "Elige el resultado real de la gestión y el CRM aplica la regla correspondiente. Para una persona que llegó sin cita, selecciona “Visita directa al showroom”: registra contacto y visita sin crear una cita. Si se genera cotización después, queda en Seguimiento / Cotización. Puedes añadir una nota opcional; también puedes seguir dejando comentarios libres sin mover el lead."
+  },
+  {
+   "title": "Perdidos, desestimados y recontacto",
+   "tags": "perdido desestimado contacto efectivo motivo recontacto kanban embudo",
+   "text": "Un lead puede clasificarse como Perdido / desestimado desde Lead inicial o cualquier etapa activa, sin requerir una cita. Primero registra “Contacto efectivo”; después usa el bloque “Clasificar como perdido / desestimado”, elige el motivo y confirma. El CRM conserva historial y motivo. Para reactivarlo, define subestado de Seguimiento, próxima acción y fecha."
+  },
+  {
+   "title": "Cola diaria",
+   "tags": "cola diaria sla pendientes citas seguimiento gestión",
+   "text": "La Cola diaria prioriza acciones pendientes: primera atención, próximas acciones vencidas, citas y seguimientos. Desde Gestionar se abre la ficha para comentar y definir el siguiente destino del lead."
+  }
+ ],
+ "playbook": [
+  {
+   "title": "Regla principal",
+   "tags": "proceso evidencia trazabilidad etapa embudo",
+   "text": "El CRM no inventa hitos comerciales. Cada transición necesita una acción real y queda trazada. Los cambios operativos no deben alterar artificialmente la lectura del embudo."
+  },
+  {
+   "title": "Seguimiento consolidado",
+   "tags": "seguimiento no contesta futuro cita no concretada no show post visita cotización objeciones banco fondos",
+   "text": "Seguimiento usa subestados operativos: No contesta, Seguimiento futuro, Cita no concretada, No-show, Post-visita, Cotización, Objeciones, Evaluación financiera, Consulta con decisor, Negociación, Esperando banco y Esperando fondos."
+  },
+  {
+   "title": "Cita cancelada y pérdida: acciones separadas",
+   "tags": "cita cancelar perdido desestimado seguimiento contacto efectivo",
+   "text": "Cancelar una cita solo resuelve la cita: conserva el motivo y pasa el lead a Seguimiento / Cita no concretada con una próxima acción. No clasifica la pérdida ni interpreta comentarios automáticamente. La clasificación como Perdido / desestimado es una acción independiente y exige “Contacto efectivo” validado y un motivo."
+  },
+  {
+   "title": "Semáforo único",
+   "tags": "semaforo verde amarillo rojo crítico prioridad sla manual automático",
+   "text": "Cada lead tiene un solo semáforo: Verde, Amarillo, Rojo o Crítico. Indica urgencia, no una etapa comercial. Un ajuste manual se registra con motivo, pero es temporal: el SLA retoma el cálculo automático en su siguiente evaluación, sin mover la tarjeta ni modificar el embudo."
+  },
+  {
+   "title": "Movimiento automático permitido",
+   "tags": "automatización cadencia siete intentos lead inicial no contesta horario pérdida",
+   "text": "El único movimiento automático vigente requiere que se cumpla toda la cadencia: siete intentos documentados sin contacto efectivo, dentro de la configuración SLA. Entonces Lead Inicial puede pasar a Seguimiento / No contesta. No se crean citas, cotizaciones, ventas ni pérdidas automáticamente; una pérdida exige contacto efectivo validado y decisión humana."
+  },
+  {
+   "title": "IA y canales",
+   "tags": "gemini whatsapp webhook leadcenter n8n facebook instagram resumen",
+   "text": "Gemini sirve para resumir conversaciones solo a solicitud del usuario y el resultado queda en el historial. WhatsApp, Meta, LeadCenter o n8n requieren conexión oficial y credenciales de Gerencia; hasta entonces no modifican datos ni etapas."
+  }
+ ],
+ "route": [
+  {
+   "label": "1. Lead entra",
+   "detail": "Fuente, fecha y responsable.",
+   "query": "lead nuevo",
+   "color": "#e4f5e7",
+   "edge": "#16a34a"
+  },
+  {
+   "label": "2. Contacto",
+   "detail": "Intento o contacto efectivo.",
+   "query": "contacto",
+   "color": "#e8f2ff",
+   "edge": "#2563eb"
+  },
+  {
+   "label": "3. Calificación",
+   "detail": "Necesidad, presupuesto y plazo.",
+   "query": "calificación",
+   "color": "#eeeefe",
+   "edge": "#6366f1"
+  },
+  {
+   "label": "4. Visita, cita o propuesta",
+   "detail": "Agenda, visita directa, asistencia o propuesta.",
+   "query": "showroom",
+   "color": "#fff2db",
+   "edge": "#d97706"
+  },
+  {
+   "label": "5. Seguimiento",
+   "detail": "Subestado, motivo, acción y fecha.",
+   "query": "seguimiento",
+   "color": "#fff7cf",
+   "edge": "#ca8a04"
+  },
+  {
+   "label": "6. Sin continuidad",
+   "detail": "Valida contacto y el motivo real.",
+   "query": "perdido",
+   "color": "#fee8e8",
+   "edge": "#dc2626"
+  },
+  {
+   "label": "7. Venta",
+   "detail": "Solo al confirmar el hito comercial.",
+   "query": "venta",
+   "color": "#e1f6e7",
+   "edge": "#15803d"
+  },
+  {
+   "label": "Todos los días",
+   "detail": "Cola: Crítico → Rojo → Amarillo → Verde.",
+   "query": "sla",
+   "color": "#f3eee8",
+   "edge": "#92400e"
+  }
+ ]
+}
