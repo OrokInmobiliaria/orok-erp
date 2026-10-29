@@ -24,7 +24,7 @@ Cómo reportar avance: marca cada casilla al terminarla y anota la hora de Lima 
 
 ## Qué trae el paquete y qué no
 
-El paquete repositorio privado `Orokinmobiliaria/orok-erp` (rama `main`) contiene la versión vigente (R34 a R44, versión 67.6.27-r44, 598/598 pruebas). Los zips anteriores no hacen falta.
+El paquete repositorio privado `Orokinmobiliaria/orok-erp` (rama `main`) contiene la versión vigente (R34 a R44, versión 67.6.28-r45, 603/603 pruebas). Los zips anteriores no hacen falta.
 
 | Parte | Dónde está en el zip | Para qué |
 | --- | --- | --- |
@@ -80,7 +80,7 @@ Objetivo: probar R41 con una copia real de la base sin tocar el CRM vivo. Detall
 1. Crear en el host un servicio nuevo de ensayo (no el de producción) con el código del zip y `OROK_REHEARSAL=1`.
 2. Darle una base PostgreSQL de ensayo con una **copia** de la base de producción (restaurar el `pg_dump` de la Fase 0).
 3. En la consola del servicio de ensayo: `npm run postgres:check` y luego `npm run migraciones` (solo revisa); si todo sale `ok`, `node deploy/aplicar-migraciones.cjs --aplicar`.
-4. Abrir `https://<dominio de ensayo>/api/health` y confirmar `ok: true` y versión `67.6.27-r44`.
+4. Abrir `https://<dominio de ensayo>/api/health` y confirmar `ok: true` y versión `67.6.28-r45`.
 
 Comprobaciones en el ensayo:
 
@@ -110,7 +110,7 @@ Publicar:
 
 Después (con R41 corriendo):
 
-- [ ] `npm run produccion:despues`: espera `/api/health` con `67.6.27-r44` y compara la base con el respaldo. Debe decir «Actualización verificada: se conservaron leads, comentarios, etapas y orden del Kanban».
+- [ ] `npm run produccion:despues`: espera `/api/health` con `67.6.28-r45` y compara la base con el respaldo. Debe decir «Actualización verificada: se conservaron leads, comentarios, etapas y orden del Kanban».
 - [ ] Si dice VERIFICACIÓN FALLIDA: no usar; ir al plan de vuelta atrás.
 - [ ] Ingresar como Gerencia y revisar 5 leads al azar (etapa, comentarios, posición en el Kanban).
 - [ ] Salir del mantenimiento y vigilar 48 horas el registro `<OROK_PRIVATE_DIR>/deploy/produccion.log`.
@@ -202,6 +202,18 @@ Objetivo: dejar el módulo Marketing operativo para Gerencia. Detalle en la skil
 - [ ] Prueba: aprobar un formulario de ensayo → «Crear en Meta» → ejecutar el flujo a mano → el ERP muestra «En Meta» con su ID. Si Meta rechaza, el formulario vuelve a «Error de Meta» con el motivo. Archivar el de ensayo.
 - [ ] Prueba de lead: con la [herramienta de prueba de anuncios para clientes potenciales](https://developers.facebook.com/tools/lead-ads-testing) enviar un lead de ese formulario; en el CRM entra con las respuestas como comentario y aparece en Pauta y KPIs › Formularios. En ensayo, agregar el ID del formulario a los formularios de prueba permitidos de Meta en el CRM.
 - [ ] Recordar: un formulario ya creado en Meta no se edita. Se usa «Nueva versión»; al crearla, la anterior se archiva sola.
+
+## Fase 4b2 · L.O.L.A Operaciones: que no se pierda nada
+
+Objetivo: copia cifrada de todo el ERP fuera del VPS de Hostinger y aviso si algo se cae.
+
+- [ ] Google Drive de la empresa: crear (o elegir) una carpeta «Respaldos ERP», idealmente en una unidad compartida. Compartirla como Editor con el correo de la cuenta de servicio del ERP (el `client_email` del archivo de credenciales de Google del servidor; no pegarlo completo en chats).
+- [ ] CRM › Configuración › L.O.L.A Operaciones › «Generar llave de los respaldos» → «Descargar llave privada». Guardarla en dos lugares (USB y gestor de contraseñas de la empresa). El ERP no la conserva: sin ella no se abren los respaldos.
+- [ ] Pegar el enlace de la carpeta de Drive y la dirección de n8n → Guardar → «Activar resguardo» → «Resguardar ahora». Debe decir «en Drive» y mostrar los conteos de leads y comentarios.
+- [ ] Al día siguiente: «Verificar copia en Drive» debe decir que coincide.
+- [ ] Prueba de apertura (una vez al mes): en una PC, con la llave privada, `node deploy/restaurar-resguardo.cjs --llave llave.pem --archivo respaldo.orokbak --salida carpeta-nueva`. Comparar los conteos con el ERP. Nunca restaurar sobre la base vigente.
+- [ ] Vigilancia externa: en GitHub › Settings › Secrets and variables › Actions › Variables, crear `ERP_URL` y `N8N_URL`. En la pestaña Actions, ejecutar «Vigilancia ERP ÖRÖK» una vez a mano. Activar los avisos de correo de GitHub (Watch › All activity, o Settings › Notifications › Actions).
+- [ ] Hostinger: activar las copias automáticas del VPS y tomar una instantánea antes de cada actualización grande (protege también a n8n y a su base, que viven en el mismo VPS).
 
 ## Fase 4c · Conector del ERP para Claude
 

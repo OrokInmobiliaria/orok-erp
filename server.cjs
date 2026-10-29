@@ -200,9 +200,9 @@ function createServer({config,store,auth,cache,authCache,supportMail,whatsappOpt
  if(!config.testing&&(!config.rehearsal||config.rehearsalAutomation))server.on('listening',()=>{
   // Background work is delayed and lease-protected.  A web-server restart must
   // make the login available immediately, never trigger a full CRM migration.
-  syncer.start();sla.start();
+  syncer.start();sla.start();app.resguardo?.start(); // R45 · resguardo externo (solo si Gerencia lo activó)
  });
- server.on('close',()=>{syncer.stop();sla.stop();backups.stop();});
+ server.on('close',()=>{syncer.stop();sla.stop();backups.stop();app.resguardo?.stop();});
  return server;
 }
 async function start(){

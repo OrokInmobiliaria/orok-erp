@@ -24,6 +24,8 @@ class CloudAuth{
  }
  // R44 · Sesión breve para el conector de Claude (MCP): solo para una persona existente y, si se indica, con la misma contraseña con que autorizó.
  async issueFor(userId,expectedVersion){const s=await this.ref.get(),users=(s.exists?s.data():{users:[]}).users||[],u=users.find(x=>x.id===userId);if(!u)return null;const version=crypto.createHash('sha256').update(String(u.hash)).digest('hex').slice(0,32);if(expectedVersion&&expectedVersion!==version)return null;return {cookie:this.sign.issue({id:u.id,hash:u.hash}),version,user:{id:u.id,name:u.name,role:u.role}};}
+ // R45 · Copia de usuarios y accesos para el resguardo cifrado (incluye hashes de contraseñas: solo viaja cifrado).
+ async snapshot(){const s=await this.ref.get();return s.exists?s.data():{users:[]};}
  async require(cookie,manager=false){return (await this.execute('requireUser',[manager],cookie)).value;}
  // Authentication remains in Firebase; a SQL transaction must never read its foreign reference.
  // Read current auth on each mutation and fail closed if Firebase is unavailable.

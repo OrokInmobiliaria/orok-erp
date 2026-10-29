@@ -1,4 +1,5 @@
 GUÍA DE LANZAMIENTO: CHECKLIST-LANZAMIENTO-CHATGPT.md (lista de comprobación paso a paso para usar con ChatGPT).
+R45 · 29-oct-2026 · L.O.L.A Operaciones: resguardo externo cifrado (base, accesos y archivos) en Drive cada hora, verificación y vigilancia externa desde GitHub. Ver CAMBIOS-R45-LOLA-OPERACIONES-2026-10-29.md.
 R44 · 29-oct-2026 · Conector del ERP para Claude: Claude consulta el ERP con los permisos de quien lo conecta (OAuth); se activa y se corta en Configuración › Conexiones de IA. Ver CAMBIOS-R44-CONECTOR-CLAUDE-2026-10-29.md.
 R43 · 29-oct-2026 · G.R.E.T.A arma las piezas (elige tus fotos y clips por escena y genera las que faltan) y crea formularios instantáneos editables para anuncios de Facebook, Instagram y TikTok. Ver CAMBIOS-R43-GRETA-FORMULARIOS-2026-10-29.md.
 R42 · 28-oct-2026 · Marketing sale del CRM y es un módulo propio con G.R.E.T.A (tendencias, Estudio, publicar o exportar al editor de cada red, pauta y KPIs) enlazada con L.O.L.A; G.R.E.T.A es asistente flotante del módulo, como L.O.L.A, M.O.R.A y C.L.A.R.A. Ver CAMBIOS-R42-MARKETING-GRETA-2026-10-28.md y la Fase 4b del checklist.
