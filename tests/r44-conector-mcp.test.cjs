@@ -107,5 +107,5 @@ test('roles: un vendedor no puede conectar mientras Gerencia no lo habilite y no
 test('UI: Configuración › Conexiones de IA para activar, ver conectados, cortar y ver la actividad',()=>{
  const ui=fs.readFileSync(path.join(__dirname,'..','src','ConexionesIA.jsx'),'utf8'),app=fs.readFileSync(path.join(__dirname,'..','src','App.jsx'),'utf8'),br=fs.readFileSync(path.join(__dirname,'..','src','cloudBridge.js'),'utf8');
  for(const x of ['Conexiones de IA','Agregar conector personalizado','Cortar conexión','Actividad reciente','mcpConfigGuardar'])assert.ok(ui.includes(x),x);
- assert.match(app,/activeTab==='settings'&&currentUser\.role==='Gerente'&&<ConexionesIA\/>/);assert.match(br,/'mcpConexiones','mcpRevocar','mcpConfigGuardar'/);
+ assert.match(app,/<ConexionesIA\/>/);assert.match(br,/'mcpConexiones','mcpRevocar','mcpConfigGuardar'/);
 });

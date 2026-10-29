@@ -1,0 +1,37 @@
+# R45 · L.O.L.A Operaciones · Vigilancia externa.
+# Corre en GitHub (fuera del VPS de Hostinger), así detecta una caída aunque se caiga todo el servidor.
+# Configurar en GitHub › Settings › Secrets and variables › Actions › Variables: ERP_URL (https://…) y N8N_URL (https://…).
+# Si falla, GitHub envía un correo a quienes vigilan el repositorio. Opcional: secreto ALERTA_WEBHOOK (p. ej. un webhook de n8n en OTRO servidor o de WhatsApp/Slack).
+name: Vigilancia ERP ÖRÖK
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  salud:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Revisar ERP y n8n
+        env:
+          ERP_URL: ${{ vars.ERP_URL }}
+          N8N_URL: ${{ vars.N8N_URL }}
+          ALERTA_WEBHOOK: ${{ secrets.ALERTA_WEBHOOK }}
+        run: |
+          set -u
+          if [ -z "$ERP_URL" ] && [ -z "$N8N_URL" ]; then echo "Vigilancia sin configurar (variables ERP_URL y N8N_URL)."; exit 0; fi
+          fallas=""
+          revisar() { nombre="$1"; url="$2"; patron="$3"
+            for i in 1 2 3; do
+              cuerpo=$(curl -fsS --max-time 20 "$url" 2>/dev/null) && echo "$cuerpo" | grep -q "$patron" && { echo "$nombre: en línea"; return 0; }
+              sleep 20
+            done
+            echo "::error::$nombre no responde ($url)"; fallas="$fallas $nombre"; }
+          [ -n "$ERP_URL" ] && revisar "ERP" "$ERP_URL/api/health" '"ok"'
+          [ -n "$N8N_URL" ] && revisar "n8n" "$N8N_URL/healthz" 'ok'
+          if [ -n "$fallas" ]; then
+            [ -n "$ALERTA_WEBHOOK" ] && curl -fsS --max-time 20 -H 'Content-Type: application/json' -d "{\"origen\":\"L.O.L.A Operaciones\",\"caidos\":\"$fallas\",\"hora\":\"$(TZ=America/Lima date '+%d/%m %H:%M')\"}" "$ALERTA_WEBHOOK" || true
+            exit 1
+          fi

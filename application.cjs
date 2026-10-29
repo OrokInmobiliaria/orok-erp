@@ -32,7 +32,8 @@ const {MoraIntegration,MORA_METHODS}=require('./business/moraIntegration');
 const {LolaAssistant,LOLA_ASSIST_METHODS}=require('./business/lolaAssistant');
 const {ClaraErp,CLARA_METHODS}=require('./business/claraErp');
 const {Greta,GRETA_METHODS,paraLola}=require('./business/greta');
-const {McpConnector,MCP_METHODS}=require('./business/mcpConnector'); // R44 · conector del ERP para Claude // R42 · Marketing con G.R.E.T.A
+const {McpConnector,MCP_METHODS}=require('./business/mcpConnector'); // R44 · conector del ERP para Claude
+const {Resguardo,OPS_METHODS}=require('./business/resguardo'); // R45 · L.O.L.A Operaciones: resguardo externo cifrado // R42 · Marketing con G.R.E.T.A
 const {ProjectDrive}=require('./business/projectDrive');
 const {DeviceEnrollment,INSTALL_METHODS}=require('./business/deviceEnrollment');
 const managerMethods=new Set(['updateSettings','saveIntegrationCredentials','addUnit','updateUnitStatus','updateUnitPlan','syncLocalFolder','clearUnits','clearLeads','deleteLostLead','deleteQuotes','addMarketingExpense','deleteMarketingExpense','reconcileQuoteProfiles','importChannelHistory']);
@@ -360,6 +361,7 @@ function application({store,auth,cache,authCache,config,syncer,supportMail,whats
    if(name==='approveProjectDriveSource')return {value:await projectDrive.approveSource(args[0],args[1],args[2],user)};
    if(name==='scanProjectDrive'){return {value:await projectDrive.requestScan(args[0],user)};}
    if(MCP_METHODS.includes(name))return {value:await mcp.rpc(name,args,user)};
+   if(OPS_METHODS.includes(name))return {value:await resguardo.rpc(name,args,user)};
    if(GRETA_METHODS.includes(name)){const value=await greta.rpc(name,args,user,()=>cache.read());if(['gretaAsk','gretaTendencias','gretaIdea','gretaImagen','gretaKpisLectura'].includes(name)){try{value.drive=await projectDrive.archiveResult(name,args[0]||{},value,user,creative);}catch(e){value.drive={state:'error',reason:e.message};}}return {value};}
    if(CLARA_METHODS.includes(name))return {value:await clara.rpc(name,args,user,()=>cache.read(),{usuarios:async()=>((await auth.execute('info',[],cookie)).value?.users||[]).map(u=>({id:u.id,name:u.name,role:u.role}))})};
    if(['getCreativeSetup','saveCreativeSetup','getCreativeModels','getCreativeCampaigns','getCreativeCampaign','createCreativeCampaign','editCreativeCampaign','approveCreativeCampaign','archiveCreativeCampaign','requestCreativeProposal','getCreativeAudit','getCreativeBrand','saveCreativeBrand','getCreativeFactCandidates','getVariantReport','linkCreativeVariant','unlinkCreativeVariant','getBudgetRecommendations','createBudgetRecommendation','decideBudgetRecommendation','getDailyBriefConfig','saveDailyBriefConfig','previewDailyBrief','getVoiceConfig','saveVoiceConfig','getPublishConfig','savePublishConfig','getCycleConfig','saveCycleConfig','requestVoice','requestPublication','getPipelineJobs','cancelPipelineJob','exportLeads','exportLeadsToSheet','getLeadExportConfig','saveLeadExportConfig','getLeadExportHistory'].includes(name)){
@@ -494,6 +496,7 @@ function application({store,auth,cache,authCache,config,syncer,supportMail,whats
  }
  // R44 · Conector MCP: usa el mismo despachador rpc() con una sesión breve de la persona que autorizó.
  const mcp=new McpConnector(store,config,{rpc:(m,a,c)=>rpc(m,a,c),issueSession:(id,v)=>auth.issueFor?auth.issueFor(id,v):null,version:require('./package.json').version});
- return {mcp,rpc,library,reconcileHistoricalQuotes,uploadSeparationDocument,ingestLola,whatsapp,social,ads,creative,assistant,pipelines,omnichannel,mora,enrollment,projectDrive};
+ const resguardo=new Resguardo(store,config,{authSnapshot:auth.snapshot?()=>auth.snapshot():null});
+ return {mcp,resguardo,rpc,library,reconcileHistoricalQuotes,uploadSeparationDocument,ingestLola,whatsapp,social,ads,creative,assistant,pipelines,omnichannel,mora,enrollment,projectDrive};
 }
 module.exports={application,publicSettings};
