@@ -1,16 +1,18 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react';
-import {Search, X, FileText, KanbanSquare} from 'lucide-react';
+import {Search, X, FileText, KanbanSquare, FileSpreadsheet} from 'lucide-react';
 import {api} from './dataService';
 import {searchLeads, socialHandles} from './leadSearch.mjs';
 import {indexByLead, channelsForLead, CHANNELS} from './chatChannels.mjs';
 import ChannelIcon from './ChannelIcon';
 
 // R32c · Buscador global (Ctrl/Cmd + K): busca en todos los leads y abre ficha, Kanban o chat.
-export default function LeadSearchPalette({leads = [], onClose, onOpenLead, onShowInKanban, openChat}) {
+// R48 · Si el lead tiene cotizaciones, un botón lleva a Ventas › Cotizaciones filtrado por ese lead.
+export default function LeadSearchPalette({leads = [], quotes = [], onClose, onOpenLead, onShowInKanban, onOpenQuotes, openChat}) {
   const [q, setQ] = useState(''), [threads, setThreads] = useState([]), [active, setActive] = useState(0), input = useRef(null);
   useEffect(() => { input.current?.focus(); api.getChatIndex().then(r => setThreads(r.threads || [])).catch(() => {}); const esc = e => e.key === 'Escape' && onClose(); document.addEventListener('keydown', esc); return () => document.removeEventListener('keydown', esc); }, []);
   const social = useMemo(() => socialHandles(threads), [threads]), index = useMemo(() => indexByLead(threads), [threads]);
   const results = useMemo(() => searchLeads(leads, q, {social}, 30), [leads, q, social]);
+  const quotesByLead = useMemo(() => { const m = new Map(); for (const x of quotes || []) if (x.lead_id) m.set(x.lead_id, [...(m.get(x.lead_id) || []), x]); return m; }, [quotes]);
   useEffect(() => setActive(0), [q]);
   const key = e => { if (e.key === 'ArrowDown') { e.preventDefault(); setActive(a => Math.min(a + 1, results.length - 1)); } if (e.key === 'ArrowUp') { e.preventDefault(); setActive(a => Math.max(a - 1, 0)); } if (e.key === 'Enter' && results[active]) onOpenLead(results[active].lead.id); };
   return <div className="search-veil no-print" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
@@ -23,11 +25,12 @@ export default function LeadSearchPalette({leads = [], onClose, onOpenLead, onSh
           <button className="search-main" onClick={() => onOpenLead(lead.id)}>
             <strong>{lead.name || 'Sin nombre'}</strong>
             <span>{[lead.lead_number || lead.code, lead.status, lead.source, lead.sales_owner].filter(Boolean).join(' · ')}</span>
-            <small>Coincide en: {matched.join(', ')}</small>
+            <small>Coincide en: {matched.join(', ')}{quotesByLead.get(lead.id)?.length ? ' · Cotizaciones: ' + quotesByLead.get(lead.id).slice(-3).map(x => x.quote_code + ' (' + x.unit_number + ')').join(', ') : ''}</small>
           </button>
           <div className="search-actions">
             {channelsForLead(lead, index).map(c => <button key={c.channel + c.thread_id} className="ch-btn" style={{'--ch': CHANNELS[c.channel].color}} aria-label={'Abrir chat de ' + CHANNELS[c.channel].label + ' · ' + lead.name} title={'Chat de ' + CHANNELS[c.channel].label} onClick={() => openChat({channel: c.channel, leadId: lead.id, threadId: c.thread_id})}><ChannelIcon channel={c.channel} size={14}/></button>)}
             <button className="ch-btn" style={{'--ch': '#57534e'}} title="Ver en el Kanban" aria-label={'Ver en el Kanban · ' + lead.name} onClick={() => onShowInKanban(lead.lead_number || lead.code || lead.name)}><KanbanSquare size={14}/></button>
+            {onOpenQuotes && quotesByLead.get(lead.id)?.length > 0 && <button className="ch-btn" style={{'--ch': '#85442A'}} title={'Ver cotizaciones (' + quotesByLead.get(lead.id).length + ')'} aria-label={'Ver cotizaciones · ' + lead.name} onClick={() => onOpenQuotes(lead)}><FileSpreadsheet size={14}/></button>}
             <button className="ch-btn" style={{'--ch': '#35190f'}} title="Abrir ficha" aria-label={'Abrir ficha · ' + lead.name} onClick={() => onOpenLead(lead.id)}><FileText size={14}/></button>
           </div>
         </div>)}

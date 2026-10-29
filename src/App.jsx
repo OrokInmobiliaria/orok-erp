@@ -412,6 +412,8 @@ function DesktopView({ data }) {
 
   // R48 · Oferta de feria vigente (preventa en planos o reserva) para cualquier unidad; el servidor fija el descuento y los cupos.
   const [feriaOferta, setFeriaOferta] = useState({vigente:false,ofertas:[]});
+  // R48 · Resumen de cotizaciones colapsable y filtrable; el buscador global lleva a las cotizaciones del lead.
+  const [quotesOpen, setQuotesOpen] = useState(true), [quoteFilter, setQuoteFilter] = useState('');
   const [quoteModal, setQuoteModal] = useState({ open: false, unit: null, leadId: '', leadSearch: '', clientName:'', dni: '', phone:'', email:'', address:'', unitInterest:'', budget:'', discountPct: 0, teaPct: lastTea(), financingType: 'Hipotecario', customInitialPct: 10, parking: 'Ninguno', brokerName: '', directCreditMonths: settings.directCreditMonths || 12, recontactAt: '' });
   useEffect(()=>{if(!quoteModal.open)return;let live=true;Promise.resolve(window.crmDB?.preciosOfertaFeria?.()).then(r=>{if(live&&r)setFeriaOferta(r);}).catch(()=>{});return()=>{live=false;};},[quoteModal.open]);
   const [separationModal,setSeparationModal]=useState(null);
@@ -775,6 +777,8 @@ function DesktopView({ data }) {
   const quoteLeadSearch=normalizeKanbanSearchValue(quoteModal.leadSearch||'');
   const quoteCandidates=normalizedLeads.filter(lead=>!CLOSED_LOST_STAGES.includes(lead.status)&&(!quoteLeadSearch||[lead.lead_number,lead.name,lead.last_name,lead.phone,lead.email].some(value=>normalizeKanbanSearchValue(value).includes(quoteLeadSearch))));
   const kanbanMatchIds=normalizedSearch?new Set(searchLeads(normalizedLeads,kanbanSearch,{social:socialHandles(chatThreads)}).map(r=>r.lead.id)):null;
+  const quoteNeedle=normalizeKanbanSearchValue(quoteFilter),leadNumberById=new Map(leads.map(l=>[l.id,l.lead_number||'']));
+  const visibleQuotes=quotes.slice().reverse().filter(q=>!quoteNeedle||[q.quote_code,q.lead_name,q.unit_number,q.seller,leadNumberById.get(q.lead_id)].some(v=>normalizeKanbanSearchValue(v).includes(quoteNeedle)));
   const kanbanLeads=normalizedLeads.filter(lead=>!kanbanMatchIds||kanbanMatchIds.has(lead.id));
   const dailyQueue=normalizedLeads.filter(lead=>![...CLOSED_LOST_STAGES,'Venta'].includes(lead.status)).map(lead=>{
     const due=lead.next_action_at?new Date(lead.next_action_at).getTime():0;
@@ -1000,7 +1004,7 @@ function DesktopView({ data }) {
 
       {/* CONTENT AREA */}
       <div className="app-content" style={{ '--kanban-toolbar-top': `${kanbanStickyOffsets.header}px`, '--kanban-stage-top': `${kanbanStickyOffsets.header}px`, padding: isKanban ? '10px 40px 40px 40px' : '20px 16px 40px', maxWidth: isKanban ? '100%' : '1400px', margin: '0 auto', transition: 'all 0.3s ease' }}>
-        {searchOpen&&<LeadSearchPalette leads={leads} onClose={()=>setSearchOpen(false)} onOpenLead={id=>{setSearchOpen(false);openLifecycle(id,'full');}} onShowInKanban={q=>{setSearchOpen(false);setKanbanSearch(q);handleTabChange('kanban');}} openChat={args=>{setSearchOpen(false);openChat({...args,origin:'busqueda'});}}/>}
+        {searchOpen&&<LeadSearchPalette leads={leads} onClose={()=>setSearchOpen(false)} onOpenLead={id=>{setSearchOpen(false);openLifecycle(id,'full');}} quotes={quotes} onOpenQuotes={lead=>{setSearchOpen(false);setQuoteFilter(lead.lead_number||lead.name||'');setQuotesOpen(true);handleTabChange('quotes');}} onShowInKanban={q=>{setSearchOpen(false);setKanbanSearch(q);handleTabChange('kanban');}} openChat={args=>{setSearchOpen(false);openChat({...args,origin:'busqueda'});}}/>}
         {/* RESTORED_V37_TABS_START */}
       {activeTab === 'kanban' && (<><div ref={kanbanToolbarRef} className="kanban-toolbar no-print" style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
           <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>{['Todos',...Object.keys(FUNNEL_GROUPS)].map(g=><button key={g} className={'orok-btn orok-btn-'+(funnelGroup===g?'primary':'secondary')} onClick={()=>setFunnelGroup(g)}>{g}</button>)}</div>
@@ -1444,10 +1448,11 @@ function DesktopView({ data }) {
         {activeTab === 'quotes' && (
           <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <div className="orok-card">
-               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom:'20px' }}>
-                   <h2 style={{ margin: 0, fontSize:'22px', fontWeight:'800', color:'var(--orok-brand)', display:'flex', alignItems:'center', gap:'8px' }}><FileText size={24}/> Resumen de Cotizaciones Enviadas</h2>
+               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap:12, flexWrap:'wrap', marginBottom: quotesOpen?'20px':0 }}>
+                   <button type="button" aria-expanded={quotesOpen} onClick={()=>setQuotesOpen(!quotesOpen)} style={{background:'none',border:0,padding:0,cursor:'pointer',textAlign:'left'}}><h2 style={{ margin: 0, fontSize:'22px', fontWeight:'800', color:'var(--orok-brand)', display:'flex', alignItems:'center', gap:'8px' }}><FileText size={24}/> Resumen de Cotizaciones Enviadas <span style={{fontSize:13,fontWeight:600,opacity:.7}}>({visibleQuotes.length}{quoteNeedle?' de '+quotes.length:''})</span>{quotesOpen?<ChevronsUp size={20}/>:<ChevronsDown size={20}/>}</h2></button>
+                   <label style={{display:'flex',alignItems:'center',gap:6,flex:'1 1 240px',maxWidth:360}}><Search size={16} aria-hidden="true"/><input aria-label="Buscar cotizaciones por lead, código o departamento" className="orok-input" style={{margin:0}} placeholder="Lead, LD-…, código o dpto" value={quoteFilter} onChange={e=>{setQuoteFilter(e.target.value);setQuotesOpen(true);}}/>{quoteFilter&&<button type="button" className="orok-btn orok-btn-secondary" onClick={()=>setQuoteFilter('')}>Quitar filtro</button>}</label>
                </div>
-               
+               {quotesOpen&&<>
                <div style={{display:'flex',gap:'10px',alignItems:'center',marginBottom:'16px',flexWrap:'wrap'}}>
                  <button className="orok-btn orok-btn-secondary" disabled={!selectedQuoteIds.length||quoteActionBusy} onClick={exportSelectedQuotes}><FileSpreadsheet size={16}/> Exportar seleccionadas (CSV)</button>
                  <button className="orok-btn orok-btn-secondary" disabled={!selectedQuoteIds.length||quoteActionBusy} onClick={()=>deleteSelectedQuotes(selectedQuoteIds)}><Trash2 size={16}/> Borrar seleccionadas</button>
@@ -1470,8 +1475,8 @@ function DesktopView({ data }) {
                           </tr>
                        </thead>
                        <tbody>
-                          {quotes.slice().reverse().map(q => (
-                              <tr key={q.id} style={{borderBottom:'1px solid #e7dfd8'}}>
+                          {visibleQuotes.map(q => (
+                              <tr key={q.id} id={'cotizacion-'+q.id} style={{borderBottom:'1px solid #e7dfd8',...(quoteNeedle?{background:'rgba(181,101,74,.08)'}:{})}}>
                                   <td style={{padding:'12px'}}><input type="checkbox" aria-label={'Seleccionar cotización '+q.quote_code} disabled={quoteActionBusy} checked={selectedQuoteIds.includes(q.id)} onChange={()=>toggleQuote(q.id)} /></td>
                                   <td style={{padding:'12px', color:'#57534e'}}>{new Date(q.date).toLocaleString('es-PE')}</td>
                                   <td style={{padding:'12px', fontWeight:'700', color:'var(--orok-brand)'}}>{q.quote_code}</td>
@@ -1486,6 +1491,8 @@ function DesktopView({ data }) {
                        </tbody>
                    </table></div>
                )}
+               {quoteNeedle&&quotes.length>0&&!visibleQuotes.length&&<p style={{padding:16,textAlign:'center',color:'#78716c'}}>Ninguna cotización coincide con «{quoteFilter}».</p>}
+               </>}
             </div>
           </div>
         )}

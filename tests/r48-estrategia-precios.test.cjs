@@ -131,3 +131,10 @@ test('precio especial: Ventas solicita, Gerencia aprueba/observa/rechaza, vale 7
  assert.match(fs.readFileSync(path.join(__dirname,'..','business','quotePDF.js'),'utf8'),/Ajuste de precio aprobado por Gerencia/);
  assert.match(fs.readFileSync(path.join(__dirname,'..','src','App.jsx'),'utf8'),/currentUser\.role==='Gerente'\?<>/);
 });
+
+test('Cotizaciones: resumen colapsable, filtro por lead/código/dpto y acceso desde el buscador global',()=>{
+ const app=fs.readFileSync(path.join(__dirname,'..','src','App.jsx'),'utf8'),pal=fs.readFileSync(path.join(__dirname,'..','src','LeadSearchPalette.jsx'),'utf8');
+ assert.match(app,/aria-expanded=\{quotesOpen\}/);assert.match(app,/aria-label="Buscar cotizaciones por lead, código o departamento"/);assert.match(app,/visibleQuotes\.map\(q =>/);
+ assert.match(app,/onOpenQuotes=\{lead=>\{setSearchOpen\(false\);setQuoteFilter\(lead\.lead_number\|\|lead\.name\|\|''\);setQuotesOpen\(true\);handleTabChange\('quotes'\);\}\}/);
+ assert.match(pal,/aria-label=\{'Ver cotizaciones · ' \+ lead\.name\}/);assert.match(pal,/Cotizaciones: /);
+});
