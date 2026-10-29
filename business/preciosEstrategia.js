@@ -206,7 +206,7 @@ function ofertaFeria(cfg, data = {}, hoy = new Date()) {
 }
 
 class PreciosEstrategia {
-  constructor(store, { origin = '' } = {}) { this.store = store; this.col = store.db.collection('ventas_precios'); this.sol = store.db.collection('ventas_precios_solicitudes'); this.origin = origin; this.mailer = null; this.directorio = null; }
+  constructor(store, { origin = '' } = {}) { this.store = store; this.col = store.ref.collection('ventas_precios'); this.sol = store.ref.collection('ventas_precios_solicitudes'); this.origin = origin; this.mailer = null; this.directorio = null; }
   // ---------- Aprobación de precios (como OC/OS): toda rebaja o alza que proponga Ventas pasa por Gerencia ----------
   // Solo la oferta de feria vigente (ya aprobada en la estrategia) y la Gerencia no necesitan solicitud.
   async solicitar(input, user, d) {
@@ -277,7 +277,7 @@ class PreciosEstrategia {
   async config() { return (await this.ref().get()).data() || null; }
   gerente(user) { if (user?.role !== 'Gerente') throw Error('La estrategia de precios es solo para Gerencia.'); }
   // Evaluación del Evaluador (M.O.R.A) que alimenta el estudio de mercado: la elegida, o la activa más reciente del mismo proyecto.
-  async evaluaciones() { try { return (await this.store.db.collection('mora_evaluations').get()).docs.map(x => x.data()).filter(e => e && e.active !== false); } catch { return []; } }
+  async evaluaciones() { try { return (await this.store.ref.collection('mora_evaluations').get()).docs.map(x => x.data()).filter(e => e && e.active !== false); } catch { return []; } }
   async mercado(cfg) {
     const evs = await this.evaluaciones(); if (!evs.length) return null;
     const norm = v => String(v || '').toLowerCase().replace(/[^a-z0-9]/g, '');
