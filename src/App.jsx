@@ -28,6 +28,7 @@ import AppearanceMenu from './AppearanceMenu';
 import HelpCenter from './HelpCenter';
 import MoraPanel from './MoraPanel';
 import LolaAssistant from './LolaAssistant';
+import ConexionesIA from './ConexionesIA'; // R44 · conector del ERP para Claude
 import {modulesFor, moduleOf, MODULES, canonicalTab} from './navModel.mjs';
 import AccessValidation from './AccessValidation';
 import {LoginScreen,PasswordChange,UserManagement} from './Access';
@@ -1473,6 +1474,7 @@ function DesktopView({ data }) {
           </div>
         )}
 
+        {activeTab==='settings'&&currentUser.role==='Gerente'&&<ConexionesIA/>}
         {activeTab === 'settings' && currentUser.role === 'Gerente' && (
           <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <div className="orok-card">
