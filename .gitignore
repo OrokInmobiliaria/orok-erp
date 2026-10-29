@@ -1,5 +1,5 @@
 # ERP ÖRÖK · nunca subir dependencias, datos privados ni claves
-node_modules/
+node_modules
 private/
 **/.env*
 **/*.pem

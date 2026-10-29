@@ -24,7 +24,7 @@ Cómo reportar avance: marca cada casilla al terminarla y anota la hora de Lima 
 
 ## Qué trae el paquete y qué no
 
-El paquete `ERP-OROK-R43-GRETA-FORMULARIOS-ENSAYO.zip` es acumulativo (R34 a R43, versión 67.6.26-r43, 592/592 pruebas). Los zips anteriores no hacen falta.
+El paquete repositorio privado `Orokinmobiliaria/orok-erp` (rama `main`) contiene la versión vigente (R34 a R44, versión 67.6.27-r44, 598/598 pruebas). Los zips anteriores no hacen falta.
 
 | Parte | Dónde está en el zip | Para qué |
 | --- | --- | --- |
@@ -80,7 +80,7 @@ Objetivo: probar R41 con una copia real de la base sin tocar el CRM vivo. Detall
 1. Crear en el host un servicio nuevo de ensayo (no el de producción) con el código del zip y `OROK_REHEARSAL=1`.
 2. Darle una base PostgreSQL de ensayo con una **copia** de la base de producción (restaurar el `pg_dump` de la Fase 0).
 3. En la consola del servicio de ensayo: `npm run postgres:check` y luego `npm run migraciones` (solo revisa); si todo sale `ok`, `node deploy/aplicar-migraciones.cjs --aplicar`.
-4. Abrir `https://<dominio de ensayo>/api/health` y confirmar `ok: true` y versión `67.6.26-r43`.
+4. Abrir `https://<dominio de ensayo>/api/health` y confirmar `ok: true` y versión `67.6.27-r44`.
 
 Comprobaciones en el ensayo:
 
@@ -110,7 +110,7 @@ Publicar:
 
 Después (con R41 corriendo):
 
-- [ ] `npm run produccion:despues`: espera `/api/health` con `67.6.26-r43` y compara la base con el respaldo. Debe decir «Actualización verificada: se conservaron leads, comentarios, etapas y orden del Kanban».
+- [ ] `npm run produccion:despues`: espera `/api/health` con `67.6.27-r44` y compara la base con el respaldo. Debe decir «Actualización verificada: se conservaron leads, comentarios, etapas y orden del Kanban».
 - [ ] Si dice VERIFICACIÓN FALLIDA: no usar; ir al plan de vuelta atrás.
 - [ ] Ingresar como Gerencia y revisar 5 leads al azar (etapa, comentarios, posición en el Kanban).
 - [ ] Salir del mantenimiento y vigilar 48 horas el registro `<OROK_PRIVATE_DIR>/deploy/produccion.log`.
@@ -202,6 +202,17 @@ Objetivo: dejar el módulo Marketing operativo para Gerencia. Detalle en la skil
 - [ ] Prueba: aprobar un formulario de ensayo → «Crear en Meta» → ejecutar el flujo a mano → el ERP muestra «En Meta» con su ID. Si Meta rechaza, el formulario vuelve a «Error de Meta» con el motivo. Archivar el de ensayo.
 - [ ] Prueba de lead: con la [herramienta de prueba de anuncios para clientes potenciales](https://developers.facebook.com/tools/lead-ads-testing) enviar un lead de ese formulario; en el CRM entra con las respuestas como comentario y aparece en Pauta y KPIs › Formularios. En ensayo, agregar el ID del formulario a los formularios de prueba permitidos de Meta en el CRM.
 - [ ] Recordar: un formulario ya creado en Meta no se edita. Se usa «Nueva versión»; al crearla, la anterior se archiva sola.
+
+## Fase 4c · Conector del ERP para Claude
+
+Objetivo: que Claude (app de escritorio o claude.ai) consulte el ERP con los permisos de quien lo conecta. Requiere HTTPS en el dominio del ERP.
+
+- [ ] Como Gerencia: CRM › Configuración › Conexiones de IA › activar el conector. Copiar la URL que muestra (termina en `/mcp`).
+- [ ] En Claude: Configuración › Conectores › «Agregar conector personalizado» → nombre «ERP ÖRÖK» y la URL copiada → «Conectar».
+- [ ] Se abre la página del ERP: si pide sesión, iniciar sesión en el ERP en otra pestaña y pulsar «Ya inicié sesión»; luego «Permitir».
+- [ ] Probar en un chat: «¿Cuántos leads nuevos hay esta semana?» y «¿Qué órdenes me toca aprobar?».
+- [ ] Verificar en Conexiones de IA que aparece la conexión y la actividad. «Cortar conexión» la invalida al instante; apagar el conector corta todas.
+- [ ] Recordar: Claude no aprueba órdenes ni campañas, no paga, no borra y no mueve etapas. Solo consulta, agrega comentarios firmados y prepara borradores.
 
 ## Fase 5 · App instalable y códigos de instalación
 

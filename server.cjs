@@ -86,6 +86,41 @@ function createServer({config,store,auth,cache,authCache,supportMail,whatsappOpt
     if(payload?.action==='connection_check')return json(200,{value:{ok:true,connection:true,version:require('./package.json').version,writes:0}});
     return json(200,{value:await app.ingestLola(payload)});
    }
+   // R44 · Conector del ERP para Claude (MCP remoto + OAuth 2.1 con PKCE). Apagado hasta que Gerencia lo activa.
+   if(url.pathname.startsWith('/.well-known/oauth-')||url.pathname==='/mcp'||url.pathname.startsWith('/mcp/')){
+    const mcp=app.mcp,cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'Authorization, Content-Type, Mcp-Protocol-Version, Mcp-Session-Id','Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Expose-Headers':'WWW-Authenticate'};
+    const send=(status,value,extra={})=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',...cors,...extra});res.end(value===null?'':JSON.stringify(value));};
+    const oerr=e=>send(e.status||400,{error:e.code||'invalid_request',error_description:e.message});
+    if(req.method==='OPTIONS')return send(204,null);
+    if(url.pathname.startsWith('/.well-known/oauth-protected-resource'))return send(200,mcp.resourceMetadata());
+    if(url.pathname.startsWith('/.well-known/oauth-authorization-server'))return send(200,mcp.serverMetadata());
+    if(url.pathname==='/mcp/oauth/register'&&req.method==='POST'){try{return send(201,await mcp.register(JSON.parse((await body(req,16384)).toString('utf8')||'{}')));}catch(e){return oerr(e);}}
+    if(url.pathname==='/mcp/oauth/token'&&req.method==='POST'){try{const raw=(await body(req,16384)).toString('utf8'),form=String(req.headers['content-type']||'').includes('json')?new URLSearchParams(JSON.parse(raw||'{}')):new URLSearchParams(raw);return send(200,await mcp.token(form));}catch(e){return oerr(e);}}
+    if(url.pathname==='/mcp/oauth/revoke'&&req.method==='POST'){const raw=(await body(req,16384)).toString('utf8');await mcp.revokeToken(new URLSearchParams(raw).get('token'));return send(200,{});}
+    if(url.pathname==='/mcp/oauth/autorizar.js'){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store'});return res.end(fs.readFileSync(path.join(__dirname,'public-mcp','autorizar.js')));}
+    if(url.pathname==='/mcp/oauth/authorize'&&req.method==='GET'){
+     const r=await mcp.authorizeRequest(url.searchParams);if(r.redirect){res.writeHead(302,{Location:r.redirect,'Cache-Control':'no-store'});return res.end();}
+     const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+     res.writeHead(r.error?400:200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});
+     return res.end('<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Conectar Claude · ERP ÖRÖK</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:Outfit,system-ui,sans-serif;background:radial-gradient(circle at 20% 20%,#f2c38f,transparent 40%),radial-gradient(circle at 80% 70%,#d98aa0,transparent 40%),#F3EBE5;color:#35190f}main{max-width:440px;margin:16px;padding:28px;border-radius:24px;background:linear-gradient(135deg,rgba(255,255,255,.72),rgba(255,255,255,.42));backdrop-filter:blur(26px) saturate(175%);border:1px solid rgba(255,255,255,.62);box-shadow:0 20px 60px rgba(70,35,20,.15)}h1{color:#85442A;margin:0 0 6px;font-size:30px}p{line-height:1.5}button,a.b{font:inherit;font-weight:700;border:0;border-radius:14px;padding:12px 18px;cursor:pointer;margin:6px 6px 0 0;text-decoration:none;display:inline-block}.p{background:#85442A;color:#fff}.s{background:rgba(255,255,255,.8);color:#35190f}</style></head><body><main id="mcp" data-solicitud="'+esc(r.solicitud||'')+'" data-cliente="'+esc(r.cliente||'')+'"><h1>ÖRÖK</h1><h2>Conectar '+esc(r.cliente||'Claude')+'</h2>'+(r.error?'<p role="alert">'+esc(r.error)+'</p></main></body></html>':'<p id="msg" role="status">Cargando…</p><div id="acciones" hidden><button id="permitir" class="p">Permitir</button><button id="cancelar" class="s">Cancelar</button></div><div id="login" hidden><a class="b s" href="/" target="_blank" rel="noopener">Abrir el ERP para iniciar sesión</a><button id="revisar" class="p">Ya inicié sesión</button></div></main><script src="/mcp/oauth/autorizar.js"></script></body></html>'));
+    }
+    if(['/mcp/oauth/sesion','/mcp/oauth/decidir'].includes(url.pathname)){
+     if(req.method!=='POST'||req.headers.origin!==config.origin||req.headers['x-orok-request']!=='1')return json(403,{error:'Solicitud no autorizada.'});
+     let user;try{user=await authCache.require(cookie);}catch{return json(401,{error:'No hay una sesión del ERP abierta en este navegador.'});}
+     if(url.pathname==='/mcp/oauth/sesion')return json(200,{value:{name:user.name,role:user.role}});
+     const p=JSON.parse((await body(req,4096)).toString('utf8')||'{}'),s=auth.issueFor?await auth.issueFor(user.id):null;
+     return json(200,{value:await mcp.decide(String(p.solicitud||''),{...user,version:s?.version||null},p.permitir===true)});
+    }
+    if(url.pathname==='/mcp'){
+     const tok=await mcp.bearer(req.headers.authorization);
+     if(!tok)return send(401,{error:'invalid_token',error_description:'Conecta Claude al ERP para continuar.'},{'WWW-Authenticate':'Bearer resource_metadata="'+mcp.origin()+'/.well-known/oauth-protected-resource/mcp"'});
+     if(req.method!=='POST')return send(405,{error:'Usa POST.'},{Allow:'POST'});
+     let msg;try{msg=JSON.parse((await body(req,1024*1024)).toString('utf8'));}catch{return send(400,{jsonrpc:'2.0',id:null,error:{code:-32700,message:'JSON no válido.'}});}
+     const out=await mcp.handle(msg,tok);if(!out){res.writeHead(202,cors);return res.end();}
+     return send(200,out);
+    }
+    return send(404,{error:'Ruta no disponible.'});
+   }
    if(url.pathname.startsWith('/api/')){
     if(req.method!=='POST'||req.headers.origin!==config.origin||req.headers['x-orok-request']!=='1')return json(403,{error:'Solicitud no autorizada.'});
     const key=req.socket.remoteAddress+':'+(url.pathname.includes('auth.')?'auth':'rpc'),now=Date.now();let rate=hits.get(key);if(!rate||rate.until<now){rate={count:0,until:now+60000};hits.set(key,rate);}if(++rate.count>(key.endsWith('auth')?120:3000))return json(429,{error:'Demasiadas solicitudes. Espera un minuto.'});if(hits.size>10000)for(const [k,v]of hits)if(v.until<now)hits.delete(k);
