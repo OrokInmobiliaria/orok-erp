@@ -65,7 +65,7 @@ test('guardar y aplicar: solo Gerencia, revisión para no pisar cambios, no toca
 test('integración: servidor, puente del navegador, menú de Ventas (solo Gerencia), M.O.R.A y lector de Excel',()=>{
  const R=f=>fs.readFileSync(path.join(__dirname,'..',f),'utf8');
  const app=R('application.cjs');assert.match(app,/PRECIOS_METHODS\.includes\(name\)/);assert.match(app,/method==='aplicarPreciosEstrategia'/);assert.match(app,/Antes de aplicar precios de la estrategia/);assert.match(app,/managerMethods=new Set\(\['aplicarPreciosEstrategia'/);
- assert.match(R('src/cloudBridge.js'),/'preciosEstrategia','preciosEstrategiaGuardar','preciosHistorial','preciosOfertaFeria','aplicarPreciosEstrategia'/);
+ assert.match(R('src/cloudBridge.js'),/'preciosEstrategia','preciosEstrategiaGuardar','preciosHistorial','preciosOfertaFeria','precioSolicitar','precioSolicitudes','precioDecidir','aplicarPreciosEstrategia'/);
  assert.match(R('src/navModel.mjs'),/\['precios', 'Estrategia de precios'/);assert.match(R('src/navModel.mjs'),/MANAGER_ONLY = \['precios'/);
  assert.match(R('src/App.jsx'),/activeTab==='precios'&&currentUser\.role==='Gerente'&&<EstrategiaPrecios\/>/);
  assert.match(R('business/moraIntegration.js'),/this\.precios\.paraMora\(d\)/);
@@ -143,4 +143,15 @@ test('R48b · las colecciones van dentro del proyecto (PostgreSQL rechaza docume
  const src=fs.readFileSync(path.join(__dirname,'..','business','preciosEstrategia.js'),'utf8');
  assert.doesNotMatch(src,/store\.db\.collection\(/);
  for(const c of ['ventas_precios','ventas_precios_solicitudes','mora_evaluations'])assert.match(src,new RegExp("store\\.ref\\.collection\\('"+c+"'\\)"));
+});
+
+test('R48c · el navegador expone TODOS los métodos de precios que usa la pantalla (una omisión dejaba la página en blanco)',()=>{
+ const {PRECIOS_METHODS}=require('../business/preciosEstrategia');const bridge=fs.readFileSync(path.join(__dirname,'..','src','cloudBridge.js'),'utf8');
+ for(const m of [...PRECIOS_METHODS,'aplicarPreciosEstrategia'])assert.ok(bridge.includes("'"+m+"'"),m);
+ for(const f of ['src/EstrategiaPrecios.jsx','src/PrecioEspecial.jsx'])assert.doesNotMatch(fs.readFileSync(path.join(__dirname,'..',f),'utf8'),/=> db\.precio[A-Za-z]*\(\{[^)]*\}\)\.then/,f+': las llamadas van dentro de Promise.resolve().then para no tumbar la pantalla');
+});
+
+test('R48c · la fila de títulos es «Unidad» exacta (la nota «…unidades ancla…» de la fila 2 no cuenta)',()=>{
+ const src=fs.readFileSync(path.join(__dirname,'..','src','EstrategiaPrecios.jsx'),'utf8');
+ assert.match(src,/\/\^\\s\*unidad\\s\*\$\/i\.test/);
 });
