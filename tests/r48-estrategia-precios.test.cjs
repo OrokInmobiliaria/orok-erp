@@ -138,3 +138,9 @@ test('Cotizaciones: resumen colapsable, filtro por lead/código/dpto y acceso de
  assert.match(app,/onOpenQuotes=\{lead=>\{setSearchOpen\(false\);setQuoteFilter\(lead\.lead_number\|\|lead\.name\|\|''\);setQuotesOpen\(true\);handleTabChange\('quotes'\);\}\}/);
  assert.match(pal,/aria-label=\{'Ver cotizaciones · ' \+ lead\.name\}/);assert.match(pal,/Cotizaciones: /);
 });
+
+test('R48b · las colecciones van dentro del proyecto (PostgreSQL rechaza documentos fuera del proyecto)',()=>{
+ const src=fs.readFileSync(path.join(__dirname,'..','business','preciosEstrategia.js'),'utf8');
+ assert.doesNotMatch(src,/store\.db\.collection\(/);
+ for(const c of ['ventas_precios','ventas_precios_solicitudes','mora_evaluations'])assert.match(src,new RegExp("store\\.ref\\.collection\\('"+c+"'\\)"));
+});
