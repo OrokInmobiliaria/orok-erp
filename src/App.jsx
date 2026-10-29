@@ -39,7 +39,8 @@ import { LayoutDashboard, KanbanSquare, Building2, Wrench, Settings, MessageCirc
 const FUNNEL_GROUPS = {Marketing:['Lead Inicial','Contactado','Información enviada','MQL','Cita'],Ventas:['Cita Asistida','Calificado','Evaluación GNB','Separación','Inicial','Minuta','Venta'],Seguimiento:['Seguimiento']};
 const FUNNEL_STAGES=Object.values(FUNNEL_GROUPS).flat();
 const FOLLOW_UP_STAGES=FUNNEL_GROUPS.Seguimiento;
-const OPERATIONAL_STAGES=[...FUNNEL_STAGES,'Perdido'];
+const OPERATIONAL_STAGES=[...FUNNEL_STAGES,'Perdido','Desestimado'];
+const CLOSED_LOST_STAGES=['Perdido','Desestimado'];
 const FOLLOW_UP_COLUMNS=[
   {key:'followup-no-answer',status:'Seguimiento',substatus:'No contesta',label:'No contesta'},
   {key:'followup-future',status:'Seguimiento',substatus:'Seguimiento futuro',label:'Seguimiento futuro'},
@@ -160,7 +161,7 @@ const formatLeadReceivedAt = value => {
 const getStatusColor = (status) => {
   switch (status) {
     case 'Lead Inicial': return { bg: '#e7e5e4', text: '#57534e', bar: '#a8a29e' };
-    case 'Perdido': return { bg: '#fee2e2', text: '#991b1b', bar: '#ef4444' };
+    case 'Perdido': case 'Desestimado': return { bg: '#fee2e2', text: '#991b1b', bar: '#ef4444' };
     case 'Seguimiento': return { bg: '#ffedd5', text: '#9a3412', bar: '#f97316' };
     case 'Información enviada': return { bg: '#e0e7ff', text: '#3730a3', bar: '#6366f1' };
     case 'Venta': return { bg: '#dcfce7', text: '#166534', bar: '#22c55e' };
@@ -707,7 +708,7 @@ function DesktopView({ data }) {
     if (!api.isNative) return alert("No se pudo conectar al generador de PDF.");
     const selectedLead = normalizedLeads.find(l => l.id === quoteModal.leadId);
     
-    if(!selectedLead||selectedLead.status==='Perdido')return alert('Selecciona un lead habilitado.');
+    if(!selectedLead||CLOSED_LOST_STAGES.includes(selectedLead.status))return alert('Selecciona un lead habilitado.');
     if(!units.find(u=>u.id===quoteModal.unit.id&&!isSold(u)))return alert('El departamento ya está vendido o no está disponible.');
     if(quoteModal.financingType==='Directo'&&(!Number.isInteger(Number(quoteModal.directCreditMonths))||Number(quoteModal.directCreditMonths)<1))return alert('Ingresa un plazo entero de al menos un mes.');
     if(quoteBusy)return;
@@ -767,10 +768,10 @@ function DesktopView({ data }) {
   const normalizeKanbanSearchValue=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('es-PE').replace(/[^\p{L}\p{N}]+/gu,'');
   const normalizedSearch=normalizeKanbanSearchValue(kanbanSearch.trim());
   const quoteLeadSearch=normalizeKanbanSearchValue(quoteModal.leadSearch||'');
-  const quoteCandidates=normalizedLeads.filter(lead=>lead.status!=='Perdido'&&(!quoteLeadSearch||[lead.lead_number,lead.name,lead.last_name,lead.phone,lead.email].some(value=>normalizeKanbanSearchValue(value).includes(quoteLeadSearch))));
+  const quoteCandidates=normalizedLeads.filter(lead=>!CLOSED_LOST_STAGES.includes(lead.status)&&(!quoteLeadSearch||[lead.lead_number,lead.name,lead.last_name,lead.phone,lead.email].some(value=>normalizeKanbanSearchValue(value).includes(quoteLeadSearch))));
   const kanbanMatchIds=normalizedSearch?new Set(searchLeads(normalizedLeads,kanbanSearch,{social:socialHandles(chatThreads)}).map(r=>r.lead.id)):null;
   const kanbanLeads=normalizedLeads.filter(lead=>!kanbanMatchIds||kanbanMatchIds.has(lead.id));
-  const dailyQueue=normalizedLeads.filter(lead=>!['Perdido','Venta'].includes(lead.status)).map(lead=>{
+  const dailyQueue=normalizedLeads.filter(lead=>![...CLOSED_LOST_STAGES,'Venta'].includes(lead.status)).map(lead=>{
     const due=lead.next_action_at?new Date(lead.next_action_at).getTime():0;
     const scheduled=(lead.appointments||[]).find(a=>a.status==='scheduled');
     const appointmentAt=scheduled?new Date(scheduled.scheduled_at).getTime():0;
@@ -781,7 +782,7 @@ function DesktopView({ data }) {
     const category=severity?severity+' · '+(lead.sla?.reason||fallback):fallback;
     return {...lead,category,severity,semaphoreRank,due:due||appointmentAt||Date.parse(lead.sla?.first_due_at||'')||now,overdue:severity==='Crítico'||severity==='Rojo'||!!due&&due<now};
   }).sort((a,b)=>a.semaphoreRank-b.semaphoreRank||(b.overdue-a.overdue)||a.due-b.due);
-  const lostLeads=normalizedLeads.filter(lead=>['Perdido','Desestimado'].includes(lead.status)).sort((a,b)=>String(b.lost_at||'').localeCompare(String(a.lost_at||'')));
+  const lostLeads=normalizedLeads.filter(lead=>CLOSED_LOST_STAGES.includes(lead.status)).sort((a,b)=>String(b.lost_at||'').localeCompare(String(a.lost_at||'')));
 
   return (
     <div style={{ maxWidth: '100%', margin: '0 auto', transition: 'all 0.3s ease', boxSizing: 'border-box', position: 'relative' }}>
