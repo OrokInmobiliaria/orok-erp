@@ -29,6 +29,7 @@ const {LeadExport}=require('./business/leadExport');
 const {PublicationAnalytics}=require('./business/publicationAnalytics');
 const {CustomerCare}=require('./business/customerCare');
 const {MoraIntegration,MORA_METHODS}=require('./business/moraIntegration');
+const {PreciosEstrategia,PRECIOS_METHODS}=require('./business/preciosEstrategia'); // R48 · Ventas › Estrategia de precios
 const {LolaAssistant,LOLA_ASSIST_METHODS}=require('./business/lolaAssistant');
 const {ClaraErp,CLARA_METHODS}=require('./business/claraErp');
 const {Greta,GRETA_METHODS,paraLola}=require('./business/greta');
@@ -36,9 +37,9 @@ const {McpConnector,MCP_METHODS}=require('./business/mcpConnector'); // R44 · c
 const {Resguardo,OPS_METHODS}=require('./business/resguardo'); // R45 · L.O.L.A Operaciones: resguardo externo cifrado // R42 · Marketing con G.R.E.T.A
 const {ProjectDrive}=require('./business/projectDrive');
 const {DeviceEnrollment,INSTALL_METHODS}=require('./business/deviceEnrollment');
-const managerMethods=new Set(['updateSettings','saveIntegrationCredentials','addUnit','updateUnitStatus','updateUnitPlan','syncLocalFolder','clearUnits','clearLeads','deleteLostLead','deleteQuotes','addMarketingExpense','deleteMarketingExpense','reconcileQuoteProfiles','importChannelHistory']);
+const managerMethods=new Set(['aplicarPreciosEstrategia','updateSettings','saveIntegrationCredentials','addUnit','updateUnitStatus','updateUnitPlan','syncLocalFolder','clearUnits','clearLeads','deleteLostLead','deleteQuotes','addMarketingExpense','deleteMarketingExpense','reconcileQuoteProfiles','importChannelHistory']);
 const readMethods={getSettings:'settings',getLeads:'leads',getUnits:'units',getQuotes:'quotes',getSeparations:'separations',getMarketingExpenses:'marketing_expenses',getDuplicateDeletionLog:'duplicate_deletion_log'};
-const mutationMethods=new Set(['addLead','addLeadComment','logChatAccess','backfillLeadReceivedDates','updateToolLinks','leadAction','updateLeadStatus','updateLeadAppt','updateLeadPrize','updateLeadAdvanced','deleteDuplicateLead','syncQuoteLeadProfile','updateSeparation','saveBankEvaluation','transitionBankEvaluation','updateMinuteStatus','saveSession','syncUnits','syncUnitsAI','syncPlansUrl','syncPlansAI',...managerMethods]);
+const mutationMethods=new Set(['aplicarPreciosEstrategia','addLead','addLeadComment','logChatAccess','backfillLeadReceivedDates','updateToolLinks','leadAction','updateLeadStatus','updateLeadAppt','updateLeadPrize','updateLeadAdvanced','deleteDuplicateLead','syncQuoteLeadProfile','updateSeparation','saveBankEvaluation','transitionBankEvaluation','updateMinuteStatus','saveSession','syncUnits','syncUnitsAI','syncPlansUrl','syncPlansAI',...managerMethods]);
 // Deliberately local: cotizaciones must remain available even when a legacy
 // lifecycle module is still being upgraded on a hosting node.
 function qualificationPending(lead){return [['budget','Presupuesto'],['unit_interest','Tipología de interés'],['purchase_horizon','Horizonte de compra']].filter(([key])=>key==='budget'?!(Number(lead[key])>0):!String(lead[key]||'').trim()).map(([,label])=>label);}
@@ -54,6 +55,7 @@ function application({store,auth,cache,authCache,config,syncer,supportMail,whats
  const projectDrive=new ProjectDrive(store,config);
  whatsapp.projectDrive=projectDrive;crmConversation.engine.projectDrive=projectDrive;
  const mora=new MoraIntegration(store,config);
+ const precios=new PreciosEstrategia(store,{origin:config.origin});mora.precios=precios;
  mora.projectDrive=projectDrive;
  const lolaAssistant=new LolaAssistant(store,config,{fetcher:creativeOptions.assistantFetcher});
  lolaAssistant.projectDrive=projectDrive;
@@ -62,6 +64,8 @@ function application({store,auth,cache,authCache,config,syncer,supportMail,whats
  greta.projectDrive=projectDrive;
  creative.onMedia=media=>projectDrive.archiveMedia(media,creative);
  const clara=new ClaraErp(store,config,{assistant:lolaAssistant,fetcher:creativeOptions.claraFetcher,mailer:creativeOptions.claraMailer||approvalMail});
+ // R48 · Aprobación de precios: mismos correos del directorio de Aprobaciones (D.I.A.V.A) y el mismo correo del servidor.
+ precios.mailer=creativeOptions.claraMailer||approvalMail;precios.directorio=async()=>{const users=auth.snapshot?((await auth.snapshot()).users||[]):[],dir=await clara.list('aprobadores');return users.map(u=>({name:u.name,role:u.role,email:dir.find(d=>d.user_id===u.id&&!d.eliminado)?.email||''}));};
  clara.projectDrive=projectDrive;
  async function ingestLola(payload){
   if(/^project_drive_/.test(String(payload?.action||'')))return projectDrive.action(payload);
@@ -143,6 +147,15 @@ function application({store,auth,cache,authCache,config,syncer,supportMail,whats
   // A lost or discarded lead may be purged only by Gerencia. Create a normal
   // rolling backup first so a test cleanup never becomes an irreversible data
   // loss. The scheduler retains at most four copies.
+  // R48 · Aplicar precios de la estrategia: solo Gerencia y con respaldo previo, como cualquier cambio masivo de inventario.
+  let preciosDoc=null,preciosMercado=null;
+  if(method==='aplicarPreciosEstrategia'){
+   const manager=await authCache.require(cookie,true);
+   if(manager.role!=='Gerente')throw Error('Solo Gerencia puede aplicar precios.');
+   preciosDoc=await precios.config();preciosMercado=await precios.mercado(preciosDoc?.config);
+   const backup=await backups.run({reason:'Antes de aplicar precios de la estrategia'});
+   if(!backup?.file)throw Error('No se pudo comprobar el respaldo previo; los precios no se cambiaron.');
+  }
   if(method==='deleteLostLead'){
    const manager=await authCache.require(cookie,true);
    if(manager.role!=='Gerente')throw Error('Solo Gerencia puede eliminar leads perdidos o desestimados.');
@@ -175,6 +188,7 @@ function application({store,auth,cache,authCache,config,syncer,supportMail,whats
     return {configured:true,saved_at:savedAt};
    }
    if(method==='updateSettings'){const previous=read().settings;const previousOwner=String(previous.defaultSalesOwner||previous.agentName||'').trim();const hadExplicitDefault=Boolean(String(previous.defaultSalesOwner||'').trim());const next={...previous,...args[0],...(previous.toolLinks?{toolLinks:previous.toolLinks,acabadosSheetUrl:previous.toolLinks.finishes}:{}),...(previous.leadSheetSync?{leadSheetSync:previous.leadSheetSync}:{})};if(args[0].geminiApiKey==='')delete next.geminiApiKey;delete next.geminiConfigured;const saved=q.updateSettings(next,user.name);const nextOwner=String(next.defaultSalesOwner||next.agentName||'').trim();if(nextOwner&&(!hadExplicitDefault||nextOwner!==previousOwner))q.assignUnassignedLeads(nextOwner,user.name);return saved;}
+   if(method==='aplicarPreciosEstrategia'){const d=read();const ap=precios.aplicarEnDatos(d,preciosDoc,args[0],user,preciosMercado);write(d);return ap;}
    if(method==='importChannelHistory')return {...q.importChannelHistory(args[0],user.name),pre_connection_backup:preConnectionBackup?{file:preConnectionBackup.file,sha256:preConnectionBackup.sha256}:null};
    if(method==='addUnit'){const unit={...args[0],id:randomUUID()};if(!String(unit.unit_number||'').trim()||(read().units||[]).some(u=>String(u.unit_number)===String(unit.unit_number)))throw Error('Número de unidad vacío o duplicado.');return q.addUnit(unit);}
    if(method==='clearLeads'&&(read().leads||[]).some(l=>l.sold_unit_id))throw Error('El historial de ventas confirmadas impide vaciar los leads.');
@@ -209,6 +223,7 @@ function application({store,auth,cache,authCache,config,syncer,supportMail,whats
    return q[method](...args);
   });
   if(method==='addLead')await backups.run({reason:'Registro manual de lead'});
+  if(method==='aplicarPreciosEstrategia')await precios.registrarAplicacion(result);
   return result;
  }
  async function quote(input,cookie){
@@ -223,7 +238,14 @@ function application({store,auth,cache,authCache,config,syncer,supportMail,whats
    const request={unitId:input.unitId,leadId:input.leadId,dni:String(input.dni||'').replace(/\D/g,''),leadProfile:{name:text(profile.name,200),phone:text(profile.phone,50),email:text(profile.email,250),address:text(profile.address,500),unit_interest:text(profile.unit_interest,250),budget:Number(profile.budget||0)},discountPct:Number(input.discountPct||0),financingType:input.financingType,months:Number(input.directCreditMonths||12),initialPct:Number(input.customInitialPct??10),teaPct:Math.round(Number(input.teaPct??7.8)*100)/100,parking:input.parking||'Ninguno',brokerName:input.brokerName||'',recontact_at};
    if(request.financingType==='Hipotecario'&&!(Number.isFinite(request.teaPct)&&request.teaPct>=1&&request.teaPct<=30))throw Error('Indica una TEA entre 1% y 30%.');
    if(request.financingType!=='Hipotecario')delete request.teaPct;
-   if(!Number.isFinite(request.discountPct)||request.discountPct<0||request.discountPct>100||!Number.isInteger(request.months)||request.months<1||request.months>360||!Number.isFinite(request.initialPct)||request.initialPct<0||request.initialPct>100||!['Hipotecario','Directo'].includes(request.financingType)||!/^([A-Za-z0-9 -]{1,40})$/.test(request.parking)||(request.dni&&!/^\d{8}$/.test(request.dni))||(request.leadProfile.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(request.leadProfile.email))||!Number.isFinite(request.leadProfile.budget)||request.leadProfile.budget<0)throw Error('Revisa los datos del cliente, la cotización y el DNI.');
+   // R48 · Oferta de feria: el vendedor elige la modalidad (preventa en planos o reserva) y el servidor fija el descuento en soles
+   // según la estrategia de precios vigente y los cupos que quedan. Sirve para cualquier unidad.
+   if(input.feriaOferta){const modalidad=String(input.feriaOferta),d0=await cache.read(),u0=(d0.units||[]).find(u=>u.id===request.unitId),of=(await precios.oferta(d0)).ofertas.find(o=>o.modalidad===modalidad);if(!of)throw Error('La oferta de feria ya no está disponible (fuera de fecha o sin cupos).');const base=Number(u0?.price||0)+(request.parking==='Ninguno'?0:56000);if(!base)throw Error('La unidad no tiene precio de lista.');request.discountPct=Math.round(of.descuento/base*1e8)/1e6;request.feria={modalidad,descuento:of.descuento};}
+   // R48 · Precio especial (rebaja o alza): Ventas solo cotiza con una aprobación vigente de Gerencia para esa unidad y cliente;
+   // el precio aprobado pasa a la cotización y de ahí a la separación y la minuta. Gerencia puede cotizar directamente.
+   else if(input.aprobacionPrecio){const d0=await cache.read(),u0=(d0.units||[]).find(u=>u.id===request.unitId),ap=await precios.aprobacionPara(input.aprobacionPrecio,u0,request.leadId),est=request.parking==='Ninguno'?0:56000;request.discountPct=Math.round((1-(ap.precio_aprobado+est)/(Number(u0.price)+est))*1e8)/1e6;request.aprobacion={id:ap.id,precio:ap.precio_aprobado,por:ap.decidido_por};}
+   else if(request.discountPct!==0){const caller=await authCache.require(cookie);if(caller.role!=='Gerente')throw Error('Los descuentos y cambios de precio necesitan aprobación de Gerencia: usa «Solicitar precio especial».');}
+   if(!Number.isFinite(request.discountPct)||request.discountPct<(request.aprobacion?-50:0)||request.discountPct>100||!Number.isInteger(request.months)||request.months<1||request.months>360||!Number.isFinite(request.initialPct)||request.initialPct<0||request.initialPct>100||!['Hipotecario','Directo'].includes(request.financingType)||!/^([A-Za-z0-9 -]{1,40})$/.test(request.parking)||(request.dni&&!/^\d{8}$/.test(request.dni))||(request.leadProfile.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(request.leadProfile.email))||!Number.isFinite(request.leadProfile.budget)||request.leadProfile.budget<0)throw Error('Revisa los datos del cliente, la cotización y el DNI.');
    const fingerprint=createHash('sha256').update(JSON.stringify(request)).digest('hex');
    const job=await store.run(async({tx,read,write})=>{
     const user=await auth.requireTx(tx,cookie);const old=await tx.get(jobRef);
@@ -237,7 +259,7 @@ function application({store,auth,cache,authCache,config,syncer,supportMail,whats
    if(job.state==='complete')return {success:true,filePath:'/files/'+job.file,quote_code:job.code};
    const unit={...job.unit};for(const k of ['plan_image_ext','plan_image_int'])unit[k]=library.resolve(unit[k]);
    const settings={...job.settings};settings.projectLogoUrl=library.resolve(settings.projectLogoUrl);
-   await require('./business/quotePDF').generateAndSaveQuotePDF({unit,lead:{...job.lead,dni:job.request.dni||job.lead.dni},settings,quote_code:job.code,targetFilePath:library.file(job.file),discount_pct:request.discountPct,financingType:request.financingType,directCreditMonths:request.months,customInitialPct:request.initialPct,teaPct:request.teaPct,parkingCode:request.parking,parkingPrice:56000,recontact_at:request.recontact_at});
+   await require('./business/quotePDF').generateAndSaveQuotePDF({unit,lead:{...job.lead,dni:job.request.dni||job.lead.dni},settings,quote_code:job.code,targetFilePath:library.file(job.file),discount_pct:request.discountPct,price_note:request.aprobacion?'aprobado':request.feria?'feria':'',financingType:request.financingType,directCreditMonths:request.months,customInitialPct:request.initialPct,teaPct:request.teaPct,parkingCode:request.parking,parkingPrice:56000,recontact_at:request.recontact_at});
    await store.run(async({tx,read,write})=>{
     const user=await auth.requireTx(tx,cookie),saved=await tx.get(jobRef);if(saved.data()?.state==='complete')return;
     const d=read(),current=assertQuotable(d.units,{id:request.unitId}),lead=d.leads.find(l=>l.id===request.leadId);
@@ -247,7 +269,7 @@ function application({store,auth,cache,authCache,config,syncer,supportMail,whats
     const previousQuotes=d.quotes.filter(q=>q.lead_id===lead.id);
     for(const [key,value] of Object.entries(request.leadProfile))if(key==='budget'?Number(value)>0:String(value||'').trim())lead[key]=value;if(request.dni)lead.dni=request.dni;
     const client_snapshot={name:lead.name||'',dni:lead.dni||'',phone:lead.phone||'',email:lead.email||'',address:lead.address||'',source:lead.source||'',project:lead.project||'',unit_interest:lead.unit_interest||'',budget:Number(lead.budget||0)};
-    d.quotes.push({id:job.id,date:job.createdAt,unit_id:current.id,lead_id:lead.id,dni:request.dni||lead.dni||null,financingType:request.financingType,directCreditMonths:request.financingType==='Directo'?request.months:null,discount_pct:request.discountPct,initial_pct:request.initialPct,...(request.teaPct?{tea_pct:request.teaPct}:{}),parking:request.parking,recontact_at:request.recontact_at,quote_code:job.code,lead_name:lead.name,unit_number:label,price,final_price:total,seller:user.name,client_snapshot,pdf_path:'/files/'+job.file});
+    d.quotes.push({id:job.id,date:job.createdAt,unit_id:current.id,lead_id:lead.id,dni:request.dni||lead.dni||null,financingType:request.financingType,directCreditMonths:request.financingType==='Directo'?request.months:null,discount_pct:request.discountPct,...(request.feria?{feria_modalidad:request.feria.modalidad,feria_descuento:request.feria.descuento}:{}),...(request.aprobacion?{aprobacion_precio:request.aprobacion}:{}),initial_pct:request.initialPct,...(request.teaPct?{tea_pct:request.teaPct}:{}),parking:request.parking,recontact_at:request.recontact_at,quote_code:job.code,lead_name:lead.name,unit_number:label,price,final_price:total,seller:user.name,client_snapshot,pdf_path:'/files/'+job.file});
     if(!lead.dpto1){lead.dpto1=label;lead.dpto1_price=total;}else if(!lead.dpto2){lead.dpto2=label;lead.dpto2_price=total;}
     lead.project ||= d.settings?.projectName||'Proyecto principal';
     if(request.dni)lead.dni=request.dni;
@@ -262,6 +284,7 @@ function application({store,auth,cache,authCache,config,syncer,supportMail,whats
     if(request.brokerName){const names=[d.settings.broker1Name,d.settings.broker2Name,d.settings.broker3Name];if(!names.includes(request.brokerName))throw Error('Broker no autorizado.');lead.selectedBrokers=[...new Set([...(lead.selectedBrokers||[]),request.brokerName])];}
     write(d);tx.update(jobRef,{state:'complete'});
    });
+   if(request.aprobacion)try{await precios.marcarUsada(request.aprobacion.id,{id:job.id,quote_code:job.code});}catch{}
    return {success:true,filePath:'/files/'+job.file,quote_code:job.code};
   })();jobs.set(jobKey,operation);try{return await operation;}finally{jobs.delete(jobKey);}
  }
@@ -362,6 +385,7 @@ function application({store,auth,cache,authCache,config,syncer,supportMail,whats
    if(name==='scanProjectDrive'){return {value:await projectDrive.requestScan(args[0],user)};}
    if(MCP_METHODS.includes(name))return {value:await mcp.rpc(name,args,user)};
    if(OPS_METHODS.includes(name))return {value:await resguardo.rpc(name,args,user)};
+   if(PRECIOS_METHODS.includes(name))return {value:await precios.rpc(name,args,user,()=>cache.read())};
    if(GRETA_METHODS.includes(name)){const value=await greta.rpc(name,args,user,()=>cache.read());if(['gretaAsk','gretaTendencias','gretaIdea','gretaImagen','gretaKpisLectura'].includes(name)){try{value.drive=await projectDrive.archiveResult(name,args[0]||{},value,user,creative);}catch(e){value.drive={state:'error',reason:e.message};}}return {value};}
    if(CLARA_METHODS.includes(name))return {value:await clara.rpc(name,args,user,()=>cache.read(),{usuarios:async()=>((await auth.execute('info',[],cookie)).value?.users||[]).map(u=>({id:u.id,name:u.name,role:u.role}))})};
    if(['getCreativeSetup','saveCreativeSetup','getCreativeModels','getCreativeCampaigns','getCreativeCampaign','createCreativeCampaign','editCreativeCampaign','approveCreativeCampaign','archiveCreativeCampaign','requestCreativeProposal','getCreativeAudit','getCreativeBrand','saveCreativeBrand','getCreativeFactCandidates','getVariantReport','linkCreativeVariant','unlinkCreativeVariant','getBudgetRecommendations','createBudgetRecommendation','decideBudgetRecommendation','getDailyBriefConfig','saveDailyBriefConfig','previewDailyBrief','getVoiceConfig','saveVoiceConfig','getPublishConfig','savePublishConfig','getCycleConfig','saveCycleConfig','requestVoice','requestPublication','getPipelineJobs','cancelPipelineJob','exportLeads','exportLeadsToSheet','getLeadExportConfig','saveLeadExportConfig','getLeadExportHistory'].includes(name)){

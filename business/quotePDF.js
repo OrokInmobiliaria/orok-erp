@@ -24,7 +24,8 @@ async function asset(value){
 async function generateAndSaveQuotePDF(data){
   const {unit,lead={},settings={},quote_code,targetFilePath}=data;
   const price=Number(unit.price);if(!Number.isFinite(price)||price<=0)throw new Error('Precio del departamento no válido.');
-  const discount=Number(data.discount_pct||0);if(!Number.isFinite(discount)||discount<0||discount>100)throw new Error('Descuento no válido.');
+  // R48 · Un precio aprobado por Gerencia puede ser una rebaja o un alza; la oferta de feria es una rebaja fija en soles.
+  const discount=Number(data.discount_pct||0);if(!Number.isFinite(discount)||discount<(data.price_note==='aprobado'?-50:0)||discount>100)throw new Error('Descuento no válido.');
   const parking=data.parkingCode&&data.parkingCode!=='Ninguno'?data.parkingCode:'';
   const parkingPrice=parking?Number(data.parkingPrice??56000):0;if(parking&&(!Number.isFinite(parkingPrice)||parkingPrice<=0))throw Error('Precio de estacionamiento no válido.');
   const {list,discountAmount:off,total}=quoteAmounts({price,parkingPrice,discount});
@@ -97,7 +98,7 @@ async function generateAndSaveQuotePDF(data){
   y=row(first,unitLabel,String(unit.unit_number)+' - '+(unit.unit_type||'Flat')+(parking?' + Estacionamiento '+parking:''),y);
   y=row(first,'Área total / techada / libre',((Number(unit.covered_area)||0)+(Number(unit.free_area)||0)).toFixed(2)+' / '+Number(unit.covered_area||0).toFixed(2)+' / '+Number(unit.free_area||0).toFixed(2)+' m²',y,1);
   const finalLabel='PRECIO FINAL (INCLUYE IMPUESTOS)';
-  const priceRows=[[unitLabel+' '+unit.unit_number,price],...(parking?[['Estacionamiento '+parking,parkingPrice]]:[]),['Precio de lista (suma de unidades)',list],['Descuento comercial ('+discount+'% sobre la suma)',-off],[finalLabel,total]];
+  const priceRows=[[unitLabel+' '+unit.unit_number,price],...(parking?[['Estacionamiento '+parking,parkingPrice]]:[]),['Precio de lista (suma de unidades)',list],[discount<0?'Ajuste de precio aprobado por Gerencia (+'+Number((-discount).toFixed(2))+'%)':data.price_note==='aprobado'?'Descuento aprobado por Gerencia ('+Number(discount.toFixed(2))+'%)':data.price_note==='feria'?'Descuento de feria ('+Number(discount.toFixed(2))+'%)':'Descuento comercial ('+discount+'% sobre la suma)',-off],[finalLabel,total]];
   for(const [label,value] of priceRows){const final=label===finalLabel;if(final)first.drawLine({start:{x:X+8,y:y+14},end:{x:X+W-8,y:y+14},color:rgb(.8,.76,.73),thickness:.55});text(first,label,X+9,y,9,final);right(first,money(value),y,10,final);y-=20;}
   text(first,'El precio final incluye impuestos.',X+9,y+4,8,false,muted);y-=10;
   text(first,'Precio referencial: USD '+(total/exchange).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' | TC: S/ '+exchange,X+9,y,9,false,muted);y-=27;

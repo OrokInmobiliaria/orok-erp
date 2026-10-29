@@ -279,7 +279,9 @@ class MoraIntegration {
       const fecha = String(s.sold_at || s.confirmed_at || s.created_at || '').slice(0, 7);
       ventas.push({ unidad: String(u.unit_number), fecha, precio: Number(s.final_price || u.sold_amount || 0), etapa, campana: text(lead.campaign_name || lead.utm_campaign || lead.source || '', 120) });
     }
-    return { schema: 'crm.ventas@1', evaluation_id: ev.id, generado: now(), ventas, estrategia: ev.analysis?.estrategia || null };
+    // R48 · Estrategia de precios de Ventas: real vs línea base y ajuste sugerido para comparar en el Evaluador.
+    let precios = null; try { precios = this.precios ? await this.precios.paraMora(d) : null; } catch { precios = null; }
+    return { schema: 'crm.ventas@1', evaluation_id: ev.id, generado: now(), ventas, estrategia: ev.analysis?.estrategia || null, precios };
   }
 
   // ---------- Acciones de n8n ----------
