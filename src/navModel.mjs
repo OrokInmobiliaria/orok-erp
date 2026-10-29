@@ -1,5 +1,5 @@
 // R31 · Estructura del menú agrupado. Los íconos se nombran como texto para poder probar el modelo sin React.
-export const MANAGER_ONLY = ['mkHome', 'mkTrends', 'mkForms', 'mkPublish', 'mkKpis', 'comisiones', 'marketing', 'campaigns', 'mkBrand', 'mkVariants', 'mkBudget', 'mkConnections', 'mkBrief', 'finanzas', 'ai', 'settings', 'moraAdmin', 'mora', 'evaluador', 'contabilidad'];
+export const MANAGER_ONLY = ['precios', 'mkHome', 'mkTrends', 'mkForms', 'mkPublish', 'mkKpis', 'comisiones', 'marketing', 'campaigns', 'mkBrand', 'mkVariants', 'mkBudget', 'mkConnections', 'mkBrief', 'finanzas', 'ai', 'settings', 'moraAdmin', 'mora', 'evaluador', 'contabilidad'];
 // R33b · ÖRÖK: CRM inmobiliario (todos los roles), Evaluador Inmobiliario con M.O.R.A (solo Gerencia)
 // R34 · y Contabilidad y Finanzas (ERP) con D.I.A.V.A (solo Gerencia).
 export const MODULES = [
@@ -56,7 +56,7 @@ export function navGroups(role, module = 'crm') {
       ['social', 'Bandeja social', 'MessageCircle'],
       ['quotes', 'Cotizaciones', 'FileText'],
       ['inventory', 'Inventario', 'Building2'],
-      ...(g ? [['comisiones', 'Comisiones', 'DollarSign']] : []),
+      ...(g ? [['precios', 'Estrategia de precios', 'LineChart', 'Meta vs real, etapas y precios sugeridos con el Evaluador'], ['comisiones', 'Comisiones', 'DollarSign']] : []),
     ]},
     // R42 · Marketing salió del CRM: ahora es el módulo Marketing (G.R.E.T.A).
     // R38 · Las áreas (no Gerencia) elaboran y aprueban órdenes OC/OS; el servidor decide qué ve cada persona.

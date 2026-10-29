@@ -30,6 +30,7 @@ import MoraPanel from './MoraPanel';
 import LolaAssistant from './LolaAssistant';
 import ConexionesIA from './ConexionesIA'; // R44 · conector del ERP para Claude
 import OperacionesLola from './OperacionesLola'; // R45 · L.O.L.A Operaciones
+import EstrategiaPrecios from './EstrategiaPrecios'; // R48 · Ventas › Estrategia de precios
 import {modulesFor, moduleOf, MODULES, canonicalTab} from './navModel.mjs';
 import AccessValidation from './AccessValidation';
 import {LoginScreen,PasswordChange,UserManagement} from './Access';
@@ -408,7 +409,10 @@ function DesktopView({ data }) {
   const [apptDate, setApptDate] = useState('');
   const [apptTime, setApptTime] = useState('');
 
+  // R48 · Oferta de feria vigente (preventa en planos o reserva) para cualquier unidad; el servidor fija el descuento y los cupos.
+  const [feriaOferta, setFeriaOferta] = useState({vigente:false,ofertas:[]});
   const [quoteModal, setQuoteModal] = useState({ open: false, unit: null, leadId: '', leadSearch: '', clientName:'', dni: '', phone:'', email:'', address:'', unitInterest:'', budget:'', discountPct: 0, teaPct: lastTea(), financingType: 'Hipotecario', customInitialPct: 10, parking: 'Ninguno', brokerName: '', directCreditMonths: settings.directCreditMonths || 12, recontactAt: '' });
+  useEffect(()=>{if(!quoteModal.open)return;let live=true;Promise.resolve(window.crmDB?.preciosOfertaFeria?.()).then(r=>{if(live&&r)setFeriaOferta(r);}).catch(()=>{});return()=>{live=false;};},[quoteModal.open]);
   const [separationModal,setSeparationModal]=useState(null);
   const [separationDecision,setSeparationDecision]=useState(null);
   const [separationDocuments,setSeparationDocuments]=useState(null);
@@ -718,7 +722,7 @@ function DesktopView({ data }) {
       const requestKey=JSON.stringify(quoteData);
       if(quoteRequest.current?.key!==requestKey)quoteRequest.current={key:requestKey,id:crypto.randomUUID()};
       try{localStorage.setItem('orok-tea',String(Number(quoteModal.teaPct)));}catch{}
-      await window.crmPDF.generateQuote({requestId:quoteRequest.current.id,unitId:quoteModal.unit.id,leadId:selectedLead.id,dni:quoteModal.dni,leadProfile:{name:quoteModal.clientName,phone:quoteModal.phone,email:quoteModal.email,address:quoteModal.address,unit_interest:quoteModal.unitInterest,budget:quoteModal.budget},discountPct:Number(quoteModal.discountPct),financingType:quoteModal.financingType,directCreditMonths:Number(quoteModal.directCreditMonths),customInitialPct:Number(quoteModal.customInitialPct)||10,teaPct:Number(quoteModal.teaPct),parking:quoteModal.parking,brokerName:quoteModal.brokerName,recontactAt:quoteModal.recontactAt});
+      await window.crmPDF.generateQuote({requestId:quoteRequest.current.id,unitId:quoteModal.unit.id,leadId:selectedLead.id,dni:quoteModal.dni,leadProfile:{name:quoteModal.clientName,phone:quoteModal.phone,email:quoteModal.email,address:quoteModal.address,unit_interest:quoteModal.unitInterest,budget:quoteModal.budget},discountPct:Number(quoteModal.discountPct),financingType:quoteModal.financingType,directCreditMonths:Number(quoteModal.directCreditMonths),customInitialPct:Number(quoteModal.customInitialPct)||10,teaPct:Number(quoteModal.teaPct),parking:quoteModal.parking,brokerName:quoteModal.brokerName,recontactAt:quoteModal.recontactAt,feriaOferta:quoteModal.feriaOferta||''});
       quoteRequest.current=null;
       for(const event of ['crm-quotes','crm-leads','crm-units'])window.dispatchEvent(new Event(event));
     }catch(error){alert(error.message);return;}finally{setQuoteBusy(false);}
@@ -817,9 +821,16 @@ function DesktopView({ data }) {
               
               <div data-responsive-grid="true" style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'16px'}}>
                   <div>
+                      {feriaOferta.vigente&&feriaOferta.ofertas.length>0&&<label style={{display:'grid',gap:4,fontWeight:600,fontSize:14,marginBottom:10}}>Oferta de feria
+                        <select aria-label="Oferta de feria" className="orok-input" value={quoteModal.feriaOferta||''} onChange={e=>setQuoteModal({...quoteModal,feriaOferta:e.target.value,discountPct:e.target.value?0:quoteModal.discountPct})}>
+                          <option value="">Sin oferta de feria</option>
+                          {feriaOferta.ofertas.map(o=><option key={o.modalidad} value={o.modalidad}>{o.nombre} · −S/ {Number(o.descuento).toLocaleString('es-PE')}{o.cupos_restantes!=null?' · quedan '+o.cupos_restantes+' cupos':''}</option>)}
+                        </select>
+                        {quoteModal.feriaOferta&&<span style={{fontSize:12,fontWeight:400}}>{feriaOferta.ofertas.find(o=>o.modalidad===quoteModal.feriaOferta)?.condicion}. El descuento lo fija el ERP y el cupo se usa al confirmar la separación.</span>}
+                      </label>}
                       <label style={{fontWeight:'600', fontSize:'14px'}}>Descuento Comercial (%)</label>
                       <div style={{display: 'flex', alignItems: 'center', gap: '16px', margin:'12px 0 24px 0'}}>
-                        <input aria-label="Descuento Comercial (%)" type="range" min="0" max="7" step="0.1" value={quoteModal.discountPct} onChange={e => setQuoteModal({...quoteModal, discountPct: e.target.value})} style={{flex: 1, accentColor:'var(--orok-brand)'}} />
+                        <input aria-label="Descuento Comercial (%)" disabled={!!quoteModal.feriaOferta} type="range" min="0" max="7" step="0.1" value={quoteModal.discountPct} onChange={e => setQuoteModal({...quoteModal, discountPct: e.target.value})} style={{flex: 1, accentColor:'var(--orok-brand)'}} />
                         <span style={{fontWeight: '800', fontSize:'18px', color:'var(--orok-brand)', width:'40px'}}>{quoteModal.discountPct}%</span>
                       </div>
                       <div style={{marginBottom:16}}>
@@ -1626,6 +1637,7 @@ function DesktopView({ data }) {
           </div>
         )}
 
+        {activeTab==='precios'&&currentUser.role==='Gerente'&&<EstrategiaPrecios/>}
         {activeTab === 'inventory' && (
           <div data-responsive-grid="true" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '24px' }}>
             {units.map(u => (
