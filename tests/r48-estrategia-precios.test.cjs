@@ -105,3 +105,29 @@ test('estudio de mercado del Evaluador: S/ por m² por dormitorios y tamaño; re
  assert.ok(top.unidades.filter(u=>u.mercado?.p75_m2).every(u=>u.ratio_sugerido_m2<=u.mercado.p75_m2+3),'en modo tope ningún sugerido pasa el p75');
  assert.equal(r.mercado.comps,undefined,'la pantalla recibe el resumen, no los avisos crudos');
 });
+
+test('precio especial: Ventas solicita, Gerencia aprueba/observa/rechaza, vale 7 días para esa unidad y cliente, y se consume al cotizar',async()=>{
+ const store=new FirestoreProject(new MemoryFirestore());await store.initialize({settings:{},leads:[],units:[],quotes:[],separations:[]});
+ const p=new PreciosEstrategia(store,{origin:'https://erp.orok.com.pe'});const enviados=[];p.mailer={notify:async m=>{enviados.push(m);}};
+ p.directorio=async()=>[{name:'Martín Montezuma',role:'Gerente',email:'gerencia@orok.com.pe'},{name:'Antonio',role:'Vendedor',email:'ventas@orok.com.pe'}];
+ const d={units:[{id:'u1',unit_number:'201',price:620000,status:'AVAILABLE'}],leads:[{id:'l1',name:'Cliente Uno',lead_number:'LD-0300'}]};
+ await assert.rejects(p.rpc('precioSolicitar',[{unit_id:'u1',lead_id:'l1',precio_propuesto:620000,motivo:'igual'}],V,async()=>d),/igual a la lista/);
+ await assert.rejects(p.rpc('precioSolicitar',[{unit_id:'u1',lead_id:'l1',precio_propuesto:600000,motivo:''}],V,async()=>d),/motivo/);
+ const s=await p.rpc('precioSolicitar',[{unit_id:'u1',lead_id:'l1',precio_propuesto:600000,motivo:'Cierra hoy con 30 % de inicial'}],V,async()=>d);
+ assert.equal(s.tipo,'descuento');assert.equal(s.diferencia,-20000);assert.equal(enviados[0].to,'gerencia@orok.com.pe');assert.match(enviados[0].text,/tab=precios/);
+ await assert.rejects(p.rpc('precioDecidir',[s.id,{decision:'aprobar'}],V),/Gerencia/);
+ await assert.rejects(p.rpc('precioDecidir',[s.id,{decision:'rechazar'}],G),/motivo/);
+ const ob=await p.rpc('precioDecidir',[s.id,{decision:'observar',comentario:'Máximo S/ 605,000'}],G);assert.equal(ob.estado,'observada');
+ const ap=await p.rpc('precioDecidir',[s.id,{decision:'aprobar',precio_aprobado:605000}],G);assert.equal(ap.estado,'aprobada');assert.equal(ap.precio_aprobado,605000);assert.equal(enviados.at(-1).to,'ventas@orok.com.pe');
+ await assert.rejects(p.rpc('precioDecidir',[s.id,{decision:'rechazar',comentario:'Ya no aplica'}],G),/ya fue resuelta/);
+ assert.equal((await p.rpc('precioSolicitudes',[{}],V)).length,1,'el vendedor ve sus solicitudes');
+ await assert.rejects(p.aprobacionPara(s.id,{id:'u2',price:620000},'l1'),/otra unidad/);
+ await assert.rejects(p.aprobacionPara(s.id,{id:'u1',price:630000},'l1'),/lista cambió/);
+ assert.equal((await p.aprobacionPara(s.id,{id:'u1',price:620000},'l1')).precio_aprobado,605000);
+ await p.marcarUsada(s.id,{id:'q9',quote_code:'2026-0001500'});await assert.rejects(p.aprobacionPara(s.id,{id:'u1',price:620000},'l1'),/usada/);
+ const alza=await p.rpc('precioSolicitar',[{unit_id:'u1',lead_id:'l1',precio_propuesto:640000,motivo:'Pide estacionamiento doble'}],V,async()=>d);assert.equal(alza.tipo,'incremento');
+ const app=fs.readFileSync(path.join(__dirname,'..','application.cjs'),'utf8');
+ assert.match(app,/necesitan aprobación de Gerencia/);assert.match(app,/precios\.aprobacionPara\(input\.aprobacionPrecio/);assert.match(app,/aprobacion_precio:request\.aprobacion/);assert.match(app,/precios\.marcarUsada/);
+ assert.match(fs.readFileSync(path.join(__dirname,'..','business','quotePDF.js'),'utf8'),/Ajuste de precio aprobado por Gerencia/);
+ assert.match(fs.readFileSync(path.join(__dirname,'..','src','App.jsx'),'utf8'),/currentUser\.role==='Gerente'\?<>/);
+});

@@ -55,7 +55,7 @@ function application({store,auth,cache,authCache,config,syncer,supportMail,whats
  const projectDrive=new ProjectDrive(store,config);
  whatsapp.projectDrive=projectDrive;crmConversation.engine.projectDrive=projectDrive;
  const mora=new MoraIntegration(store,config);
- const precios=new PreciosEstrategia(store);mora.precios=precios;
+ const precios=new PreciosEstrategia(store,{origin:config.origin});mora.precios=precios;
  mora.projectDrive=projectDrive;
  const lolaAssistant=new LolaAssistant(store,config,{fetcher:creativeOptions.assistantFetcher});
  lolaAssistant.projectDrive=projectDrive;
@@ -64,6 +64,8 @@ function application({store,auth,cache,authCache,config,syncer,supportMail,whats
  greta.projectDrive=projectDrive;
  creative.onMedia=media=>projectDrive.archiveMedia(media,creative);
  const clara=new ClaraErp(store,config,{assistant:lolaAssistant,fetcher:creativeOptions.claraFetcher,mailer:creativeOptions.claraMailer||approvalMail});
+ // R48 · Aprobación de precios: mismos correos del directorio de Aprobaciones (D.I.A.V.A) y el mismo correo del servidor.
+ precios.mailer=creativeOptions.claraMailer||approvalMail;precios.directorio=async()=>{const users=auth.snapshot?((await auth.snapshot()).users||[]):[],dir=await clara.list('aprobadores');return users.map(u=>({name:u.name,role:u.role,email:dir.find(d=>d.user_id===u.id&&!d.eliminado)?.email||''}));};
  clara.projectDrive=projectDrive;
  async function ingestLola(payload){
   if(/^project_drive_/.test(String(payload?.action||'')))return projectDrive.action(payload);
@@ -239,7 +241,11 @@ function application({store,auth,cache,authCache,config,syncer,supportMail,whats
    // R48 · Oferta de feria: el vendedor elige la modalidad (preventa en planos o reserva) y el servidor fija el descuento en soles
    // según la estrategia de precios vigente y los cupos que quedan. Sirve para cualquier unidad.
    if(input.feriaOferta){const modalidad=String(input.feriaOferta),d0=await cache.read(),u0=(d0.units||[]).find(u=>u.id===request.unitId),of=(await precios.oferta(d0)).ofertas.find(o=>o.modalidad===modalidad);if(!of)throw Error('La oferta de feria ya no está disponible (fuera de fecha o sin cupos).');const base=Number(u0?.price||0)+(request.parking==='Ninguno'?0:56000);if(!base)throw Error('La unidad no tiene precio de lista.');request.discountPct=Math.round(of.descuento/base*1e8)/1e6;request.feria={modalidad,descuento:of.descuento};}
-   if(!Number.isFinite(request.discountPct)||request.discountPct<0||request.discountPct>100||!Number.isInteger(request.months)||request.months<1||request.months>360||!Number.isFinite(request.initialPct)||request.initialPct<0||request.initialPct>100||!['Hipotecario','Directo'].includes(request.financingType)||!/^([A-Za-z0-9 -]{1,40})$/.test(request.parking)||(request.dni&&!/^\d{8}$/.test(request.dni))||(request.leadProfile.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(request.leadProfile.email))||!Number.isFinite(request.leadProfile.budget)||request.leadProfile.budget<0)throw Error('Revisa los datos del cliente, la cotización y el DNI.');
+   // R48 · Precio especial (rebaja o alza): Ventas solo cotiza con una aprobación vigente de Gerencia para esa unidad y cliente;
+   // el precio aprobado pasa a la cotización y de ahí a la separación y la minuta. Gerencia puede cotizar directamente.
+   else if(input.aprobacionPrecio){const d0=await cache.read(),u0=(d0.units||[]).find(u=>u.id===request.unitId),ap=await precios.aprobacionPara(input.aprobacionPrecio,u0,request.leadId),est=request.parking==='Ninguno'?0:56000;request.discountPct=Math.round((1-(ap.precio_aprobado+est)/(Number(u0.price)+est))*1e8)/1e6;request.aprobacion={id:ap.id,precio:ap.precio_aprobado,por:ap.decidido_por};}
+   else if(request.discountPct!==0){const caller=await authCache.require(cookie);if(caller.role!=='Gerente')throw Error('Los descuentos y cambios de precio necesitan aprobación de Gerencia: usa «Solicitar precio especial».');}
+   if(!Number.isFinite(request.discountPct)||request.discountPct<(request.aprobacion?-50:0)||request.discountPct>100||!Number.isInteger(request.months)||request.months<1||request.months>360||!Number.isFinite(request.initialPct)||request.initialPct<0||request.initialPct>100||!['Hipotecario','Directo'].includes(request.financingType)||!/^([A-Za-z0-9 -]{1,40})$/.test(request.parking)||(request.dni&&!/^\d{8}$/.test(request.dni))||(request.leadProfile.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(request.leadProfile.email))||!Number.isFinite(request.leadProfile.budget)||request.leadProfile.budget<0)throw Error('Revisa los datos del cliente, la cotización y el DNI.');
    const fingerprint=createHash('sha256').update(JSON.stringify(request)).digest('hex');
    const job=await store.run(async({tx,read,write})=>{
     const user=await auth.requireTx(tx,cookie);const old=await tx.get(jobRef);
@@ -253,7 +259,7 @@ function application({store,auth,cache,authCache,config,syncer,supportMail,whats
    if(job.state==='complete')return {success:true,filePath:'/files/'+job.file,quote_code:job.code};
    const unit={...job.unit};for(const k of ['plan_image_ext','plan_image_int'])unit[k]=library.resolve(unit[k]);
    const settings={...job.settings};settings.projectLogoUrl=library.resolve(settings.projectLogoUrl);
-   await require('./business/quotePDF').generateAndSaveQuotePDF({unit,lead:{...job.lead,dni:job.request.dni||job.lead.dni},settings,quote_code:job.code,targetFilePath:library.file(job.file),discount_pct:request.discountPct,financingType:request.financingType,directCreditMonths:request.months,customInitialPct:request.initialPct,teaPct:request.teaPct,parkingCode:request.parking,parkingPrice:56000,recontact_at:request.recontact_at});
+   await require('./business/quotePDF').generateAndSaveQuotePDF({unit,lead:{...job.lead,dni:job.request.dni||job.lead.dni},settings,quote_code:job.code,targetFilePath:library.file(job.file),discount_pct:request.discountPct,price_note:request.aprobacion?'aprobado':request.feria?'feria':'',financingType:request.financingType,directCreditMonths:request.months,customInitialPct:request.initialPct,teaPct:request.teaPct,parkingCode:request.parking,parkingPrice:56000,recontact_at:request.recontact_at});
    await store.run(async({tx,read,write})=>{
     const user=await auth.requireTx(tx,cookie),saved=await tx.get(jobRef);if(saved.data()?.state==='complete')return;
     const d=read(),current=assertQuotable(d.units,{id:request.unitId}),lead=d.leads.find(l=>l.id===request.leadId);
@@ -263,7 +269,7 @@ function application({store,auth,cache,authCache,config,syncer,supportMail,whats
     const previousQuotes=d.quotes.filter(q=>q.lead_id===lead.id);
     for(const [key,value] of Object.entries(request.leadProfile))if(key==='budget'?Number(value)>0:String(value||'').trim())lead[key]=value;if(request.dni)lead.dni=request.dni;
     const client_snapshot={name:lead.name||'',dni:lead.dni||'',phone:lead.phone||'',email:lead.email||'',address:lead.address||'',source:lead.source||'',project:lead.project||'',unit_interest:lead.unit_interest||'',budget:Number(lead.budget||0)};
-    d.quotes.push({id:job.id,date:job.createdAt,unit_id:current.id,lead_id:lead.id,dni:request.dni||lead.dni||null,financingType:request.financingType,directCreditMonths:request.financingType==='Directo'?request.months:null,discount_pct:request.discountPct,...(request.feria?{feria_modalidad:request.feria.modalidad,feria_descuento:request.feria.descuento}:{}),initial_pct:request.initialPct,...(request.teaPct?{tea_pct:request.teaPct}:{}),parking:request.parking,recontact_at:request.recontact_at,quote_code:job.code,lead_name:lead.name,unit_number:label,price,final_price:total,seller:user.name,client_snapshot,pdf_path:'/files/'+job.file});
+    d.quotes.push({id:job.id,date:job.createdAt,unit_id:current.id,lead_id:lead.id,dni:request.dni||lead.dni||null,financingType:request.financingType,directCreditMonths:request.financingType==='Directo'?request.months:null,discount_pct:request.discountPct,...(request.feria?{feria_modalidad:request.feria.modalidad,feria_descuento:request.feria.descuento}:{}),...(request.aprobacion?{aprobacion_precio:request.aprobacion}:{}),initial_pct:request.initialPct,...(request.teaPct?{tea_pct:request.teaPct}:{}),parking:request.parking,recontact_at:request.recontact_at,quote_code:job.code,lead_name:lead.name,unit_number:label,price,final_price:total,seller:user.name,client_snapshot,pdf_path:'/files/'+job.file});
     if(!lead.dpto1){lead.dpto1=label;lead.dpto1_price=total;}else if(!lead.dpto2){lead.dpto2=label;lead.dpto2_price=total;}
     lead.project ||= d.settings?.projectName||'Proyecto principal';
     if(request.dni)lead.dni=request.dni;
@@ -278,6 +284,7 @@ function application({store,auth,cache,authCache,config,syncer,supportMail,whats
     if(request.brokerName){const names=[d.settings.broker1Name,d.settings.broker2Name,d.settings.broker3Name];if(!names.includes(request.brokerName))throw Error('Broker no autorizado.');lead.selectedBrokers=[...new Set([...(lead.selectedBrokers||[]),request.brokerName])];}
     write(d);tx.update(jobRef,{state:'complete'});
    });
+   if(request.aprobacion)try{await precios.marcarUsada(request.aprobacion.id,{id:job.id,quote_code:job.code});}catch{}
    return {success:true,filePath:'/files/'+job.file,quote_code:job.code};
   })();jobs.set(jobKey,operation);try{return await operation;}finally{jobs.delete(jobKey);}
  }

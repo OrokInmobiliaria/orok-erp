@@ -31,6 +31,7 @@ import LolaAssistant from './LolaAssistant';
 import ConexionesIA from './ConexionesIA'; // R44 · conector del ERP para Claude
 import OperacionesLola from './OperacionesLola'; // R45 · L.O.L.A Operaciones
 import EstrategiaPrecios from './EstrategiaPrecios'; // R48 · Ventas › Estrategia de precios
+import PrecioEspecial from './PrecioEspecial'; // R48 · precio especial con aprobación de Gerencia
 import {modulesFor, moduleOf, MODULES, canonicalTab} from './navModel.mjs';
 import AccessValidation from './AccessValidation';
 import {LoginScreen,PasswordChange,UserManagement} from './Access';
@@ -722,7 +723,7 @@ function DesktopView({ data }) {
       const requestKey=JSON.stringify(quoteData);
       if(quoteRequest.current?.key!==requestKey)quoteRequest.current={key:requestKey,id:crypto.randomUUID()};
       try{localStorage.setItem('orok-tea',String(Number(quoteModal.teaPct)));}catch{}
-      await window.crmPDF.generateQuote({requestId:quoteRequest.current.id,unitId:quoteModal.unit.id,leadId:selectedLead.id,dni:quoteModal.dni,leadProfile:{name:quoteModal.clientName,phone:quoteModal.phone,email:quoteModal.email,address:quoteModal.address,unit_interest:quoteModal.unitInterest,budget:quoteModal.budget},discountPct:Number(quoteModal.discountPct),financingType:quoteModal.financingType,directCreditMonths:Number(quoteModal.directCreditMonths),customInitialPct:Number(quoteModal.customInitialPct)||10,teaPct:Number(quoteModal.teaPct),parking:quoteModal.parking,brokerName:quoteModal.brokerName,recontactAt:quoteModal.recontactAt,feriaOferta:quoteModal.feriaOferta||''});
+      await window.crmPDF.generateQuote({requestId:quoteRequest.current.id,unitId:quoteModal.unit.id,leadId:selectedLead.id,dni:quoteModal.dni,leadProfile:{name:quoteModal.clientName,phone:quoteModal.phone,email:quoteModal.email,address:quoteModal.address,unit_interest:quoteModal.unitInterest,budget:quoteModal.budget},discountPct:Number(quoteModal.discountPct),financingType:quoteModal.financingType,directCreditMonths:Number(quoteModal.directCreditMonths),customInitialPct:Number(quoteModal.customInitialPct)||10,teaPct:Number(quoteModal.teaPct),parking:quoteModal.parking,brokerName:quoteModal.brokerName,recontactAt:quoteModal.recontactAt,feriaOferta:quoteModal.feriaOferta||'',aprobacionPrecio:quoteModal.feriaOferta?'':(quoteModal.aprobacionPrecio||'')});
       quoteRequest.current=null;
       for(const event of ['crm-quotes','crm-leads','crm-units'])window.dispatchEvent(new Event(event));
     }catch(error){alert(error.message);return;}finally{setQuoteBusy(false);}
@@ -822,17 +823,19 @@ function DesktopView({ data }) {
               <div data-responsive-grid="true" style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'16px'}}>
                   <div>
                       {feriaOferta.vigente&&feriaOferta.ofertas.length>0&&<label style={{display:'grid',gap:4,fontWeight:600,fontSize:14,marginBottom:10}}>Oferta de feria
-                        <select aria-label="Oferta de feria" className="orok-input" value={quoteModal.feriaOferta||''} onChange={e=>setQuoteModal({...quoteModal,feriaOferta:e.target.value,discountPct:e.target.value?0:quoteModal.discountPct})}>
+                        <select aria-label="Oferta de feria" className="orok-input" value={quoteModal.feriaOferta||''} onChange={e=>setQuoteModal({...quoteModal,feriaOferta:e.target.value,aprobacionPrecio:e.target.value?'':quoteModal.aprobacionPrecio,discountPct:e.target.value?0:quoteModal.discountPct})}>
                           <option value="">Sin oferta de feria</option>
                           {feriaOferta.ofertas.map(o=><option key={o.modalidad} value={o.modalidad}>{o.nombre} · −S/ {Number(o.descuento).toLocaleString('es-PE')}{o.cupos_restantes!=null?' · quedan '+o.cupos_restantes+' cupos':''}</option>)}
                         </select>
                         {quoteModal.feriaOferta&&<span style={{fontSize:12,fontWeight:400}}>{feriaOferta.ofertas.find(o=>o.modalidad===quoteModal.feriaOferta)?.condicion}. El descuento lo fija el ERP y el cupo se usa al confirmar la separación.</span>}
                       </label>}
+                      {currentUser.role==='Gerente'?<>
                       <label style={{fontWeight:'600', fontSize:'14px'}}>Descuento Comercial (%)</label>
                       <div style={{display: 'flex', alignItems: 'center', gap: '16px', margin:'12px 0 24px 0'}}>
                         <input aria-label="Descuento Comercial (%)" disabled={!!quoteModal.feriaOferta} type="range" min="0" max="7" step="0.1" value={quoteModal.discountPct} onChange={e => setQuoteModal({...quoteModal, discountPct: e.target.value})} style={{flex: 1, accentColor:'var(--orok-brand)'}} />
                         <span style={{fontWeight: '800', fontSize:'18px', color:'var(--orok-brand)', width:'40px'}}>{quoteModal.discountPct}%</span>
-                      </div>
+                      </div></>
+                      :<PrecioEspecial unit={quoteModal.unit} leadId={quoteModal.leadId} value={quoteModal.aprobacionPrecio} disabled={!!quoteModal.feriaOferta} onChange={id=>setQuoteModal({...quoteModal,aprobacionPrecio:id,discountPct:0})}/>}
                       <div style={{marginBottom:16}}>
                         <label htmlFor="quote-months" style={{fontWeight:600,fontSize:13}}>Plazo Crédito Directo (meses)</label>
                         <input aria-label="Ajustar plazo de crédito directo" type="range" min="1" max="36" step="1" value={Math.min(36,Math.max(1,Number(quoteModal.directCreditMonths)||1))} onChange={e=>setQuoteModal({...quoteModal,directCreditMonths:e.target.value})} style={{display:'block',width:'100%',margin:'10px 0',accentColor:'var(--orok-brand)'}}/>

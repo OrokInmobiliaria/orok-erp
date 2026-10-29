@@ -119,6 +119,40 @@ function Editor({config, revision, evaluaciones, onSaved}) {
   </details>;
 }
 
+// Bandeja de Gerencia: solicitudes de precio especial de Ventas (rebajas o alzas), como la aprobación de OC/OS.
+function Solicitudes({onCambio}) {
+  const [rows, setRows] = useState(null), [edit, setEdit] = useState({}), [busy, setBusy] = useState(''), [err, setErr] = useState('');
+  const load = () => db.precioSolicitudes({}).then(setRows).catch(e => setErr(e.message));
+  useEffect(() => { load(); }, []);
+  const decidir = async (r, decision) => {
+    const e = edit[r.id] || {}; setBusy(r.id); setErr('');
+    try { await db.precioDecidir(r.id, {decision, precio_aprobado: e.precio ?? r.precio_propuesto, comentario: e.nota || ''}); await load(); onCambio?.(); }
+    catch (x) { setErr(x.message); } finally { setBusy(''); }
+  };
+  if (!rows) return null;
+  const pend = rows.filter(r => ['pendiente', 'observada'].includes(r.estado)), hist = rows.filter(r => !['pendiente', 'observada'].includes(r.estado)).slice(0, 15);
+  return <div className="orok-card" style={{padding: 16}} id="solicitudes-precio">
+    <h3 style={{marginTop: 0}}>Solicitudes de precio especial {pend.length ? <span style={{background: '#9a3412', color: '#fff', borderRadius: 999, padding: '1px 9px', fontSize: 13}}>{pend.length}</span> : null}</h3>
+    <p style={{fontSize: 12, marginTop: 0}}>Toda rebaja o alza que propone Ventas espera tu aprobación. Lo aprobado vale 7 días para esa unidad y cliente, y pasa a la cotización, la separación y la minuta. Cada decisión llega por correo al vendedor.</p>
+    {err && <p role="alert" style={{color: '#b91c1c'}}>{err}</p>}
+    {!pend.length && <p style={{fontSize: 13}}>No hay solicitudes pendientes.</p>}
+    {pend.map(r => { const e = edit[r.id] || {}; return <div key={r.id} style={{borderTop: '1px solid rgba(148,163,184,.35)', padding: '10px 0', display: 'grid', gap: 6}}>
+      <div><b>Unidad {r.unidad}</b> · {r.cliente} ({r.lead_number || '—'}) · pide <b>{r.solicitante?.nombre}</b> · {new Date(r.creada).toLocaleString('es-PE', {timeZone: 'America/Lima'})}{r.estado === 'observada' ? ' · observada' : ''}</div>
+      <div style={{fontSize: 13}}>Lista {S(r.precio_lista)} → propuesto <b>{S(r.precio_propuesto)}</b> <span style={{color: r.tipo === 'descuento' ? '#9a3412' : '#166534'}}>({r.variacion_pct > 0 ? '+' : ''}{r.variacion_pct} %, {r.tipo} de {S(Math.abs(r.diferencia))})</span></div>
+      <div style={{fontSize: 13}}>Motivo: {r.motivo}</div>
+      <div data-responsive-grid="true" style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 8, alignItems: 'end'}}>
+        <label style={{display: 'grid', gap: 4, fontSize: 12}}>Precio que apruebas (S/)<input className="orok-input" type="number" step="100" value={e.precio ?? r.precio_propuesto} onChange={x => setEdit({...edit, [r.id]: {...e, precio: Number(x.target.value)}})}/></label>
+        <label style={{display: 'grid', gap: 4, fontSize: 12}}>Comentario al vendedor<input className="orok-input" value={e.nota || ''} onChange={x => setEdit({...edit, [r.id]: {...e, nota: x.target.value}})}/></label>
+        <div style={{display: 'flex', gap: 6, flexWrap: 'wrap'}}>
+          <button className="orok-btn orok-btn-primary" disabled={busy === r.id} onClick={() => decidir(r, 'aprobar')}>Aprobar</button>
+          <button className="orok-btn orok-btn-secondary" disabled={busy === r.id} onClick={() => decidir(r, 'observar')}>Observar</button>
+          <button className="orok-btn orok-btn-secondary" style={{color: '#991b1b'}} disabled={busy === r.id} onClick={() => decidir(r, 'rechazar')}>Rechazar</button>
+        </div></div></div>; })}
+    {hist.length > 0 && <details style={{marginTop: 8}}><summary style={{cursor: 'pointer', fontSize: 13}}>Decisiones recientes</summary>
+      {hist.map(r => <div key={r.id} style={{fontSize: 12, padding: '4px 0', borderTop: '1px solid rgba(148,163,184,.3)'}}>{r.unidad} · {r.cliente} · {r.estado} {r.precio_aprobado ? S(r.precio_aprobado) : ''} · {r.decidido_por || ''}{r.cotizacion?.quote_code ? ' · cotización ' + r.cotizacion.quote_code : ''}</div>)}</details>}
+  </div>;
+}
+
 export default function EstrategiaPrecios() {
   const [state, setState] = useState({busy: true, data: null, error: ''});
   const [msg, setMsg] = useState(''), [err, setErr] = useState(''), [sel, setSel] = useState(new Set()), [confirm, setConfirm] = useState(false), [busy, setBusy] = useState(false);
@@ -144,6 +178,7 @@ export default function EstrategiaPrecios() {
     <h2 style={{margin: 0}}>Estrategia de precios</h2>
     <p style={{margin: 0}}>Carga la línea base del proyecto: lista Etapa 1 por unidad, meta de recaudación, etapas de alza y condiciones de feria. Desde ahí el ERP compara cada venta real contra la meta y sugiere cómo mover los precios.</p>
     <div>{importBtn}</div>{err && <p role="alert" style={{color: '#b91c1c'}}>{err}</p>}{msg && <p role="status">{msg}</p>}
+    <Solicitudes/>
   </section>;
 
   const kpi = (label, value, sub, color) => <div className="orok-card" style={{padding: 12, minWidth: 0}}><div style={{fontSize: 12, opacity: .75}}>{label}</div><div style={{fontSize: 20, fontWeight: 800, color}}>{value}</div>{sub && <div style={{fontSize: 11, opacity: .75}}>{sub}</div>}</div>;
@@ -192,6 +227,7 @@ export default function EstrategiaPrecios() {
           <td style={{padding: 6}} title={u.mercado ? `${u.mercado.criterio} · ${u.mercado.n} comparables · rango ${N(u.mercado.p25_m2)}–${N(u.mercado.p75_m2)}` : 'Sin estudio de mercado'}>{u.mercado ? <>{N(u.mercado.mediana_m2)}<div style={{fontSize: 10, opacity: .7}}>{u.mercado.criterio} · {u.mercado.n}</div></> : '—'}</td>
           <td style={{padding: 6, color: u.posicion_mercado === 'Sobre el mercado' ? '#9a3412' : u.posicion_mercado === 'Bajo el mercado' ? '#1d4ed8' : '#166534'}}>{u.posicion_mercado || '—'}</td></tr>)}</tbody></table></div>
     </div>
+    <Solicitudes onCambio={load}/>
     {c.feria && <div className="orok-card" style={{padding: 16}}>
       <h3 style={{marginTop: 0}}>Feria desde el {c.feria.fecha_inicio}{c.feria.vigente ? ' · vigente' : ''}</h3>
       <div data-responsive-grid="true" style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 10, marginBottom: 10}}>{(c.feria.ofertas || []).map(o => <div key={o.modalidad} style={{border: '1px solid rgba(148,163,184,.4)', borderRadius: 10, padding: 10}}>

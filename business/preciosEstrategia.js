@@ -14,7 +14,8 @@ const round100 = n => Math.round(n / 100) * 100;
 const pct = n => Math.round(n * 10000) / 100;
 // «D101_2», «101», «Dpto 101» → «101»: mismo criterio que usa el resto del CRM para los números de unidad.
 const unitKey = v => { const m = String(v ?? '').match(/(\d{3,4})/); return m ? m[1] : String(v ?? '').trim(); };
-const METHODS = ['preciosEstrategia', 'preciosEstrategiaGuardar', 'preciosHistorial', 'preciosOfertaFeria'];
+const METHODS = ['preciosEstrategia', 'preciosEstrategiaGuardar', 'preciosHistorial', 'preciosOfertaFeria', 'precioSolicitar', 'precioSolicitudes', 'precioDecidir'];
+const VIGENCIA_DIAS = 7, ESTADOS = ['pendiente', 'aprobada', 'rechazada', 'observada', 'usada', 'vencida'];
 const MODALIDADES = { preventa: 'Preventa en planos', reserva: 'Reserva fuera de preventa' };
 
 // ---------- Estudio de mercado del Evaluador (M.O.R.A) ----------
@@ -205,7 +206,73 @@ function ofertaFeria(cfg, data = {}, hoy = new Date()) {
 }
 
 class PreciosEstrategia {
-  constructor(store) { this.store = store; this.col = store.db.collection('ventas_precios'); }
+  constructor(store, { origin = '' } = {}) { this.store = store; this.col = store.db.collection('ventas_precios'); this.sol = store.db.collection('ventas_precios_solicitudes'); this.origin = origin; this.mailer = null; this.directorio = null; }
+  // ---------- Aprobación de precios (como OC/OS): toda rebaja o alza que proponga Ventas pasa por Gerencia ----------
+  // Solo la oferta de feria vigente (ya aprobada en la estrategia) y la Gerencia no necesitan solicitud.
+  async solicitar(input, user, d) {
+    const unit = (d.units || []).find(u => u.id === input?.unit_id), lead = (d.leads || []).find(l => l.id === input?.lead_id);
+    if (!unit) throw Error('Selecciona la unidad.'); if (!lead) throw Error('Selecciona el cliente (lead).');
+    if (unit.sold_lead_id || /^(SOLD|VENDID[OA]|VENTA)$/i.test(String(unit.status || ''))) throw Error('La unidad ya está vendida.');
+    const lista = Number(unit.price || 0), propuesto = Math.round(Number(input?.precio_propuesto) * 100) / 100, motivo = text(input?.motivo, 600);
+    if (!lista) throw Error('La unidad no tiene precio de lista.');
+    if (!(propuesto > 0) || propuesto < lista * 0.5 || propuesto > lista * 1.5) throw Error('Indica un precio propuesto razonable (entre −50 % y +50 % de la lista).');
+    if (propuesto === lista) throw Error('El precio propuesto es igual a la lista: no necesita aprobación.');
+    if (motivo.length < 5) throw Error('Explica el motivo para Gerencia.');
+    const id = randomUUID(), at = now(), doc = { id, estado: 'pendiente', unit_id: unit.id, unidad: String(unit.unit_number), lead_id: lead.id, cliente: text(lead.name, 120), lead_number: text(lead.lead_number, 30),
+      precio_lista: lista, precio_propuesto: propuesto, diferencia: Math.round((propuesto - lista) * 100) / 100, variacion_pct: pct(propuesto / lista - 1), tipo: propuesto < lista ? 'descuento' : 'incremento',
+      motivo, solicitante: { id: String(user.id ?? user.name), nombre: user.name, rol: user.role }, creada: at, historial: [{ at, por: user.name, accion: 'solicitud', nota: motivo }] };
+    await this.store.db.runTransaction(async tx => { tx.set(this.sol.doc(id), doc); });
+    doc.avisos = await this.avisar(doc, 'solicitud');
+    return doc;
+  }
+  async solicitudes(user, filtro = {}) {
+    const rows = (await this.sol.limit(2000).get()).docs.map(x => x.data()).map(r => this.vigencia(r));
+    const mine = user?.role === 'Gerente' ? rows : rows.filter(r => r.solicitante?.nombre === user?.name || r.solicitante?.id === String(user?.id ?? ''));
+    return mine.filter(r => (!filtro.estado || r.estado === filtro.estado) && (!filtro.unit_id || r.unit_id === filtro.unit_id) && (!filtro.lead_id || r.lead_id === filtro.lead_id)).sort((a, b) => String(b.creada).localeCompare(String(a.creada))).slice(0, 300);
+  }
+  vigencia(r) { if (r.estado === 'aprobada' && Date.parse(r.vence) < Date.now()) return { ...r, estado: 'vencida' }; return r; }
+  async decidir(id, input, user) {
+    this.gerente(user);
+    const decision = String(input?.decision || ''); if (!['aprobar', 'rechazar', 'observar'].includes(decision)) throw Error('Decisión no válida.');
+    const nota = text(input?.comentario, 600); if (decision !== 'aprobar' && nota.length < 3) throw Error('Indica el motivo al vendedor.');
+    const doc = await this.store.db.runTransaction(async tx => {
+      const ref = this.sol.doc(String(id || '')), r = (await tx.get(ref)).data();
+      if (!r) throw Error('La solicitud no existe.'); if (!['pendiente', 'observada'].includes(r.estado)) throw Error('Esta solicitud ya fue resuelta (' + r.estado + ').');
+      const at = now(), aprobado = decision === 'aprobar' ? Math.round(Number(input?.precio_aprobado ?? r.precio_propuesto) * 100) / 100 : null;
+      if (decision === 'aprobar' && !(aprobado > 0 && aprobado >= r.precio_lista * 0.5 && aprobado <= r.precio_lista * 1.5)) throw Error('Precio aprobado fuera de rango.');
+      const next = { ...r, estado: decision === 'aprobar' ? 'aprobada' : decision === 'rechazar' ? 'rechazada' : 'observada', decidido_por: user.name, decidida: at, comentario: nota,
+        ...(aprobado ? { precio_aprobado: aprobado, vence: new Date(Date.now() + VIGENCIA_DIAS * 86400000).toISOString() } : {}),
+        historial: [...(r.historial || []), { at, por: user.name, accion: decision, nota, ...(aprobado ? { precio: aprobado } : {}) }] };
+      tx.set(ref, next); return next;
+    });
+    doc.avisos = await this.avisar(doc, 'decision');
+    return doc;
+  }
+  // Valida y consume la aprobación al generar la cotización: misma unidad, mismo cliente, misma lista y vigente.
+  async aprobacionPara(id, unit, leadId) {
+    const r = this.vigencia((await this.sol.doc(String(id || '')).get()).data() || {});
+    if (!r.id) throw Error('La aprobación de precio no existe.');
+    if (r.estado !== 'aprobada') throw Error('La solicitud de precio está ' + (r.estado || 'sin estado') + '.');
+    if (r.unit_id !== unit?.id || r.lead_id !== leadId) throw Error('La aprobación de precio es para otra unidad o cliente.');
+    if (Number(unit.price || 0) !== Number(r.precio_lista)) throw Error('La lista cambió desde la aprobación; solicita de nuevo.');
+    return r;
+  }
+  async marcarUsada(id, quote) {
+    await this.store.db.runTransaction(async tx => { const ref = this.sol.doc(String(id)), r = (await tx.get(ref)).data(); if (!r) return; tx.set(ref, { ...r, estado: 'usada', cotizacion: quote, usada: now(), historial: [...(r.historial || []), { at: now(), por: 'Sistema', accion: 'cotizada', nota: quote?.quote_code || '' }] }); });
+  }
+  async avisar(r, tipo) {
+    const envios = [];
+    try {
+      const dir = this.directorio ? await this.directorio() : [];
+      const money = v => 'S/ ' + Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const link = String(this.origin || '').replace(/\/$/, '') + '/?tab=precios';
+      const resumen = `Unidad: ${r.unidad}\nCliente: ${r.cliente} (${r.lead_number || '—'})\nLista: ${money(r.precio_lista)}\nPropuesto: ${money(r.precio_propuesto)} (${r.variacion_pct > 0 ? '+' : ''}${r.variacion_pct} %)\nMotivo: ${r.motivo}`;
+      if (tipo === 'solicitud') for (const g of dir.filter(x => x.role === 'Gerente' && x.email)) envios.push({ para: g.email, asunto: `Aprobación de precio · Unidad ${r.unidad} · ${r.tipo}`, cuerpo: `Hola ${g.name}:\n\n${r.solicitante.nombre} solicita un precio especial.\n\n${resumen}\n\nAprueba, observa o rechaza en Ventas › Estrategia de precios:\n${link}\n\nERP ÖRÖK` });
+      else { const v = dir.find(x => x.name === r.solicitante?.nombre && x.email); if (v) envios.push({ para: v.email, asunto: `Precio ${r.estado} · Unidad ${r.unidad}`, cuerpo: `Hola ${v.name}:\n\nGerencia (${r.decidido_por}) ${r.estado === 'aprobada' ? 'aprobó el precio de ' + money(r.precio_aprobado) + '. Úsalo al cotizar dentro de ' + VIGENCIA_DIAS + ' días; pasará a la separación y la minuta.' : r.estado + ' la solicitud: ' + r.comentario}\n\n${resumen}\n\nERP ÖRÖK` }); }
+      for (const e of envios) { try { if (!this.mailer?.notify) throw Error('Correo del servidor no disponible'); await this.mailer.notify({ to: e.para, subject: e.asunto, text: e.cuerpo }); e.ok = true; } catch (err) { e.ok = false; e.error = text(err.message, 160); } }
+    } catch { /* el aviso por correo nunca bloquea la decisión: queda en la bandeja del ERP */ }
+    return envios.map(e => ({ para: e.para, ok: e.ok, error: e.error }));
+  }
   ref() { return this.col.doc('estrategia'); }
   async config() { return (await this.ref().get()).data() || null; }
   gerente(user) { if (user?.role !== 'Gerente') throw Error('La estrategia de precios es solo para Gerencia.'); }
@@ -271,6 +338,9 @@ class PreciosEstrategia {
     if (name === 'preciosEstrategiaGuardar') return this.guardar(args[0] || {}, user, await readData());
     if (name === 'preciosHistorial') return this.historial(user);
     if (name === 'preciosOfertaFeria') return ofertaFeria((await this.config())?.config, await readData());
+    if (name === 'precioSolicitar') return this.solicitar(args[0] || {}, user, await readData());
+    if (name === 'precioSolicitudes') return this.solicitudes(user, args[0] || {});
+    if (name === 'precioDecidir') return this.decidir(args[0], args[1] || {}, user);
     throw Error('Acción no válida.');
   }
 }
