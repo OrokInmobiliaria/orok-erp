@@ -1,11 +1,11 @@
 ---
 name: erp-orok-entrega
-description: Úsalo al preparar, compilar o entregar una versión del ERP ÖRÖK (CRM L.O.L.A, Evaluador M.O.R.A, Contabilidad C.L.A.R.A, flujos n8n) sin afectar el CRM vivo.
+description: Úsalo al preparar, compilar o entregar una versión del ERP ÖRÖK (CRM L.O.L.A, Evaluador M.O.R.A, Contabilidad D.I.A.V.A, flujos n8n) sin afectar el CRM vivo.
 ---
 
 # Entrega de versiones del ERP ÖRÖK
 
-Procedimiento para cada nueva versión (R33d, R34, R35, …) del paquete del ERP ÖRÖK. Las tres apps son CRM Inmobiliario con L.O.L.A, Evaluador Inmobiliario con M.O.R.A y Contabilidad y Finanzas con C.L.A.R.A.
+Procedimiento para cada nueva versión (R33d, R34, R35, …) del paquete del ERP ÖRÖK. Las tres apps son CRM Inmobiliario con L.O.L.A, Evaluador Inmobiliario con M.O.R.A y Contabilidad y Finanzas con D.I.A.V.A.
 
 ## Principios que nunca se rompen
 

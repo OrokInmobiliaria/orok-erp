@@ -1,12 +1,12 @@
 // R31 · Estructura del menú agrupado. Los íconos se nombran como texto para poder probar el modelo sin React.
 export const MANAGER_ONLY = ['mkHome', 'mkTrends', 'mkForms', 'mkPublish', 'mkKpis', 'comisiones', 'marketing', 'campaigns', 'mkBrand', 'mkVariants', 'mkBudget', 'mkConnections', 'mkBrief', 'finanzas', 'ai', 'settings', 'moraAdmin', 'mora', 'evaluador', 'contabilidad'];
 // R33b · ÖRÖK: CRM inmobiliario (todos los roles), Evaluador Inmobiliario con M.O.R.A (solo Gerencia)
-// R34 · y Contabilidad y Finanzas (ERP) con C.L.A.R.A (solo Gerencia).
+// R34 · y Contabilidad y Finanzas (ERP) con D.I.A.V.A (solo Gerencia).
 export const MODULES = [
   {id: 'evaluador', label: 'Evaluador Inmobiliario', hint: 'Análisis y riesgo con M.O.R.A', home: 'evaluador', managerOnly: true},
   {id: 'marketing', label: 'Marketing', hint: 'Tendencias, contenido, publicación y pauta con G.R.E.T.A', home: 'mkHome', managerOnly: true},
   {id: 'crm', label: 'CRM Inmobiliario', hint: 'Leads y ventas con L.O.L.A', home: 'dashboard'},
-  {id: 'erp', label: 'Contabilidad y Finanzas', hint: 'Logística OC/OS, tesorería y finanzas con C.L.A.R.A', home: 'contabilidad', managerOnly: true},
+  {id: 'erp', label: 'Contabilidad y Finanzas', hint: 'Logística OC/OS, tesorería y finanzas con D.I.A.V.A', home: 'contabilidad', managerOnly: true},
 ];
 export const modulesFor = role => MODULES.filter(m => !m.managerOnly || role === 'Gerente');
 // R42 · Marketing es un módulo propio a cargo de G.R.E.T.A; alimenta al CRM (leads con su origen) sin vivir dentro de él.

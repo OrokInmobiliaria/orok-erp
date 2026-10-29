@@ -109,7 +109,7 @@ const TOOLS = [
     description: 'Salud de la base de datos, Drive y n8n; último resguardo cifrado, si está atrasado, su verificación en Drive y los conteos de control (leads, comentarios, firma del Kanban). Solo Gerencia.',
     schema: obj(), run: async (a, x) => { const e = await x.call('opsEstado'); return { activo: e.activo, atrasado: e.atrasado, salud: e.salud, ultimo: e.ultimo && { at: e.ultimo.at, estado: e.ultimo.estado, bytes: e.ultimo.bytes, avisos: e.ultimo.avisos, conteos: e.ultimo.conteos }, ultima_verificacion: e.ultima_verificacion, llave_configurada: !!e.llave }; } },
   { name: 'preguntar_a_ia_del_erp', title: 'Preguntar a una IA del ERP', ro: true,
-    description: 'Hace una consulta a L.O.L.A (CRM), C.L.A.R.A (contabilidad, solo Gerencia) o G.R.E.T.A (marketing, solo Gerencia), que responden con los datos y reglas de su módulo.',
+    description: 'Hace una consulta a L.O.L.A (CRM), D.I.A.V.A (contabilidad, solo Gerencia) o G.R.E.T.A (marketing, solo Gerencia), que responden con los datos y reglas de su módulo.',
     schema: obj({ ia: { type: 'string', enum: ['lola', 'clara', 'greta'] }, pregunta: { type: 'string', minLength: 2, maxLength: 3000 } }, ['ia', 'pregunta']),
     run: async (a, x) => {
       const q = text(a.pregunta, 3000);
@@ -238,7 +238,7 @@ class McpConnector {
     if (msg.method === 'initialize') {
       const v = PROTOCOLS.includes(msg.params?.protocolVersion) ? msg.params.protocolVersion : PROTOCOLS[0];
       return ok({ protocolVersion: v, capabilities: { tools: { listChanged: false } }, serverInfo: { name: 'erp-orok', title: 'ERP ÖRÖK', version: this.version },
-        instructions: 'ERP ÖRÖK: CRM (L.O.L.A), Marketing (G.R.E.T.A), Evaluador (M.O.R.A) y Contabilidad (C.L.A.R.A). Actúas con los permisos de ' + tok.user_name + ' (' + tok.user_role + '). Responde en español de Perú. Los datos son de clientes reales: no los copies fuera de la conversación sin que te lo pidan. Las aprobaciones de órdenes y campañas se hacen en el ERP; aquí solo se consulta y se proponen borradores.' });
+        instructions: 'ERP ÖRÖK: CRM (L.O.L.A), Marketing (G.R.E.T.A), Evaluador (M.O.R.A) y Contabilidad (D.I.A.V.A). Actúas con los permisos de ' + tok.user_name + ' (' + tok.user_role + '). Responde en español de Perú. Los datos son de clientes reales: no los copies fuera de la conversación sin que te lo pidan. Las aprobaciones de órdenes y campañas se hacen en el ERP; aquí solo se consulta y se proponen borradores.' });
     }
     if (msg.method === 'ping') return ok({});
     if (msg.method === 'tools/list') return ok({ tools: TOOLS.map(t => ({ name: t.name, title: t.title, description: t.description, inputSchema: t.schema, annotations: { title: t.title, readOnlyHint: t.ro, destructiveHint: false, idempotentHint: t.ro, openWorldHint: false } })) });

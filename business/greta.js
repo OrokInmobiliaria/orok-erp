@@ -160,7 +160,7 @@ class Greta {
   }
   // ---------- Pregúntale a G.R.E.T.A ----------
   async ask(input, user, data) {
-    // R42 · el asistente flotante envía la conversación (como L.O.L.A, M.O.R.A y C.L.A.R.A); se aceptan los últimos 10 mensajes.
+    // R42 · el asistente flotante envía la conversación (como L.O.L.A, M.O.R.A y D.I.A.V.A); se aceptan los últimos 10 mensajes.
     const hist = (Array.isArray(input?.mensajes) ? input.mensajes : []).slice(-10).map(m => ({ role: m?.role === 'assistant' ? 'G.R.E.T.A' : 'Gerencia', text: text(m?.text, 2000) })).filter(m => m.text);
     const q = text(input?.pregunta || (hist.length && hist[hist.length - 1].role === 'Gerencia' ? hist.pop().text : ''), 2000); if (!q) throw Error('Escribe tu consulta.');
     const h = await this.hoy(user, data), S = this.skill();

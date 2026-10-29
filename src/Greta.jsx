@@ -223,7 +223,7 @@ export function GretaConfig() {
   </div>;
 }
 
-// ---------- Asistente flotante G.R.E.T.A (igual que L.O.L.A en el CRM, M.O.R.A en el Evaluador y C.L.A.R.A en Contabilidad) ----------
+// ---------- Asistente flotante G.R.E.T.A (igual que L.O.L.A en el CRM, M.O.R.A en el Evaluador y D.I.A.V.A en Contabilidad) ----------
 const PANTALLA = {mkHome: 'Hoy', mkTrends: 'Tendencias', campaigns: 'Estudio', mkForms: 'Formularios', mkPublish: 'Publicar', mkKpis: 'Pauta y KPIs', marketing: 'Ventas atribuidas', mkBrand: 'Marca'};
 const SUGERIR = ['¿Qué publico esta semana para llevar más visitas al showroom?', '¿Qué anuncio conviene revisar y por qué?', 'Dame 3 ganchos para un reel del showroom'];
 const SRG = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null;
