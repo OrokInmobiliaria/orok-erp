@@ -1,13 +1,13 @@
 ---
 name: erp-orok-contabilidad
-description: Úsalo para trabajo contable, logístico o financiero de ÖRÖK (BMG, MZA, MAAS): OC/OS, facturas, vouchers, pagos, bancos, Drive de Contabilidad, proyectos, control de obra, honorarios y cobranzas, y C.L.A.R.A.
+description: Úsalo para trabajo contable, logístico o financiero de ÖRÖK (BMG, MZA, MAAS): OC/OS, facturas, vouchers, pagos, bancos, Drive de Contabilidad, proyectos, control de obra, honorarios y cobranzas, y D.I.A.V.A.
 ---
 
-# ERP ÖRÖK · Contabilidad y Finanzas (C.L.A.R.A)
+# ERP ÖRÖK · Contabilidad y Finanzas (D.I.A.V.A)
 
 Reglas de trabajo del módulo Contabilidad y Finanzas del ERP ÖRÖK. Este archivo es la **fuente única**:
 - el ERP (servidor y pantalla) y el flujo n8n leen de aquí las reglas y los parámetros;
-- C.L.A.R.A usa este texto como sus instrucciones;
+- D.I.A.V.A usa este texto como sus instrucciones;
 - Claude lo usa como skill en cualquier conversación.
 
 Para cambiar una regla se cambia aquí: el texto y el bloque `clara-parametros` del final.
@@ -139,7 +139,7 @@ Subcarpetas:
 - `04 Pagos y vouchers/AAAA-MM`
 - `05 Bancos/AAAA-MM`
 - `06 Reportes/AAAA-MM`
-- `07 Procesados por C.L.A.R.A`
+- `07 Procesados por C.L.A.R.A` (nombre histórico de la carpeta: no se cambia porque lo usa el flujo n8n)
 - `08 Histórico (antes de 2025)/AAAA`
 
 **Nombres estándar** (el mes sale de la fecha del documento, no de la fecha en que se subió):

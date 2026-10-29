@@ -184,7 +184,7 @@ function createServer({config,store,auth,cache,authCache,supportMail,whatsappOpt
     res.writeHead(200,{'Content-Type':type,'Cache-Control':'private, no-store'});if(req.method==='HEAD')return res.end();return res.end(fs.readFileSync(file));
    }
    if(url.pathname==='/contabilidad'||url.pathname.startsWith('/contabilidad/')){
-    // R34 · ERP · Contabilidad y Finanzas con C.L.A.R.A, servido fuera de dist/ y sin caché.
+    // R34 · ERP · Contabilidad y Finanzas con D.I.A.V.A, servido fuera de dist/ y sin caché.
     // R38 · Cualquier usuario con sesión carga la pantalla; los datos los decide el servidor (Gerencia: todo; áreas habilitadas: sus órdenes y aprobaciones).
     await authCache.require(cookie);
     const files={'/contabilidad':'index.html','/contabilidad/':'index.html','/contabilidad/app.js':'app.js','/contabilidad/jspdf.umd.min.js':'jspdf.umd.min.js','/contabilidad/exceljs.min.js':'exceljs.min.js'},name=files[url.pathname];

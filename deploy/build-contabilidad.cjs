@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// R34 · Genera contabilidad/ (index.html + app.js + jspdf + exceljs) a partir de la app C.L.A.R.A.
+// R34 · Genera contabilidad/ (index.html + app.js + jspdf + exceljs) a partir de la app D.I.A.V.A.
 // Uso: node deploy/build-contabilidad.cjs <clara-contabilidad.html> <jspdf.umd.min.js> <exceljs.min.js>
 // La misma app funciona publicada en Claude; dentro de /contabilidad activa el «modo CRM»:
-// datos en PostgreSQL del CRM vía RPC (claraList/claraPut), Drive vía n8n y C.L.A.R.A con el proveedor de L.O.L.A.
+// datos en PostgreSQL del CRM vía RPC (claraList/claraPut), Drive vía n8n y D.I.A.V.A con el proveedor de L.O.L.A.
 'use strict';
 const fs = require('node:fs'), path = require('node:path');
 const [src, jspdf, exceljs] = process.argv.slice(2);

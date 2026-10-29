@@ -1,6 +1,6 @@
 ---
 name: erp-orok-n8n
-description: Úsalo para modificar, evaluar o preparar los flujos n8n del ERP ÖRÖK (L.O.L.A, M.O.R.A, C.L.A.R.A) para su conexión final a producción sin perder nodos ni conexiones.
+description: Úsalo para modificar, evaluar o preparar los flujos n8n del ERP ÖRÖK (L.O.L.A, M.O.R.A, D.I.A.V.A) para su conexión final a producción sin perder nodos ni conexiones.
 ---
 
 # n8n del ERP ÖRÖK: modificar, evaluar y preparar la conexión final
@@ -11,7 +11,7 @@ Flujos vigentes en `n8n/` del paquete:
 |---|---|---|---|
 | L.O.L.A (atención y marketing) | `LOLA-ENSAYO-67.6.13-r30-MARKETING-CONEXIONES-INACTIVO.json` | 110 | CRM, PostgreSQL, OpenAI, Gemini, Gmail, Calendar, Sheets |
 | M.O.R.A (Evaluador) | `MORA-ENSAYO-67.6.17-EVALUADOR-CONVERSACIONAL-INACTIVO.json` | 40 | CRM, PostgreSQL, Anthropic |
-| C.L.A.R.A (Drive contable) | `CLARA-ENSAYO-67.6.18-DRIVE-CONTABLE-INACTIVO.json` | 69 | Google Drive, CRM, PostgreSQL, Anthropic, Webhook CRM |
+| D.I.A.V.A (Drive contable) | `CLARA-ENSAYO-67.6.18-DRIVE-CONTABLE-INACTIVO.json` | 69 | Google Drive, CRM, PostgreSQL, Anthropic, Webhook CRM |
 
 Los otros JSON son versiones anteriores: se conservan, pero no se importan.
 
@@ -69,10 +69,10 @@ La auditoría sale con código 2 si hay bloqueos. Estos son los más comunes:
 5. **Probar:** ejecutar una vez cada flujo de forma manual con un caso ficticio:
    - L.O.L.A: un trabajo de prueba sin enviar a clientes;
    - M.O.R.A: una consulta;
-   - C.L.A.R.A: «Inventario de carpetas» y una factura de prueba en 01 Entrada.
+   - D.I.A.V.A: «Inventario de carpetas» y una factura de prueba en 01 Entrada.
 
    Revisar las ejecuciones.
-6. **Activar** uno por uno, en este orden: C.L.A.R.A (solo lectura e inventario primero), M.O.R.A y L.O.L.A. Vigilar las primeras 24 horas de ejecuciones.
+6. **Activar** uno por uno, en este orden: D.I.A.V.A (solo lectura e inventario primero), M.O.R.A y L.O.L.A. Vigilar las primeras 24 horas de ejecuciones.
 7. **Si algo falla:** desactivar el flujo nuevo y reactivar el anterior. Los flujos no borran datos.
 
 ## Al reportar

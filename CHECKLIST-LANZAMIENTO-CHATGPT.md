@@ -4,7 +4,7 @@
 
 ## Cómo usar esta guía con ChatGPT
 
-Copia esta guía completa en ChatGPT y pídele que te acompañe paso a paso. El objetivo es dejar el ERP ÖRÖK R42 (CRM con L.O.L.A + Marketing con G.R.E.T.A + Evaluador M.O.R.A + Contabilidad C.L.A.R.A + n8n) publicado y en operación sin perder datos del CRM vivo.
+Copia esta guía completa en ChatGPT y pídele que te acompañe paso a paso. El objetivo es dejar el ERP ÖRÖK R42 (CRM con L.O.L.A + Marketing con G.R.E.T.A + Evaluador M.O.R.A + Contabilidad D.I.A.V.A + n8n) publicado y en operación sin perder datos del CRM vivo.
 
 Instrucción sugerida para pegar al inicio:
 
@@ -24,15 +24,15 @@ Cómo reportar avance: marca cada casilla al terminarla y anota la hora de Lima 
 
 ## Qué trae el paquete y qué no
 
-El paquete repositorio privado `Orokinmobiliaria/orok-erp` (rama `main`) contiene la versión vigente (R34 a R44, versión 67.6.28-r45, 603/603 pruebas). Los zips anteriores no hacen falta.
+El paquete repositorio privado `Orokinmobiliaria/orok-erp` (rama `main`) contiene la versión vigente (R34 a R44, versión 67.6.29-r46, 604/604 pruebas). Los zips anteriores no hacen falta.
 
 | Parte | Dónde está en el zip | Para qué |
 | --- | --- | --- |
 | CRM compilado | `dist/`, `src/`, `server.cjs`, `application.cjs` | Leads, Kanban y ventas con L.O.L.A |
 | Marketing G.R.E.T.A | `business/greta.js`, `src/Greta.jsx`, `skills/greta-marketing/` | Tendencias, Estudio, Publicar, Pauta y KPIs (solo Gerencia) |
 | Evaluador M.O.R.A | `evaluador/` | Factibilidad y riesgo (solo Gerencia) |
-| Contabilidad y Finanzas C.L.A.R.A | `contabilidad/`, `business/clara*.js` | OC/OS con aprobaciones, pagos, bancos, presupuesto, obra, cobranzas, campanita |
-| Flujos n8n | `n8n/` | L.O.L.A, M.O.R.A y C.L.A.R.A Drive contable (inactivos) |
+| Contabilidad y Finanzas D.I.A.V.A | `contabilidad/`, `business/clara*.js` | OC/OS con aprobaciones, pagos, bancos, presupuesto, obra, cobranzas, campanita |
+| Flujos n8n | `n8n/` | L.O.L.A, M.O.R.A y D.I.A.V.A Drive contable (inactivos) |
 | Skills | `skills/` | Reglas y procedimientos: contabilidad, entrega, n8n, producción, instalación, marketing (G.R.E.T.A) |
 | Base de datos | `migrations/001..003` | Solo agregan tablas; no borran |
 | Publicación | `Dockerfile`, `deploy/` | Respaldo, migraciones, verificación, códigos de instalación |
@@ -80,7 +80,7 @@ Objetivo: probar R41 con una copia real de la base sin tocar el CRM vivo. Detall
 1. Crear en el host un servicio nuevo de ensayo (no el de producción) con el código del zip y `OROK_REHEARSAL=1`.
 2. Darle una base PostgreSQL de ensayo con una **copia** de la base de producción (restaurar el `pg_dump` de la Fase 0).
 3. En la consola del servicio de ensayo: `npm run postgres:check` y luego `npm run migraciones` (solo revisa); si todo sale `ok`, `node deploy/aplicar-migraciones.cjs --aplicar`.
-4. Abrir `https://<dominio de ensayo>/api/health` y confirmar `ok: true` y versión `67.6.28-r45`.
+4. Abrir `https://<dominio de ensayo>/api/health` y confirmar `ok: true` y versión `67.6.29-r46`.
 
 Comprobaciones en el ensayo:
 
@@ -110,7 +110,7 @@ Publicar:
 
 Después (con R41 corriendo):
 
-- [ ] `npm run produccion:despues`: espera `/api/health` con `67.6.28-r45` y compara la base con el respaldo. Debe decir «Actualización verificada: se conservaron leads, comentarios, etapas y orden del Kanban».
+- [ ] `npm run produccion:despues`: espera `/api/health` con `67.6.29-r46` y compara la base con el respaldo. Debe decir «Actualización verificada: se conservaron leads, comentarios, etapas y orden del Kanban».
 - [ ] Si dice VERIFICACIÓN FALLIDA: no usar; ir al plan de vuelta atrás.
 - [ ] Ingresar como Gerencia y revisar 5 leads al azar (etapa, comentarios, posición en el Kanban).
 - [ ] Salir del mantenimiento y vigilar 48 horas el registro `<OROK_PRIVATE_DIR>/deploy/produccion.log`.
@@ -150,7 +150,7 @@ Cadenas que deben verse:
 
 ## Fase 4 · Google Drive y n8n
 
-Objetivo: que n8n guarde y lea los documentos de la carpeta Contabilidad de cada empresa sin reconexiones manuales, y que L.O.L.A, M.O.R.A y C.L.A.R.A queden activos. Detalle en la skill `erp-orok-n8n` y en `LEEME-CLARA-DRIVE-R34.md`.
+Objetivo: que n8n guarde y lea los documentos de la carpeta Contabilidad de cada empresa sin reconexiones manuales, y que L.O.L.A, M.O.R.A y D.I.A.V.A queden activos. Detalle en la skill `erp-orok-n8n` y en `LEEME-CLARA-DRIVE-R34.md`.
 
 Google (una sola vez):
 
@@ -174,18 +174,18 @@ n8n:
 - [ ] Copiar `n8n/produccion-mapa.ejemplo.json` a `n8n/produccion-mapa.json` y completar hosts de producción y nombre/ID de cada credencial (sin claves).
 - [ ] `npm run n8n:preparar` → genera `n8n/produccion/*-PRODUCCION-*-INACTIVO.json` y `AUDITORIA-N8N.md`; los tres deben decir «LISTO para importar (inactivo)».
 - [ ] Importar los tres JSON en n8n como flujos nuevos, sin activar. Desactivar (no borrar) las versiones anteriores.
-- [ ] Copiar la URL del webhook «04» del flujo C.L.A.R.A y su secreto de Header Auth.
+- [ ] Copiar la URL del webhook «04» del flujo D.I.A.V.A y su secreto de Header Auth.
 - [ ] En el servidor del ERP, crear `<OROK_PRIVATE_DIR>/clara.json` (permisos 600) siguiendo `docs/clara.json.ejemplo`: `drive_webhook_url`, `drive_webhook_secret` (24+ caracteres) y `drive_webhook_header`.
-- [ ] Ejecutar a mano «01 Preparar carpetas» y «01b Inventario» del flujo C.L.A.R.A; revisar que creó las carpetas 01 a 08 sin borrar nada.
+- [ ] Ejecutar a mano «01 Preparar carpetas» y «01b Inventario» del flujo D.I.A.V.A; revisar que creó las carpetas 01 a 08 sin borrar nada.
 - [ ] Probar: subir una factura PDF de prueba a «01 Entrada» de BMG y ver que aparece en Contabilidad › Bandeja de Drive.
-- [ ] Activar en este orden, vigilando 24 horas cada uno: C.L.A.R.A → M.O.R.A → L.O.L.A.
+- [ ] Activar en este orden, vigilando 24 horas cada uno: D.I.A.V.A → M.O.R.A → L.O.L.A.
 
 ## Fase 4b · Marketing con G.R.E.T.A
 
 Objetivo: dejar el módulo Marketing operativo para Gerencia. Detalle en la skill `greta-marketing` y en `CAMBIOS-R42-MARKETING-GRETA-2026-10-28.md`.
 
 - [ ] Entrar como Gerencia → selector superior «Marketing». Ver Hoy, Crear, Publicar, Medir y Marca. En «CRM Inmobiliario» ya no aparece Marketing.
-- [ ] En Marketing aparece el botón flotante «G.R.E.T.A» (como L.O.L.A en el CRM, M.O.R.A en el Evaluador y C.L.A.R.A en Contabilidad): abrirlo, preguntar por escrito o por voz y recibir respuesta.
+- [ ] En Marketing aparece el botón flotante «G.R.E.T.A» (como L.O.L.A en el CRM, M.O.R.A en el Evaluador y D.I.A.V.A en Contabilidad): abrirlo, preguntar por escrito o por voz y recibir respuesta.
 - [ ] Confirmar que L.O.L.A tiene proveedor y clave activos (G.R.E.T.A usa el mismo). Para tendencias con búsqueda web, el proveedor debe ser Claude o Gemini.
 - [ ] Crear › Tendencias › «Actualizar radar»: aparecen tendencias con fuentes. «Crear alternativas» abre la campaña en Estudio con su propuesta.
 - [ ] Marketing › Marca › G.R.E.T.A: proveedor OpenAI, pegar la clave en el campo (no en el chat), activar y guardar. La clave queda en el servidor y la pantalla solo dice «Guardada». Crear la clave en [OpenAI › API keys](https://platform.openai.com/api-keys); la organización puede requerir verificación para `gpt-image-1`.

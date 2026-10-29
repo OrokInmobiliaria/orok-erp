@@ -1,5 +1,5 @@
 'use strict';
-// R35 · Reglas de C.L.A.R.A desde la skill «erp-orok-contabilidad» (fuente única).
+// R35 · Reglas de D.I.A.V.A desde la skill «erp-orok-contabilidad» (fuente única).
 // El ERP, la pantalla, la IA y n8n leen de aquí el texto de instrucciones y el bloque `clara-parametros`.
 // Orden de búsqueda: 1) <privateDir>/skills/erp-orok-contabilidad/SKILL.md (copia editable por Gerencia en el servidor)
 //                    2) skills/erp-orok-contabilidad/SKILL.md del paquete.
