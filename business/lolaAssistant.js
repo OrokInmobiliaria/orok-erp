@@ -110,26 +110,28 @@ ${JSON.stringify(ctx)}`;
   }
 
   // ---------- Proveedores ----------
-  async call(c, key, system, messages) {
-    const model = c.model || PROVIDERS[c.provider].model, max = 700;
+  // R54 · `opts.max` amplía la respuesta (p. ej. JSON de «Dictar o adjuntar») y cada mensaje puede traer imágenes o PDF (`images: [{mime, b64, name}]`).
+  async call(c, key, system, messages, opts = {}) {
+    const model = c.model || PROVIDERS[c.provider].model, max = Math.min(4000, Math.max(200, Number(opts.max) || 700));
+    const imgs = m => Array.isArray(m.images) ? m.images : [];
     const post = async (url, headers, body) => {
       if (new URL(url).hostname !== PROVIDERS[c.provider].host) throw Error('Destino no permitido.');
-      const r = await this.fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body), signal: AbortSignal.timeout(45000) });
+      const r = await this.fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body), signal: AbortSignal.timeout(opts.max ? 90000 : 45000) });
       let j = null; try { j = await r.json(); } catch {}
       if (!r.ok) throw Error(`${PROVIDERS[c.provider].label} respondió ${r.status}: ${redact(j?.error?.message || j?.message || 'sin detalle')}`);
       return j;
     };
     if (c.provider === 'claude') {
-      const j = await post('https://api.anthropic.com/v1/messages', { 'x-api-key': key, 'anthropic-version': '2023-06-01' }, { model, max_tokens: max, system, messages: messages.map(m => ({ role: m.role, content: m.text })) });
+      const j = await post('https://api.anthropic.com/v1/messages', { 'x-api-key': key, 'anthropic-version': '2023-06-01' }, { model, max_tokens: max, system, messages: messages.map(m => ({ role: m.role, content: imgs(m).length ? [...imgs(m).map(i => i.mime === 'application/pdf' ? { type: 'document', source: { type: 'base64', media_type: i.mime, data: i.b64 } } : { type: 'image', source: { type: 'base64', media_type: i.mime, data: i.b64 } }), { type: 'text', text: m.text }] : m.text })) });
       return (j?.content || []).filter(x => x.type === 'text').map(x => x.text).join('').trim();
     }
     if (c.provider === 'openai') {
-      const j = await post('https://api.openai.com/v1/chat/completions', { Authorization: 'Bearer ' + key }, { model, max_completion_tokens: max * 3, messages: [{ role: 'system', content: system }, ...messages.map(m => ({ role: m.role, content: m.text }))] });
+      const j = await post('https://api.openai.com/v1/chat/completions', { Authorization: 'Bearer ' + key }, { model, max_completion_tokens: max * 3, messages: [{ role: 'system', content: system }, ...messages.map(m => ({ role: m.role, content: imgs(m).length ? [{ type: 'text', text: m.text }, ...imgs(m).map(i => i.mime === 'application/pdf' ? { type: 'file', file: { filename: i.name || 'documento.pdf', file_data: 'data:application/pdf;base64,' + i.b64 } } : { type: 'image_url', image_url: { url: 'data:' + i.mime + ';base64,' + i.b64 } })] : m.text }))] });
       return String(j?.choices?.[0]?.message?.content || '').trim();
     }
     const j = await post(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, { 'x-goog-api-key': key }, {
-      systemInstruction: { parts: [{ text: system }] }, contents: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.text }] })),
-      generationConfig: { maxOutputTokens: max * 2, temperature: 0.4 } });
+      systemInstruction: { parts: [{ text: system }] }, contents: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.text }, ...imgs(m).map(i => ({ inline_data: { mime_type: i.mime, data: i.b64 } }))] })),
+      generationConfig: { maxOutputTokens: max * 2, temperature: opts.json ? 0.2 : 0.4 } });
     return (j?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('').trim();
   }
   async count(user, c) {

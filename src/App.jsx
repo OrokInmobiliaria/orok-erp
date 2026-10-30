@@ -321,6 +321,8 @@ function DesktopView({ data }) {
   // R50 · Cambio de proyecto (selector o Mis proyectos): ir al panel con los datos del proyecto elegido; «orok-ir» abre una pestaña.
   useEffect(()=>{const ir=t=>{try{handleTabChange(t);}catch(_){setActiveTab(t);}};const p=()=>ir('dashboard'),g=e=>ir(e.detail||'proyectos');window.addEventListener('orok-proyecto',p);window.addEventListener('orok-ir',g);return()=>{window.removeEventListener('orok-proyecto',p);window.removeEventListener('orok-ir',g);};});
   const appModule = currentUser?.role === 'Gerente' ? moduleOf(activeTab) : 'crm';
+  // R54 · «Dictar o adjuntar»: L.O.L.A en el CRM y G.R.E.T.A en Marketing; el Evaluador (M.O.R.A) y Contabilidad (D.I.A.V.A) traen su propio botón dentro de su pantalla.
+  useEffect(()=>{const m=appModule==='crm'&&!['ordenesErp'].includes(activeTab)?'lola':appModule==='marketing'?'greta':'';if(m)document.body.setAttribute('data-ia-modulo',m);else document.body.removeAttribute('data-ia-modulo');return()=>document.body.removeAttribute('data-ia-modulo');},[appModule,activeTab]);
   useEffect(() => { if (currentUser && currentUser.role !== 'Gerente' && moduleOf(activeTab) !== 'crm') setActiveTab('dashboard'); }, [currentUser?.role, activeTab]);
   const [chatThreads, setChatThreads] = useState([]),[searchOpen,setSearchOpen]=useState(false);
   const chatIndex=React.useMemo(()=>indexByLead(chatThreads),[chatThreads]);
