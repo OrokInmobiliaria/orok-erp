@@ -60,6 +60,20 @@ class WhatsAppGateway{
   const data=await this.api(s,account+'/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
   if(!data.messages?.[0]?.id)throw Error('Meta no devolvió el identificador del envío; comprueba la entrega antes de repetir.');return data.messages[0].id;
  }
+ // R68 · Prueba de conexión con Meta sin mostrar claves: confirma que la llave funciona, que el número responde
+ // y si la app del ERP está suscrita a la cuenta de WhatsApp (para recibir los mensajes).
+ async diagnose(){
+  const s=this.setup();if(!s.accessToken)throw Error('Primero guarda el token de acceso.');if(!/^v\d{2}\.\d+$/.test(s.apiVersion||''))throw Error('Indica la versión de Graph API (por ejemplo v26.0).');
+  if(!s.businessAccountId||!s.phoneNumberIds?.length)throw Error('Indica el WABA ID y el Phone Number ID.');
+  const appId=String(s.appId||'1633244618375190'),phones=[];
+  for(const id of s.phoneNumberIds){const p=await this.api(s,encodeURIComponent(id)+'?fields=display_phone_number,verified_name,quality_rating,status,name_status,platform_type');phones.push({id,numero:p.display_phone_number||'',nombre:p.verified_name||'',calidad:p.quality_rating||'',estado:p.status||'',plataforma:p.platform_type||''});}
+  const sub=await this.api(s,encodeURIComponent(s.businessAccountId)+'/subscribed_apps'),apps=(sub.data||[]).map(a=>({id:String(a.whatsapp_business_api_data?.id||a.id||''),nombre:String(a.whatsapp_business_api_data?.name||a.name||'')}));
+  return {ok:true,phones,apps,app_id:appId,app_suscrita:apps.some(a=>a.id===appId),webhook:'https://erp.orok.com.pe/api/integrations/whatsapp',habilitada:s.enabled===true,verificacion:!!s.appSecret&&!!s.verifyToken,probado:new Date().toISOString()};
+ }
+ async subscribeApp(){
+  const s=this.setup();if(!s.accessToken||!s.businessAccountId||!/^v\d{2}\.\d+$/.test(s.apiVersion||''))throw Error('Primero guarda el token, el WABA ID y la versión.');
+  const r=await this.api(s,encodeURIComponent(s.businessAccountId)+'/subscribed_apps',{method:'POST'});if(r.success!==true)throw Error('Meta no confirmó la suscripción.');return this.diagnose();
+ }
  async approvedRecovery(account){return this.approvedTemplate(account,require('./recoveryTemplate').definition);}
  async approvedTemplate(account,definition){
   const s=this.setup();if(!s.businessAccountId||!s.phoneNumberIds?.includes(account))throw Error('Configura WABA ID y número del negocio.');

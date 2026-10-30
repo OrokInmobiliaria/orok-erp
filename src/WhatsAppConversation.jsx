@@ -8,6 +8,27 @@ import {LolaExperience,LolaPrecios} from './LolaCare';
 const date=value=>{const d=new Date(value);return Number.isFinite(d.getTime())?d.toLocaleString('es-PE',{timeZone:'America/Lima',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';};
 const modes={observer:'Solo registro',manual:'Manual',suggest:'Sugerencias',auto:'Lola automática'};
 const states={received:'Recibido',sent:'Enviado',delivered:'Entregado',read:'Leído',failed:'Fallido',imported:'Importado'};
+// R68 · Prueba de conexión con Meta (no muestra claves).
+function PruebaMeta(){
+ const [r,setR]=useState(null),[busy,setBusy]=useState(''),[err,setErr]=useState('');
+ const run=async(kind)=>{setBusy(kind);setErr('');try{setR(kind==='sub'?await api.subscribeWhatsAppApp():await api.testWhatsAppConnection());}catch(e){setErr(e.message||'No se pudo consultar a Meta.');}finally{setBusy('');}};
+ const ok=v=><b style={{color:v?'#15803d':'#b42318'}}>{v?'✓':'✗'}</b>;
+ return <div className="wa-prueba" style={{marginTop:14,padding:14,border:'1px solid var(--glass-border,#e7dfd8)',borderRadius:14,display:'grid',gap:8}}>
+  <strong>Probar conexión con Meta</strong>
+  <p style={{margin:0,fontSize:13,color:'#57534e'}}>Comprueba con la llave guardada que el número responde y que el ERP está suscrito para recibir los mensajes. No muestra ni envía ninguna clave.</p>
+  <div style={{display:'flex',gap:8,flexWrap:'wrap'}}><button type="button" className="orok-btn orok-btn-primary" disabled={!!busy} onClick={()=>run('test')}>{busy==='test'?'Consultando…':'Probar conexión con Meta'}</button>
+  {r&&!r.app_suscrita&&<button type="button" className="orok-btn" disabled={!!busy} onClick={()=>run('sub')}>{busy==='sub'?'Suscribiendo…':'Suscribir el ERP a la cuenta de WhatsApp'}</button>}</div>
+  {err&&<p role="status" style={{margin:0,color:'#b42318'}}>{err}</p>}
+  {r&&<div style={{fontSize:13,display:'grid',gap:4}}>
+   <span>{ok(true)} La llave funciona.</span>
+   {r.phones.map(p=><span key={p.id}>{ok(p.estado!=='DISCONNECTED')} Número {p.numero} · {p.nombre} · calidad {p.calidad||'—'} · estado {p.estado||'—'}</span>)}
+   <span>{ok(r.app_suscrita)} {r.app_suscrita?'El ERP está suscrito y puede recibir mensajes.':'El ERP aún no está suscrito a la cuenta de WhatsApp.'} Apps suscritas: {r.apps.map(a=>a.nombre||a.id).join(', ')||'ninguna'}.</span>
+   <span>{ok(r.verificacion)} Clave secreta y token de verificación guardados.</span>
+   <span>{ok(r.habilitada)} Conexión {r.habilitada?'habilitada':'sin habilitar (necesaria para recibir mensajes)'}.</span>
+   <span style={{color:'#57534e'}}>Dirección para Meta (webhook): <code>{r.webhook}</code></span>
+  </div>}
+ </div>;
+}
 export function Connection({onSaved}){
  const [form,setForm]=useState(null),[busy,setBusy]=useState(false),[error,setError]=useState('');
  useEffect(()=>{let live=true;api.getWhatsAppSetup().then(s=>{if(live)setForm({businessAccountId:s.business_account_id||'',calendarId:s.calendar_id||'ventas@orok.com.pe',testAdvisorPhone:s.test_advisor_phone||'',advisorPhones:(s.advisor_phones||[]).join(','),enabled:s.enabled,sendingEnabled:s.sending_enabled,automaticEnabled:s.automatic_enabled,agendaEnabled:s.agenda_enabled,newConversationMode:s.new_conversation_mode||'observer',environment:s.environment,apiVersion:s.api_version,phoneNumberIds:s.phone_number_ids.join(','),testRecipients:s.test_recipients.join(','),accessToken:'',appSecret:'',verifyToken:''});}).catch(e=>setError(e.message));return ()=>{live=false;};},[]);
@@ -23,7 +44,7 @@ export function Connection({onSaved}){
  {form.environment==='test'&&<label>Teléfono de avisos al asesor en el ensayo<input value={form.testAdvisorPhone} onChange={e=>field('testAdvisorPhone',e.target.value)} placeholder="51 seguido del número autorizado"/></label>}<label>Celulares de asesores que reciben el aviso «cliente pide asesor» (separados por coma)<input value={form.advisorPhones||''} onChange={e=>field('advisorPhones',e.target.value)} placeholder="51 seguido del número de cada asesor"/></label>
  {[['accessToken','Token de acceso'],['appSecret','App Secret de Meta'],['verifyToken','Token de verificación del webhook']].map(([key,label])=><label key={key}>{label}<input type="password" autoComplete="new-password" value={form[key]} onChange={e=>field(key,e.target.value)}/></label>)}
  {[['enabled','Habilitar conexión'],['sendingEnabled','Permitir envíos desde el CRM'],['automaticEnabled','Permitir activar Lola automática'],['agendaEnabled','Habilitar agenda y gestión de citas con Calendar']].map(([key,label])=><label className="wa-check" key={key}><input type="checkbox" checked={form[key]} onChange={e=>field(key,e.target.checked)}/>{label}</label>)}
- <button className="orok-btn orok-btn-primary" disabled={busy}>{busy?'Guardando…':'Guardar conexión'}</button></form>:<p>Cargando configuración…</p>}<LolaPrecios/><LolaExperience/>{error&&<p role="status">{error}</p>}</div>;
+ <button className="orok-btn orok-btn-primary" disabled={busy}>{busy?'Guardando…':'Guardar conexión'}</button></form>:<p>Cargando configuración…</p>}{form&&<PruebaMeta/>}<LolaPrecios/><LolaExperience/>{error&&<p role="status">{error}</p>}</div>;
 }
 export default function WhatsAppConversation({lead,onClose,user,origin='kanban'}){
  const [chat,setChat]=useState(null),[messages,setMessages]=useState([]),[busy,setBusy]=useState(false),[sending,setSending]=useState(false),[error,setError]=useState(''),[draft,setDraft]=useState(''),[setup,setSetup]=useState(false),[audio,setAudio]=useState(null),[attachment,setAttachment]=useState(null),[recording,setRecording]=useState(false),[audioURL,setAudioURL]=useState(''),[buttons,setButtons]=useState(null),[handoffResolveOpen,setHandoffResolveOpen]=useState(false),[handoffReason,setHandoffReason]=useState('');
