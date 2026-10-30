@@ -107,4 +107,4 @@ test('n8n observer accepts message copies only with the existing private secret'
  }finally{await t.close();}
 });
 
-test('Meta reply context is preserved to bind an internal adviser command to its original alert',()=>{const r=metaEvents({object:'whatsapp_business_account',entry:[{changes:[{field:'messages',value:{metadata:{phone_number_id:'business-1'},messages:[{id:'r',from:'51987208622',timestamp:String(Math.floor(Date.now()/1000)),type:'text',text:{body:'/asesor'},context:{id:'alert-id'}}]}}]}]});assert.equal(r[0].message.reply_to,'alert-id');});
+test('Meta reply context is preserved to bind an internal adviser command to its original alert',()=>{const r=metaEvents({object:'whatsapp_business_account',entry:[{changes:[{field:'messages',value:{metadata:{phone_number_id:'business-1'},messages:[{id:'r',from:'51900000001',timestamp:String(Math.floor(Date.now()/1000)),type:'text',text:{body:'/asesor'},context:{id:'alert-id'}}]}}]}]});assert.equal(r[0].message.reply_to,'alert-id');});

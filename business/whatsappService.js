@@ -51,7 +51,7 @@ class WhatsAppService extends WhatsAppInbox{
  constructor(store,config={},options={}){super(store,options);this.config=config;this.attachmentArchive=new AttachmentArchive(config.privateDir);this.drive=options.drive||new LolaDrive(config);this.gateway=options.gateway||new WhatsAppGateway(config.privateDir);this.jobs=store.ref.collection(this.namespace+'_jobs');this.outbox=store.ref.collection(this.namespace+'_outbox');this.agenda=new WhatsAppAgenda(this);this.recovery=new WhatsAppRecovery(this);this.memory=new ConversationMemory(this);this.followups=new AutomaticFollowup(this);this.alerts=new AdvisorAlerts(this);}
  async ingest(input){
   const probe=this.normalizer(input),routing=require('./advisorRouting'),setup=this.gateway.setup();
-  const officialAdvisor=routing.SALES.phones.includes(probe.phone),testAdvisor=setup.environment==='test'&&setup.testAdvisorPhone===probe.phone;
+  const officialAdvisor=routing.advisorPhones(setup).includes(probe.phone),testAdvisor=setup.environment==='test'&&setup.testAdvisorPhone===probe.phone;
   if(this.channel==='whatsapp'&&probe.direction==='inbound'&&(officialAdvisor||testAdvisor)){
    if(input.message?.reply_to){const receipt=(await this.receipts.doc(hash(probe.account+'\0'+input.message.reply_to)).get()).data();if(receipt?.internal_notification&&receipt.lead_id){if(probe.text.trim()==='/asesor')return this.takeover(receipt.lead_id,'Asesor interno '+probe.phone);return {ok:true,internal_notification:true,reply_disabled:true};}}
    if(officialAdvisor)return {ok:true,internal_notification:true,unresolved_control:true,reply_disabled:true};

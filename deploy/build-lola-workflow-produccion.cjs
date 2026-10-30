@@ -32,6 +32,10 @@ for (const n of w.nodes) {
     n.parameters.options.systemMessage = t;
   }
 }
+// R66 · El número de Gerencia no figura en ningún lado: los avisos van a ventas@orok.com.pe y a los asesores registrados en el ERP.
+for (const n of w.nodes) for (const key of ['content']) if (typeof n.parameters?.[key] === 'string') n.parameters[key] = n.parameters[key].replace(/\+?51 ?987 ?208 ?622/g, 'los celulares de asesores registrados en el ERP');
+for (const n of w.nodes) { const o = n.parameters?.options; if (typeof o?.systemMessage === 'string') o.systemMessage = o.systemMessage.replace('y al único número interno autorizado +51 987208622 (requieren plantilla aprobada)', 'y a los asesores que Gerencia registró en el ERP (por correo; WhatsApp solo con plantilla aprobada)'); }
+must(!JSON.stringify(w).includes('987208622'), 'Quedó el número de Gerencia en el flujo.');
 must(w.nodes.some(n => n.name === MEM), 'No se encontró el paso de PostgreSQL.');
 const ren = x => x === PG ? MEM : x;
 w.connections = Object.fromEntries(Object.entries(w.connections).map(([k, v]) => [ren(k), Object.fromEntries(Object.entries(v).map(([t, outs]) => [t, (outs || []).map(o => (o || []).map(d => ({ ...d, node: ren(d.node) })))]))]));
