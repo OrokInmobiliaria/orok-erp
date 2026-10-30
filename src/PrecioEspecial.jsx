@@ -8,7 +8,7 @@ const ESTADO = {pendiente: ['Pendiente de Gerencia', '#9a3412'], aprobada: ['Apr
 
 export default function PrecioEspecial({unit, leadId, value, onChange, disabled}) {
   const [rows, setRows] = useState([]), [precio, setPrecio] = useState(''), [motivo, setMotivo] = useState(''), [busy, setBusy] = useState(false), [msg, setMsg] = useState(''), [err, setErr] = useState('');
-  const load = () => { if (!unit?.id || !leadId) { setRows([]); return; } db.precioSolicitudes({unit_id: unit.id, lead_id: leadId}).then(setRows).catch(() => setRows([])); };
+  const load = () => { if (!unit?.id || !leadId) { setRows([]); return; } Promise.resolve().then(() => db.precioSolicitudes({unit_id: unit.id, lead_id: leadId})).then(setRows).catch(() => setRows([])); };
   useEffect(load, [unit?.id, leadId]);
   const enviar = async () => {
     setBusy(true); setErr(''); setMsg('');

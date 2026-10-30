@@ -19,7 +19,7 @@ async function leerExcel(file) {
   await wb.xlsx.load(await file.arrayBuffer());
   const cf = wb.worksheets.find(w => /cuadro\s*final/i.test(w.name)), rs = wb.worksheets.find(w => /resumen/i.test(w.name));
   if (!cf) throw Error('El Excel no tiene la hoja «Cuadro final» con la lista de precios por unidad.');
-  let header = 0; cf.eachRow((row, i) => { if (!header && /unidad/i.test(String(cellValue(row.getCell(1)) || ''))) header = i; });
+  let header = 0; cf.eachRow((row, i) => { if (!header && /^\s*unidad\s*$/i.test(String(cellValue(row.getCell(1)) || '')) && /tipo|piso|[aá]rea/i.test(String(cellValue(row.getCell(2)) || '') + String(cellValue(row.getCell(4)) || ''))) header = i; });
   if (!header) throw Error('No encontré la fila de títulos (Unidad, Tipo, Piso, Área…) en «Cuadro final».');
   const unidades = [];
   for (let i = header + 1; i <= cf.rowCount; i++) {
@@ -122,7 +122,7 @@ function Editor({config, revision, evaluaciones, onSaved}) {
 // Bandeja de Gerencia: solicitudes de precio especial de Ventas (rebajas o alzas), como la aprobación de OC/OS.
 function Solicitudes({onCambio}) {
   const [rows, setRows] = useState(null), [edit, setEdit] = useState({}), [busy, setBusy] = useState(''), [err, setErr] = useState('');
-  const load = () => db.precioSolicitudes({}).then(setRows).catch(e => setErr(e.message));
+  const load = () => Promise.resolve().then(() => db.precioSolicitudes({})).then(setRows).catch(e => setErr(e.message));
   useEffect(() => { load(); }, []);
   const decidir = async (r, decision) => {
     const e = edit[r.id] || {}; setBusy(r.id); setErr('');
@@ -156,7 +156,7 @@ function Solicitudes({onCambio}) {
 export default function EstrategiaPrecios() {
   const [state, setState] = useState({busy: true, data: null, error: ''});
   const [msg, setMsg] = useState(''), [err, setErr] = useState(''), [sel, setSel] = useState(new Set()), [confirm, setConfirm] = useState(false), [busy, setBusy] = useState(false);
-  const load = () => db.preciosEstrategia().then(data => setState({busy: false, data, error: ''})).catch(e => setState({busy: false, data: null, error: e.message}));
+  const load = () => Promise.resolve().then(() => db.preciosEstrategia()).then(data => setState({busy: false, data, error: ''})).catch(e => setState({busy: false, data: null, error: e.message}));
   useEffect(() => { load(); }, []);
   const c = state.data?.calculo;
   const candidatos = useMemo(() => (c?.unidades || []).filter(u => u.precio_sugerido && u.en_erp && u.precio_sugerido !== u.precio_actual), [c]);
