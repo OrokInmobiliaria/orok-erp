@@ -29,7 +29,7 @@ function buildQuery(project,ref){
  return {text:'SELECT path,body FROM lola_unified.documents WHERE '+clauses.join(' AND ')+' ORDER BY '+sort+(o.limit?' LIMIT '+add(o.limit):''),values};
 }
 class PostgresDocuments{
- constructor(pool,{project='infinity224',collection='orok_projects',firebase=null}={}){if(!/^[\w-]{1,100}$/.test(project)||!/^\w+$/.test(collection))throw Error('Proyecto SQL no válido.');this.pool=pool;this.project=project;this.root=collection+'/'+project;this.firebase=firebase;this.lastProjectionError=null;this.lastProjectionAt=null;this.projecting=null;this.onProjection=()=>{};}
+ constructor(pool,{project='infinity224',collection='orok_projects',firebase=null,outbox=true}={}){this.outbox=outbox;if(!/^[\w-]{1,100}$/.test(project)||!/^\w+$/.test(collection))throw Error('Proyecto SQL no válido.');this.pool=pool;this.project=project;this.root=collection+'/'+project;this.firebase=firebase;this.lastProjectionError=null;this.lastProjectionAt=null;this.projecting=null;this.onProjection=()=>{};}
  collection(name){return new Ref(this,safePath(name),true);}
  assertScope(ref){if(ref.db!==this||!(ref.path===this.root||ref.path.startsWith(this.root+'/')))throw Error('Documento fuera del proyecto SQL.');}
  async get(ref,client=this.pool){this.assertScope(ref);const q=buildQuery(this.project,ref),{rows}=await client.query(q.text,q.values);if(!ref._collection)return snapshot(ref,rows[0]?.body);const docs=rows.map(r=>snapshot(new Ref(this,r.path),r.body));return {docs,size:docs.length,empty:!docs.length};}
@@ -56,7 +56,7 @@ class PostgresDocuments{
     else await client.query('INSERT INTO lola_unified.documents(project_id,path,collection_path,doc_id,body,revision) VALUES($1,$2,$3,$4,$5::jsonb,$6) ON CONFLICT(project_id,path) DO UPDATE SET body=EXCLUDED.body,revision=EXCLUDED.revision,updated_at=clock_timestamp()',[this.project,path,path.slice(0,path.lastIndexOf('/')),w.ref.id,JSON.stringify(body),revision]);
     // Changing only the SQL revision counter is not a commercial update.
     const comparable=v=>{const x={...v};delete x._state_revision;return x;};
-    if(this.isCommercial(path)&&!(path.endsWith('/state/config')&&previous&&body&&JSON.stringify(comparable(previous))===JSON.stringify(comparable(body))))await client.query('INSERT INTO lola_unified.firebase_outbox(project_id,path,revision,deleted) VALUES($1,$2,$3,$4) ON CONFLICT(project_id,path) DO UPDATE SET revision=EXCLUDED.revision,deleted=EXCLUDED.deleted',[this.project,path,revision,body===undefined]);
+    if(this.outbox&&this.isCommercial(path)&&!(path.endsWith('/state/config')&&previous&&body&&JSON.stringify(comparable(previous))===JSON.stringify(comparable(body))))await client.query('INSERT INTO lola_unified.firebase_outbox(project_id,path,revision,deleted) VALUES($1,$2,$3,$4) ON CONFLICT(project_id,path) DO UPDATE SET revision=EXCLUDED.revision,deleted=EXCLUDED.deleted',[this.project,path,revision,body===undefined]);
     observed.set(path,body);
    }
    await client.query('COMMIT');committed=true;if(writes.length)this.onProjection();return result;

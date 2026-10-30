@@ -10,6 +10,17 @@ const {backupScheduler}=require('./backup-scheduler.cjs');
 const {slaScheduler}=require('./business/slaScheduler.cjs');
 const {metaEvents}=require('./business/whatsappInbox');
 const {metaEvents:socialMetaEvents,validSignature,readSetup:readSocialSetup}=require('./business/socialGateway');
+const {ProyectosRegistro,proyectosHub,PROYECTOS_METHODS,COOKIE:PROYECTO_COOKIE}=require('./business/proyectos');
+// R50 · Abre (o crea) el espacio de datos de otro proyecto en la misma base que el principal. PostgreSQL: mismas tablas, otro project_id;
+// sin copia a Firestore (esa copia de respaldo sigue siendo solo del principal). Pruebas en memoria: el mismo almacén Firestore simulado.
+async function abrirProyecto(principal,id,inicial){
+ let store;
+ if(principal.db?.pool){const {PostgresDocuments}=require('./postgres-documents.cjs'),{attachWatch}=require('./postgres-project.cjs');const db=new PostgresDocuments(principal.db.pool,{project:id,firebase:null,outbox:false});attachWatch(db);store=new FirestoreProject(db,{project:id});store.persistence='postgresql';store.close=async()=>{};}
+ else store=new FirestoreProject(principal.db,{project:id});
+ store.projectId=id;
+ if(inicial)await store.initialize({...inicial,_postgres_migration_complete:true,_proyecto_creado:new Date().toISOString()});
+ return store;
+}
 function whatsappConfig(config){
  try{return JSON.parse(fs.readFileSync(path.join(config.privateDir,'whatsapp-inbox.json'),'utf8'));}catch{return {};}
 }
@@ -27,9 +38,18 @@ function validSecret(expected,provided){
  return a.length===b.length&&crypto.timingSafeEqual(a,b);
 }
 function createServer({config,store,auth,cache,authCache,supportMail,whatsappOptions={},socialOptions={},creativeOptions={}}){
- const backups=config.privateDir?backupScheduler({store,privateDir:config.privateDir}):{run:async()=>({skipped:true}),start(){},stop(){}};
- const sla=slaScheduler({store});
- const syncer=sheetSync({store,cache,onNewLeads:({added,source})=>backups.run({reason:source+' · '+added+' lead(s) nuevo(s)'})}),app=application({store,auth,cache,authCache,config,syncer,backups,sla,supportMail,whatsappOptions,socialOptions,creativeOptions}),hits=new Map();
+ // R50 · Una aplicación por proyecto (mismos usuarios). El principal se arma como siempre; los demás al primer uso.
+ const contexto=(st,ca,id)=>{
+  const dir=id&&config.privateDir?path.join(config.privateDir,'proyectos',id):config.privateDir;
+  const backups=dir?backupScheduler({store:st,privateDir:dir}):{run:async()=>({skipped:true}),start(){},stop(){}};
+  const sla=slaScheduler({store:st});
+  const syncer=sheetSync({store:st,cache:ca,onNewLeads:({added,source})=>backups.run({reason:source+' · '+added+' lead(s) nuevo(s)'})});
+  const app=application({store:st,auth,cache:ca,authCache,config,syncer,backups,sla,supportMail,whatsappOptions,socialOptions,creativeOptions});
+  return {id:id||config.project,store:st,cache:ca,app,backups,sla,syncer};
+ };
+ const principal=contexto(store,cache,null),{backups,sla,syncer,app}=principal,hits=new Map();
+ let escuchando=false;
+ const proyectos=proyectosHub({principal,registro:new ProyectosRegistro(store,{principalId:config.project||'infinity224',principalNombre:'Infinity 224'}),abrir:(id,inicial)=>abrirProyecto(store,id,inicial),contexto,onNuevo:c=>{if(escuchando){c.syncer.start();c.sla.start();}}});
  const server=http.createServer(async(req,res)=>{
   const json=(status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
   res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','SAMEORIGIN');
@@ -84,7 +104,7 @@ function createServer({config,store,auth,cache,authCache,supportMail,whatsappOpt
     // opening the CRM store so a connection test cannot create, move or annotate
     // a lead and cannot be delayed by a Firestore transaction.
     if(payload?.action==='connection_check')return json(200,{value:{ok:true,connection:true,version:require('./package.json').version,writes:0}});
-    return json(200,{value:await app.ingestLola(payload)});
+    return json(200,{value:await (payload?.project?(await proyectos.porNombre(payload.project)).app:app).ingestLola(payload)});
    }
    // R44 · Conector del ERP para Claude (MCP remoto + OAuth 2.1 con PKCE). Apagado hasta que Gerencia lo activa.
    if(url.pathname.startsWith('/.well-known/oauth-')||url.pathname==='/mcp'||url.pathname.startsWith('/mcp/')){
@@ -123,6 +143,7 @@ function createServer({config,store,auth,cache,authCache,supportMail,whatsappOpt
    }
    if(url.pathname.startsWith('/api/')){
     if(req.method!=='POST'||req.headers.origin!==config.origin||req.headers['x-orok-request']!=='1')return json(403,{error:'Solicitud no autorizada.'});
+    const ctx=await proyectos.resolver(req.headers.cookie),papp=ctx.app;
     const key=req.socket.remoteAddress+':'+(url.pathname.includes('auth.')?'auth':'rpc'),now=Date.now();let rate=hits.get(key);if(!rate||rate.until<now){rate={count:0,until:now+60000};hits.set(key,rate);}if(++rate.count>(key.endsWith('auth')?120:3000))return json(429,{error:'Demasiadas solicitudes. Espera un minuto.'});if(hits.size>10000)for(const [k,v]of hits)if(v.until<now)hits.delete(k);
     // R36 · Registro del ERP instalado (PC/Mac/celular): código de instalación que solo existe en el servidor.
     const deviceCookie=String(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith(app.enrollment.cookieName()+'='))?.slice(app.enrollment.cookieName().length+1)||'';
@@ -137,40 +158,47 @@ function createServer({config,store,auth,cache,authCache,supportMail,whatsappOpt
     if(url.pathname==='/api/creative-media'){
      const user=await authCache.require(cookie);if(user.role!=='Gerente')return json(403,{error:'Requiere Gerencia.'});
      const campaign=String(req.headers['x-campaign-id']||''),input={request_id:String(req.headers['x-request-id']||''),filename:decodeURIComponent(String(req.headers['x-file-name']||'')),label:decodeURIComponent(String(req.headers['x-media-label']||'')),approved:req.headers['x-media-approved']==='1',export:req.headers['x-media-export']==='1',revision:Number(req.headers['x-campaign-revision']),mime:String(req.headers['content-type']||'').split(';')[0]};
-     return json(200,{value:await app.creative.addMedia(campaign,input,await body(req,40*1024*1024),user.name)});
+     return json(200,{value:await papp.creative.addMedia(campaign,input,await body(req,40*1024*1024),user.name)});
     }
     if(url.pathname==='/api/whatsapp-attachment'){
      const user=await authCache.require(cookie),leadId=String(req.headers['x-lead-id']||''),requestId=String(req.headers['x-request-id']||''),mime=String(req.headers['content-type']||'').split(';')[0],filename=decodeURIComponent(String(req.headers['x-file-name']||'')),text=decodeURIComponent(String(req.headers['x-file-caption']||''));
-     return json(200,{value:await app.whatsapp.send(leadId,{request_id:requestId,text},user.name,{attachment:{bytes:await body(req,16*1024*1024),mime,filename}})});
+     return json(200,{value:await papp.whatsapp.send(leadId,{request_id:requestId,text},user.name,{attachment:{bytes:await body(req,16*1024*1024),mime,filename}})});
     }
     if(url.pathname==='/api/whatsapp-audio'){
      const user=await authCache.require(cookie),leadId=String(req.headers['x-lead-id']||''),requestId=String(req.headers['x-request-id']||''),mime=require('./business/whatsappGateway').audioMime(req.headers['content-type']);
      if(!['audio/aac','audio/amr','audio/mpeg','audio/mp4','audio/ogg','audio/webm'].includes(mime))return json(415,{error:'Formato de audio no compatible.'});
-     return json(200,{value:await app.whatsapp.send(leadId,{request_id:requestId},user.name,{audio:{bytes:await body(req,16*1024*1024),mime}})});
+     return json(200,{value:await papp.whatsapp.send(leadId,{request_id:requestId},user.name,{audio:{bytes:await body(req,16*1024*1024),mime}})});
     }
-    if(url.pathname==='/api/upload'){await authCache.require(cookie,true);const name=decodeURIComponent(String(req.headers['x-file-name']||''));const value=await app.library.add(name,await body(req,100*1024*1024));return json(200,{value});}
+    if(url.pathname==='/api/upload'){await authCache.require(cookie,true);const name=decodeURIComponent(String(req.headers['x-file-name']||''));const value=await papp.library.add(name,await body(req,100*1024*1024));return json(200,{value});}
     if(url.pathname==='/api/separation-document'){
      const input={separationId:decodeURIComponent(String(req.headers['x-separation-id']||'')),kind:decodeURIComponent(String(req.headers['x-document-kind']||'')),fileName:decodeURIComponent(String(req.headers['x-file-name']||'')),mimeType:String(req.headers['content-type']||'').split(';')[0].trim()};
-     return json(200,{value:await app.uploadSeparationDocument(input,await body(req,15*1024*1024),cookie)});
+     return json(200,{value:await papp.uploadSeparationDocument(input,await body(req,15*1024*1024),cookie)});
     }
     if(!url.pathname.startsWith('/api/rpc/'))return json(404,{error:'Ruta no disponible.'});
     if(!String(req.headers['content-type']).startsWith('application/json'))return json(415,{error:'Formato no válido.'});
     const payload=JSON.parse((await body(req,8*1024*1024)).toString('utf8'));if(!Array.isArray(payload.args))throw Error('Argumentos no válidos.');
-    const result=await app.rpc(url.pathname.slice('/api/rpc/'.length),payload.args,cookie);
+    const method=url.pathname.slice('/api/rpc/'.length),pname=method.split('.')[1];
+    // R50 · Proyectos: listar, crear, elegir (cookie del navegador) y cambiar de etapa. Lo demás va a la aplicación del proyecto elegido.
+    if(method.startsWith('db.')&&PROYECTOS_METHODS.includes(pname)){
+     const user=await authCache.require(cookie),out=await proyectos.rpc(pname,payload.args,user,req.headers.cookie);
+     if(out.usar)res.setHeader('Set-Cookie',PROYECTO_COOKIE+'='+encodeURIComponent(out.usar)+'; Path=/; HttpOnly; SameSite=Strict; Max-Age='+(365*86400)+(config.testing?'':'; Secure'));
+     return json(200,{value:out.value??null});
+    }
+    const result=await papp.rpc(method,payload.args,cookie);
     if('cookie'in result)res.setHeader('Set-Cookie',config.cookieName+'='+result.cookie+'; Path=/; HttpOnly; SameSite=Strict; Max-Age='+(result.cookie?43200:0)+(config.testing?'':'; Secure'));
     return json(200,{value:result.value??null});
    }
    if(!['GET','HEAD'].includes(req.method))return json(405,{error:'Método no disponible.'});
    if(url.pathname.startsWith('/campaign-media/')){
     const user=await authCache.require(cookie);if(user.role!=='Gerente')return json(403,{error:'Requiere Gerencia.'});
-    const token=url.pathname.slice('/campaign-media/'.length),media=await app.creative.mediaFile(token),size=fs.statSync(media.path).size;
+    const token=url.pathname.slice('/campaign-media/'.length),media=await (await proyectos.resolver(req.headers.cookie)).app.creative.mediaFile(token),size=fs.statSync(media.path).size;
     const headers={'Content-Type':media.mime,'Cache-Control':'private, no-store','Accept-Ranges':'bytes','Content-Disposition':url.searchParams.has('download')?'attachment; filename="Recurso-'+token+'"':'inline'};
     if(req.headers.range){const m=/^bytes=(\d+)-(\d*)$/.exec(String(req.headers.range));const start=m?Number(m[1]):NaN,end=m&&m[2]?Math.min(Number(m[2]),size-1):size-1;if(!Number.isSafeInteger(start)||start<0||start>=size||!Number.isSafeInteger(end)||end<start){res.writeHead(416,{'Content-Range':'bytes */'+size});return res.end();}res.writeHead(206,{...headers,'Content-Length':end-start+1,'Content-Range':`bytes ${start}-${end}/${size}`});if(req.method==='HEAD')return res.end();return fs.createReadStream(media.path,{start,end}).on('error',()=>res.destroy()).pipe(res);}
     res.writeHead(200,{...headers,'Content-Length':size});if(req.method==='HEAD')return res.end();return fs.createReadStream(media.path).on('error',()=>res.destroy()).pipe(res);
    }
    if(url.pathname.startsWith('/whatsapp-media/')){
     await authCache.require(cookie);const parts=url.pathname.split('/');if(parts.length!==4)return json(400,{error:'Archivo no válido.'});
-    const media=await app.whatsapp.media(decodeURIComponent(parts[2]),parts[3],await cache.read());
+    const pctx=await proyectos.resolver(req.headers.cookie),media=await pctx.app.whatsapp.media(decodeURIComponent(parts[2]),parts[3],await pctx.cache.read());
     if(!/^(audio\/(aac|amr|mpeg|mp4|ogg)|image\/(jpeg|png|webp)|video\/mp4|application\/pdf)$/.test(media.mime))return json(415,{error:'Este adjunto no se puede abrir en el panel.'});
     res.writeHead(200,{'Content-Type':media.mime,'Content-Length':media.bytes.length,'Cache-Control':'private, no-store','Content-Disposition':media.mime.startsWith('audio/')?'inline':"attachment; filename*=UTF-8''"+encodeURIComponent(media.filename||'Archivo')});return res.end(req.method==='HEAD'?undefined:media.bytes);
    }
@@ -192,7 +220,7 @@ function createServer({config,store,auth,cache,authCache,supportMail,whatsappOpt
     const file=path.join(__dirname,'contabilidad',name),type=name.endsWith('.html')?'text/html; charset=utf-8':'text/javascript; charset=utf-8';
     res.writeHead(200,{'Content-Type':type,'Cache-Control':'private, no-store'});if(req.method==='HEAD')return res.end();return res.end(fs.readFileSync(file));
    }
-   if(url.pathname.startsWith('/files/')){await authCache.require(cookie);target=app.library.file(url.pathname.slice(7));res.setHeader('Cache-Control','private, no-store');if(url.searchParams.has('download'))res.setHeader('Content-Disposition','attachment; filename="'+(path.extname(target)==='.csv'?'Cotizaciones.csv':'Documento'+path.extname(target))+'"');}
+   if(url.pathname.startsWith('/files/')){await authCache.require(cookie);target=(await proyectos.resolver(req.headers.cookie)).app.library.file(url.pathname.slice(7));res.setHeader('Cache-Control','private, no-store');if(url.searchParams.has('download'))res.setHeader('Content-Disposition','attachment; filename="'+(path.extname(target)==='.csv'?'Cotizaciones.csv':'Documento'+path.extname(target))+'"');}
    else {const dist=path.join(__dirname,'dist'),relative=decodeURIComponent(url.pathname);target=path.resolve(dist,'.'+relative);if(!target.startsWith(dist+path.sep)&&target!==dist)return json(403,{error:'Ruta no válida.'});if(!fs.existsSync(target)||fs.statSync(target).isDirectory()){if(path.extname(relative))return json(404,{error:'Archivo no disponible.'});target=path.join(dist,'index.html');}res.setHeader('Cache-Control',['index.html','sw.js','manifest.webmanifest','version.json'].includes(path.basename(target))?'no-cache':'public,max-age=3600');if(path.basename(target)==='sw.js')res.setHeader('Service-Worker-Allowed','/');}
    if(!fs.existsSync(target))return json(404,{error:'Archivo no disponible.'});const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.pdf':'application/pdf','.csv':'text/csv; charset=utf-8','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.webmanifest':'application/manifest+json; charset=utf-8','.json':'application/json; charset=utf-8'}[path.extname(target)]||'application/octet-stream';res.setHeader('Content-Type',mime);res.setHeader('Content-Length',fs.statSync(target).size);if(req.method==='HEAD')return res.end();fs.createReadStream(target).on('error',()=>res.destroy()).pipe(res);
   }catch(error){if(res.headersSent)return res.destroy();const message=String(error.message||'No se pudo completar la solicitud.');const safe=/credential|private.?key|service.?account|invalid_grant|ENOENT|PERMISSION_DENIED|GOOGLE_APPLICATION/i.test(message)?'No se pudo completar la operación del servidor.':message;json(/Inicia sesión|validación de|contraseña temporal/.test(safe)?401:400,{error:safe});}
@@ -200,9 +228,9 @@ function createServer({config,store,auth,cache,authCache,supportMail,whatsappOpt
  if(!config.testing&&(!config.rehearsal||config.rehearsalAutomation))server.on('listening',()=>{
   // Background work is delayed and lease-protected.  A web-server restart must
   // make the login available immediately, never trigger a full CRM migration.
-  syncer.start();sla.start();app.resguardo?.start(); // R45 · resguardo externo (solo si Gerencia lo activó)
+  escuchando=true;for(const c of proyectos.ctxs.values()){c.syncer.start();c.sla.start();}app.resguardo?.start(); // R45 · resguardo externo (solo si Gerencia lo activó)
  });
- server.on('close',()=>{syncer.stop();sla.stop();backups.stop();app.resguardo?.stop();});
+ server.on('close',()=>{for(const c of proyectos.ctxs.values()){c.syncer.stop();c.sla.stop();c.backups.stop();}app.resguardo?.stop();proyectos.cerrar();});
  return server;
 }
 async function start(){
@@ -226,4 +254,4 @@ async function start(){
 }
 if(require.main===module)start().catch(()=>{console.error('No se pudo iniciar el CRM. Revisa la configuración privada del servidor.');process.exitCode=1;});
 function authProject(config){return config.isolatedR41?'infinity224_r41_ensayo_20261028':config.project;}
-module.exports={createServer,start,body,authProject};
+module.exports={createServer,start,body,authProject,abrirProyecto};

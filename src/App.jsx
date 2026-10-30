@@ -30,6 +30,7 @@ import MoraPanel from './MoraPanel';
 import LolaAssistant from './LolaAssistant';
 import ConexionesIA from './ConexionesIA'; // R44 · conector del ERP para Claude
 import OperacionesLola from './OperacionesLola'; // R45 · L.O.L.A Operaciones
+import Proyectos, {ProyectoSelector} from './Proyectos.jsx';
 import EstrategiaPrecios from './EstrategiaPrecios'; // R48 · Ventas › Estrategia de precios
 import PrecioEspecial from './PrecioEspecial'; // R48 · precio especial con aprobación de Gerencia
 import {modulesFor, moduleOf, MODULES, canonicalTab} from './navModel.mjs';
@@ -316,6 +317,8 @@ function DesktopView({ data }) {
   const quoteRequest=useRef(null);
   const { leads, units, quotes, separations, duplicateDeletionLog, marketingExpenses, settings, currentUser, handleLogout, sessionMinutes, handleLeadStageChange, requestSemaphore, openLifecycle, openWhatsApp, openChat, changePassword } = data;
   const [activeTab, setActiveTab] = useState(()=>{const m=(()=>{try{return new URLSearchParams(location.search).get('modulo')}catch(_){return null}})()||currentUser?.startModule;return currentUser?.role==='Gerente'&&['evaluador','contabilidad'].includes(m)?m:currentUser?.role==='Gerente'&&m==='marketing'?'mkHome':'dashboard';}); // R36 · accesos directos de la app instalada
+  // R50 · Cambio de proyecto (selector o Mis proyectos): ir al panel con los datos del proyecto elegido; «orok-ir» abre una pestaña.
+  useEffect(()=>{const ir=t=>{try{handleTabChange(t);}catch(_){setActiveTab(t);}};const p=()=>ir('dashboard'),g=e=>ir(e.detail||'proyectos');window.addEventListener('orok-proyecto',p);window.addEventListener('orok-ir',g);return()=>{window.removeEventListener('orok-proyecto',p);window.removeEventListener('orok-ir',g);};});
   const appModule = currentUser?.role === 'Gerente' ? moduleOf(activeTab) : 'crm';
   useEffect(() => { if (currentUser && currentUser.role !== 'Gerente' && moduleOf(activeTab) !== 'crm') setActiveTab('dashboard'); }, [currentUser?.role, activeTab]);
   const [chatThreads, setChatThreads] = useState([]),[searchOpen,setSearchOpen]=useState(false);
@@ -977,6 +980,7 @@ function DesktopView({ data }) {
                    ? <div className="module-switch no-print" role="group" aria-label="Módulo de ÖRÖK">{modulesFor(currentUser.role).map(m=><button key={m.id} type="button" title={m.hint} aria-pressed={appModule===m.id} onClick={()=>appModule!==m.id&&handleTabChange(m.home)}>{m.label}</button>)}</div>
                    : <h2 style={{ color: '#57534e', margin: '0', fontSize:'16px', fontWeight:'600' }}>CRM Inmobiliario</h2>}
                  <span style={{fontSize:'10px', background:'#e0f2fe', color:'#0369a1', padding:'2px 8px', borderRadius:'12px', fontWeight:'700', display:'inline-flex', alignItems:'center', gap:'4px', marginTop:'4px'}}><div style={{width:'6px',height:'6px',borderRadius:'50%',background:'#0ea5e9'}}></div> Nube conectada</span>
+                 <ProyectoSelector/>
              </div>
           </div>
           <div className="app-account" style={{textAlign: 'right', display:'flex', flexDirection:'column', alignItems:'flex-end', gap:'8px'}}>
@@ -1302,6 +1306,7 @@ function DesktopView({ data }) {
         {/* RESTORED_V37_TABS_END */}
         {activeTab==='social'&&<SocialInbox leads={leads} openChat={openChat}/>}
         {activeTab === 'weekly' && <WeeklyAnalysis selection={weeklySelection} revision={JSON.stringify([leads,units,marketingExpenses,settings])} onLead={openLifecycle} onBack={()=>setActiveTab('dashboard')} leads={leads} units={units} expenses={marketingExpenses} separations={separations}/>}
+        {activeTab === 'proyectos' && <Proyectos user={currentUser}/>}
         {activeTab === 'dashboard' && (dashboardClassic?<><div style={{textAlign:'right',marginBottom:8}}><button className="orok-btn orok-btn-secondary" onClick={()=>setDashboardClassic(false)}>Volver al panel interactivo</button></div><BusinessDashboard initialFilters={dashboardFilters} onFilters={setDashboardFilters} onMonth={openWeekly} revision={JSON.stringify([leads,units,marketingExpenses,settings])} onLead={openLifecycle}/></>:<PowerDashboard leads={leads} units={units} expenses={marketingExpenses} onClassic={()=>setDashboardClassic(true)}/>)}
         {activeTab === 'help' && <HelpCenter/>}
         {currentUser.role==='Gerente'&&(activeTab==='mora'||activeTab==='moraAdmin')&&<MoraPanel section={activeTab}/>}

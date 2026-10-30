@@ -1,10 +1,10 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {LayoutDashboard, LineChart, KanbanSquare, UserPlus, MessageCircle, FileText, Building2, DollarSign, Megaphone, Sparkles, Palette, GitCompare, PiggyBank, Send, Mail, Wallet, Wrench, Bot, Settings, BookOpen, Home, Briefcase, MoreHorizontal, ChevronDown, Search} from 'lucide-react';
+import {LayoutDashboard, LineChart, KanbanSquare, UserPlus, MessageCircle, FileText, Building2, DollarSign, Megaphone, Sparkles, Palette, GitCompare, PiggyBank, Send, Mail, Wallet, Wrench, Bot, Settings, BookOpen, Home, Briefcase, MoreHorizontal, ChevronDown, Search, LayoutGrid} from 'lucide-react';
 
 // R31 · Menú agrupado (escritorio: barra de cristal con menús; celular: barra inferior + hoja).
 // Solo reorganiza el acceso: cada pestaña conserva su control de permisos original.
 import {navGroups as model} from './navModel.mjs';
-const ICONS = {LayoutDashboard, LineChart, KanbanSquare, UserPlus, MessageCircle, FileText, Building2, DollarSign, Megaphone, Sparkles, Palette, GitCompare, PiggyBank, Send, Mail, Wallet, Wrench, Bot, Settings, BookOpen, Home, Briefcase};
+const ICONS = {LayoutDashboard, LineChart, KanbanSquare, UserPlus, MessageCircle, FileText, Building2, DollarSign, Megaphone, Sparkles, Palette, GitCompare, PiggyBank, Send, Mail, Wallet, Wrench, Bot, Settings, BookOpen, Home, Briefcase, LayoutGrid};
 export const navGroups = (role, module = 'crm') => model(role, module).map(g => ({...g, icon: ICONS[g.icon], items: g.items.map(([id, label, icon, hint]) => [id, label, ICONS[icon], hint])}));
 
 function Item({item, active, onPick}) {

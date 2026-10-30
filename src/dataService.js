@@ -63,6 +63,8 @@ async function refreshWorkspace(){
   return workspaceRequest;
 }
 for(const [kind,{event}] of Object.entries(workspaceSpecs))window.addEventListener(event,()=>void refreshKind(kind));
+// R50 · Al cambiar de proyecto se descarta todo lo cargado y se pide completo al servidor (sin recargar la página: recargar cierra la sesión).
+window.addEventListener('orok-proyecto',()=>{workspaceState={};workspaceRevision=null;kindRequests.clear();void refreshWorkspace();});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshWorkspace();else {clearTimeout(pollTimer);pollTimer=null;}});
 function listen(method,event,cb,onError=message=>console.error(message)) {
   const kind=methodKinds[method];if(!kind)throw Error('Colección del CRM no reconocida.');
