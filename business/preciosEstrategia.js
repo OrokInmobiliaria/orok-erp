@@ -84,15 +84,18 @@ function cocherasOcupadas(data = {}) {
 function limpiarConfig(input = {}) {
   const unidades = (Array.isArray(input.unidades) ? input.unidades : []).map(u => ({
     unidad: unitKey(u.unidad), codigo: text(u.codigo || u.unidad, 40), tipo: text(u.tipo, 60), piso: num(u.piso, -5, 200),
-    area: num(u.area, 1, 100000), precio_base: num(u.precio_base, 1, 1e9), ancla: u.ancla === true || /^s[ií]$/i.test(String(u.ancla || '')), manual: limpiarManual(u.manual),
+    area: num(u.area, 1, 100000), precio_base: num(u.precio_base, 1, 1e9), ancla: u.ancla === true || /^s[ií]$/i.test(String(u.ancla || '')), manual: limpiarManual(u.manual), precio_erp: num(u.precio_erp, 1, 1e9),
   })).filter(u => u.unidad && u.area && u.precio_base);
   if (!unidades.length) throw Error('La estrategia necesita al menos una unidad con área y precio de la Etapa 1.');
   if (new Set(unidades.map(u => u.unidad)).size !== unidades.length) throw Error('Hay unidades repetidas en la estrategia.');
-  const etapas = (Array.isArray(input.etapas) && input.etapas.length ? input.etapas : [{ nombre: 'Etapa 1', alza: 0, umbral: 0 }]).map((e, i) => ({
+  const etIn = Array.isArray(input.etapas) && input.etapas.length ? input.etapas : [{ nombre: 'Etapa 1', alza: 0, umbral: 0 }];
+  // R49 · «avance» (solo con ancla ERP): 0 = precio Etapa 1 (oferta de preventa), 1 = precio ERP congelado; 0.5 = a mitad de camino.
+  const etapas = etIn.map((e, i) => ({
     nombre: text(e.nombre || 'Etapa ' + (i + 1), 40), alza: num(e.alza, -0.5, 2) ?? 0, umbral: i === 0 ? 0 : (num(e.umbral, 0, 1) ?? 1),
+    avance: i === 0 ? 0 : (num(e.avance, 0, 1.5) ?? (etIn.length > 1 ? Math.round(i / (etIn.length - 1) * 1000) / 1000 : 1)),
   }));
   for (let i = 1; i < etapas.length; i++) if (etapas[i].umbral < etapas[i - 1].umbral) throw Error('Los umbrales de las etapas deben ir de menor a mayor.');
-  const cocheras = (Array.isArray(input.cocheras) ? input.cocheras : COCHERAS_DEFECTO).map(c => ({ codigo: text(c.codigo, 10).toUpperCase(), precio_base: num(c.precio_base, 1, 1e8), manual: limpiarManual(c.manual) }))
+  const cocheras = (Array.isArray(input.cocheras) ? input.cocheras : COCHERAS_DEFECTO).map(c => ({ codigo: text(c.codigo, 10).toUpperCase(), precio_base: num(c.precio_base, 1, 1e8), manual: limpiarManual(c.manual), precio_erp: num(c.precio_erp, 1, 1e8) }))
     .filter(c => /^[A-Z0-9-]{1,10}$/.test(c.codigo) && c.precio_base);
   if (new Set(cocheras.map(c => c.codigo)).size !== cocheras.length) throw Error('Hay estacionamientos repetidos en la estrategia.');
   const meta = num(input.meta_recaudacion, 1, 1e11);
@@ -102,7 +105,8 @@ function limpiarConfig(input = {}) {
   return {
     proyecto: text(input.proyecto || 'Proyecto', 120), meta_recaudacion: meta,
     linea_base: num(input.linea_base, 1, 1e11) || meta, objetivo_superar_pct: num(input.objetivo_superar_pct, 0, 1) ?? 0.03,
-    unidades, cocheras, etapas,
+    // R49 · ancla «erp»: la escalera parte de la oferta de preventa (Etapa 1) y sube hasta el precio ERP congelado de cada unidad.
+    ancla: input.ancla === 'erp' ? 'erp' : 'etapa1', unidades, cocheras, etapas,
     feria: {
       activa: f.activa !== false && !!f.fecha_inicio, fecha_inicio: /^\d{4}-\d{2}-\d{2}$/.test(String(f.fecha_inicio || '')) ? f.fecha_inicio : '',
       // Los cupos sirven para CUALQUIER unidad: el comprador elige. Las «ancla» solo son sugeridas para el stand.
@@ -151,11 +155,19 @@ function calcular(cfg, data = {}, hoy = new Date(), mercado = null, cocherasApli
   const items = [...cfg.unidades.map(u => ({ ...u, kind: 'unidad' })),
     ...cocherasDe(cfg).map(c => ({ kind: 'cochera', unidad: 'EST-' + c.codigo, codigo: c.codigo, tipo: 'Estacionamiento', piso: null, area: 0, ancla: false, precio_base: c.precio_base, manual: c.manual || null }))];
   const ventaDe = it => it.kind === 'cochera' ? cochVentas.get(it.codigo) : ventas.get(it.unidad);
+  const erpMode = cfg.ancla === 'erp';
+  // Precio ERP de referencia: el congelado en la estrategia; si falta, el vigente (Inventario o precio aplicado del estacionamiento).
+  const erpDe = it => it.precio_erp || (it.kind === 'cochera' ? Number(cocherasAplicadas?.[it.codigo] ?? it.precio_base) : Number(units.get(it.unidad)?.price || it.precio_base));
+  const brecha = it => Math.max(0, erpDe(it) - it.precio_base);
+  const precioEn = (it, i) => erpMode ? round100(it.precio_base + (cfg.etapas[i].avance ?? 1) * brecha(it)) : round100(it.precio_base * (1 + cfg.etapas[i].alza));
   const listaTotal = items.reduce((a, u) => a + u.precio_base, 0), areaTotal = cfg.unidades.reduce((a, u) => a + u.area, 0);
   let vendidoLista = 0, recaudado = 0, areaVendida = 0;
   const vendidas = [];
   for (const u of items) { const v = ventaDe(u); if (v) { vendidoLista += u.precio_base; recaudado += v.precio || u.precio_base; areaVendida += u.area; vendidas.push({ ...u, ...v, precio: v.precio || u.precio_base }); } }
   const avance = listaTotal ? vendidoLista / listaTotal : 0;
+  // Con ancla ERP, cada etapa equivale a un alza promedio sobre la lista Etapa 1 (para proyectar con la misma escalera de umbrales).
+  const brechaTotal = items.reduce((a, it) => a + brecha(it), 0), erpTotal = items.reduce((a, it) => a + Math.max(erpDe(it), it.precio_base), 0);
+  const etapasEf = cfg.etapas.map(e => erpMode ? { ...e, alza: listaTotal ? (e.avance ?? 1) * brechaTotal / listaTotal : 0 } : e);
   let activa = 0; cfg.etapas.forEach((e, i) => { if (avance >= e.umbral) activa = i; });
   const etapa = cfg.etapas[activa];
 
@@ -176,11 +188,11 @@ function calcular(cfg, data = {}, hoy = new Date(), mercado = null, cocherasApli
   let manualTotal = 0, listaManual = 0, listaAuto = 0, cocherasPend = 0;
   for (const it of items) {
     if (ventaDe(it)) continue;
-    const pe = round100(it.precio_base * (1 + etapa.alza)), m = objetivoManual(it, pe);
+    const pe = precioEn(it, activa), m = objetivoManual(it, pe);
     if (m != null) { manualTotal += m; listaManual += it.precio_base; } else listaAuto += it.precio_base;
     if (it.kind === 'cochera') cocherasPend += m ?? pe;
   }
-  const restante = proyectarRestante(cfg.etapas, listaTotal, vendidoLista);
+  const restante = proyectarRestante(etapasEf, listaTotal, vendidoLista);
   const restanteAuto = listaAuto + listaManual > 0 ? restante.valor * listaAuto / (listaAuto + listaManual) : 0;
   const proyectado = recaudado + manualTotal + restanteAuto - descuentoPendiente;
   const escenario = (nombre, objetivo) => {
@@ -194,18 +206,45 @@ function calcular(cfg, data = {}, hoy = new Date(), mercado = null, cocherasApli
   const comps = mercado?.comps || [], tope = cfg.mercado?.modo === 'tope';
   const unidades = items.map(u => {
     const coch = u.kind === 'cochera', erp = coch ? null : units.get(u.unidad), v = ventaDe(u), ref = coch ? null : referenciaMercado(comps, u);
-    const precioEtapa = round100(u.precio_base * (1 + etapa.alza));
-    let sugerido = v ? null : round100(precioEtapa * (1 + ajusteMeta)), topado = false;
-    if (sugerido && tope && ref?.p75 && sugerido > ref.p75 * u.area) { sugerido = round100(ref.p75 * u.area); topado = true; }
+    const precioEtapa = precioEn(u, activa), erpRef = erpDe(u);
+    // Techo del sugerido (modo «tope», rango de mercado): percentil 75 del estudio de mercado; sin estudio, el precio ERP.
+    // Nunca baja del precio de la etapa vigente: si el mercado está por debajo, se marca para revisión.
+    let sugerido = v ? null : round100(precioEtapa * (1 + ajusteMeta)), topado = '';
+    const techo = !tope ? null : ref?.p75 && u.area ? round100(ref.p75 * u.area) : erpMode ? erpRef : null;
+    if (sugerido && techo && sugerido > techo) { sugerido = Math.max(precioEtapa, techo); topado = ref?.p75 && u.area ? 'mercado' : 'erp'; }
     const manual = v ? null : objetivoManual(u, precioEtapa), objetivo = v ? null : manual ?? sugerido;
     const actual = coch ? Number(cocherasAplicadas?.[u.codigo] ?? u.precio_base) : Number(erp?.price || 0), ratio = objetivo && u.area ? Math.round(objetivo / u.area) : null;
     const posicion = !ref?.mediana || !ratio ? null : ratio > (ref.p75 || ref.mediana) ? 'Sobre el mercado' : ratio < (ref.p25 || ref.mediana) ? 'Bajo el mercado' : 'En rango de mercado';
     return { kind: u.kind, unidad: u.unidad, codigo: u.codigo, tipo: u.tipo, dormitorios: coch ? null : dormDe(u.tipo), piso: u.piso, area: u.area, ancla: u.ancla, precio_base: u.precio_base, en_erp: coch || !!erp,
       manual: v ? null : u.manual || null, origen: v ? null : manual != null ? 'manual' : 'automatico', precio_objetivo: objetivo,
-      mercado: ref ? { criterio: ref.criterio, n: ref.n, mediana_m2: ref.mediana, p25_m2: ref.p25, p75_m2: ref.p75, precio_mediana: ref.mediana ? round100(ref.mediana * u.area) : null } : null, posicion_mercado: posicion, topado_por_mercado: topado,
+      mercado: ref ? { criterio: ref.criterio, n: ref.n, mediana_m2: ref.mediana, p25_m2: ref.p25, p75_m2: ref.p75, precio_mediana: ref.mediana ? round100(ref.mediana * u.area) : null } : null, posicion_mercado: posicion, topado_por_mercado: topado === 'mercado', topado_por_erp: topado === 'erp',
+      precio_erp: erpRef, etapa_vs_erp_pct: erpRef ? pct(precioEtapa / erpRef - 1) : null, techo: techo || null,
+      precios_etapas: cfg.etapas.map((e, i) => precioEn(u, i)),
       precio_actual: actual || null, precio_etapa: precioEtapa, precio_sugerido: sugerido, ratio_sugerido_m2: ratio,
       diferencia_vs_actual: objetivo && actual ? objetivo - actual : null, estado: v ? v.estado : 'Disponible', precio_real: v ? v.precio : null, fecha: v ? String(v.fecha).slice(0, 10) : '' };
   });
+
+  // R49 · Lectura estadística del estudio de mercado (Evaluador): dónde quedan la oferta, el ERP y el sugerido frente a p25 / mediana / p75,
+  // y si el mercado sostiene la meta aun con los precios en el techo.
+  const libres = unidades.filter(u => u.estado === 'Disponible'), conMercado = libres.filter(u => u.mercado?.mediana_m2 && u.area);
+  const m2 = (u, precio) => u.area ? precio / u.area : null, lista = arr => arr.map(u => u.kind === 'cochera' ? 'Est. ' + u.codigo : u.unidad).join(', ');
+  const techoDe = u => u.origen === 'manual' ? u.precio_objetivo : u.mercado?.p75_m2 && u.area ? Math.max(u.precio_etapa, round100(u.mercado.p75_m2 * u.area)) : Math.max(u.precio_etapa, u.precio_erp || 0);
+  const techoTotal = Math.round(recaudado + libres.reduce((a, u) => a + techoDe(u), 0) - descuentoPendiente);
+  const medianaTotal = conMercado.length === libres.filter(u => u.kind === 'unidad').length && conMercado.length ? Math.round(recaudado + libres.reduce((a, u) => a + (u.mercado?.precio_mediana || u.precio_etapa), 0) - descuentoPendiente) : null;
+  const ofertaBajoP25 = conMercado.filter(u => m2(u, u.precios_etapas[0]) < u.mercado.p25_m2), erpSobreP75 = conMercado.filter(u => m2(u, u.precio_erp) > u.mercado.p75_m2);
+  const etapaSobreP75 = conMercado.filter(u => m2(u, u.precio_etapa) > u.mercado.p75_m2);
+  const rec = [];
+  if (!mercado) rec.push('Sin estudio de mercado: el techo del sugerido es el precio ERP. Haz el barrido de proyectos similares en el Evaluador para que el sugerido se ajuste a la estadística por dormitorios y tamaño.');
+  else {
+    if (ofertaBajoP25.length) rec.push(`La oferta de preventa (Etapa 1) queda bajo el percentil 25 del mercado en ${lista(ofertaBajoP25)}: puedes reducir el descuento de preventa sin dejar de ser atractivo.`);
+    if (erpSobreP75.length) rec.push(`El precio ERP está sobre el percentil 75 del mercado en ${lista(erpSobreP75)}: la escalera difícilmente llegará ahí; el sugerido se queda en el techo del mercado.`);
+    if (etapaSobreP75.length) rec.push(`El precio de la etapa vigente ya supera el percentil 75 en ${lista(etapaSobreP75)}: revisa esas unidades (tipología, vista, piso) o dales precio manual.`);
+    if (!ofertaBajoP25.length && !erpSobreP75.length && !etapaSobreP75.length && conMercado.length) rec.push('La escalera completa (oferta de preventa → precio ERP) cae dentro del rango del mercado en todas las unidades con comparables.');
+  }
+  if (techoTotal < cfg.meta_recaudacion) rec.push(`Aun con todo en el techo (${mercado ? 'percentil 75 del mercado' : 'precio ERP'}), se proyecta ${techoTotal.toLocaleString('es-PE')}: faltan ${(cfg.meta_recaudacion - techoTotal).toLocaleString('es-PE')} para la meta. Opciones: menos descuento o menos cupos de feria, subir de etapa antes (umbral menor) o revisar la meta.`);
+  else rec.push(`El techo ${mercado ? 'del mercado' : 'ERP'} sostiene la meta: hasta ${techoTotal.toLocaleString('es-PE')} si todo se vende en el techo.`);
+  const diagnostico = { con_mercado: !!mercado, unidades_con_comparables: conMercado.length, techo_total: techoTotal, mediana_total: medianaTotal, alcanza_meta_con_techo: techoTotal >= cfg.meta_recaudacion,
+    oferta_bajo_p25: ofertaBajoP25.map(u => u.unidad), erp_sobre_p75: erpSobreP75.map(u => u.unidad), etapa_sobre_p75: etapaSobreP75.map(u => u.unidad), recomendaciones: rec };
 
   // Curva: lo esperado por la línea base para las mismas unidades vendidas contra lo realmente recaudado, en orden de venta.
   let accBase = 0, accReal = 0;
@@ -238,7 +277,8 @@ function calcular(cfg, data = {}, hoy = new Date(), mercado = null, cocherasApli
     lista_etapa1: listaTotal, area_total: Math.round(areaTotal * 100) / 100, ratio_lista_m2: areaTotal ? Math.round(listaTotal / areaTotal) : 0,
     unidades_total: cfg.unidades.length, unidades_vendidas: depas.length, cocheras_total: items.length - cfg.unidades.length, cocheras_vendidas: vendidas.length - depas.length, manual_total: Math.round(manualTotal), avance_valor_pct: pct(avance),
     etapa_activa: etapa.nombre, siguiente_etapa: cfg.etapas[activa + 1] ? { nombre: cfg.etapas[activa + 1].nombre, umbral_pct: pct(cfg.etapas[activa + 1].umbral), falta_lista: Math.max(0, Math.round(cfg.etapas[activa + 1].umbral * listaTotal - vendidoLista)) } : null,
-    etapas: cfg.etapas.map(e => ({ ...e, alza_pct: pct(e.alza), umbral_pct: pct(e.umbral) })),
+    ancla: erpMode ? 'erp' : 'etapa1', erp_total: Math.round(erpTotal), diagnostico,
+    etapas: etapasEf.map(e => ({ ...e, alza_pct: pct(e.alza), umbral_pct: pct(e.umbral), vs_erp_pct: erpTotal ? pct((listaTotal * (1 + e.alza)) / erpTotal - 1) : null })),
     recaudado: Math.round(recaudado), restante_proyectado: Math.round(manualTotal + restanteAuto), tramos: restante.tramos.map(t => ({ ...t, lista: Math.round(t.lista), valor: Math.round(t.valor) })),
     proyectado: Math.round(proyectado), brecha_vs_meta: Math.round(proyectado - cfg.meta_recaudacion), brecha_vs_linea_base: Math.round(proyectado - cfg.linea_base),
     escenarios, ajuste_sugerido_pct: pct(ajusteMeta), unidades, curva, feria,
@@ -356,6 +396,14 @@ class PreciosEstrategia {
     this.gerente(user);
     const config = limpiarConfig(input?.config || input);
     const rev = Number(input?.revision || 0);
+    // R49 · Con ancla ERP se congela el precio ERP de hoy en cada unidad o estacionamiento que aún no lo tenga
+    // (así aplicar precios no mueve la referencia). «Tomar precios ERP de hoy» los vuelve a congelar.
+    if (config.ancla === 'erp') {
+      const ap = (await this.config())?.cocheras_precios || {}, porNum = new Map((d?.units || []).map(u => [unitKey(u.unit_number), u]));
+      const refrescar = input?.refrescar_erp === true;
+      for (const u of config.unidades) if (refrescar || !u.precio_erp) u.precio_erp = Number(porNum.get(u.unidad)?.price) || u.precio_erp || u.precio_base;
+      for (const c of config.cocheras) if (refrescar || !c.precio_erp) c.precio_erp = Number(ap[c.codigo] ?? c.precio_base);
+    }
     const out = await this.store.db.runTransaction(async tx => {
       const ref = this.ref(), old = (await tx.get(ref)).data();
       if (old && rev && rev !== old.revision) throw Error('Otra persona cambió la estrategia. Actualiza antes de guardar.');

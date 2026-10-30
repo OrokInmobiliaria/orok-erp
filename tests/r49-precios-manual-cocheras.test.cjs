@@ -77,3 +77,34 @@ test('cableado: cotización sin S/ 56,000 fijos, puente y pantalla',()=>{
  assert.doesNotMatch(main,/Estacionamiento A \(\+ S\/ 56,000\)/);assert.match(main,/preciosCocheras/);
  for(const t of ['Ajuste manual','Precio objetivo','Asignar a marcadas','Volver a automático','Guardar ajustes manuales','Estacionamientos','Agregar estacionamiento'])assert.ok(ui.includes(t),t);
 });
+
+test('escalera hacia el precio ERP: Etapa 1 = oferta, sube por avance hasta el ERP congelado; aplicar no mueve la referencia',async()=>{
+ const erpUnits=()=>U.map((u,i)=>({id:'u'+i,unit_number:u[0].slice(1,4),price:Math.round(u[3]*1.08/100)*100,status:'AVAILABLE'}));
+ const cfg=limpiarConfig({...base,ancla:'erp',cocheras:[],etapas:[{nombre:'Etapa 1',umbral:0},{nombre:'Etapa 2',umbral:.35,avance:.5},{nombre:'Etapa 3',umbral:.7,avance:1}]});
+ assert.equal(cfg.ancla,'erp');assert.deepEqual(cfg.etapas.map(e=>e.avance),[0,.5,1]);
+ const d={units:erpUnits()},r=calcular(cfg,d,hoy),u=r.unidades.find(x=>x.unidad==='101');
+ assert.equal(u.precio_erp,Math.round(378300*1.08/100)*100);assert.deepEqual(u.precios_etapas,[378300,Math.round((378300+(u.precio_erp-378300)/2)/100)*100,u.precio_erp]);
+ assert.ok(r.etapas[0].vs_erp_pct<0&&r.etapas[2].vs_erp_pct===0,JSON.stringify(r.etapas));
+ // Sin estudio de mercado y en modo rango: el techo del sugerido es el precio ERP.
+ const t=calcular({...cfg,meta_recaudacion:9e6,mercado:{modo:'tope'}},d,hoy);assert.ok(t.unidades.every(x=>x.precio_sugerido<=x.precio_erp&&x.topado_por_erp),'techo ERP');
+ assert.equal(t.diagnostico.alcanza_meta_con_techo,false);assert.match(t.diagnostico.recomendaciones.join(' '),/Sin estudio de mercado/);
+ // Guardar congela el ERP de hoy; después de aplicar (Inventario cambia) la referencia se mantiene.
+ const docs=new Map(),col=n=>({doc:id=>({get:async()=>({data:()=>docs.get(n+'/'+id)}),_k:n+'/'+id})});
+ const p=new PreciosEstrategia({ref:{collection:col},db:{runTransaction:async fn=>fn({get:async r=>({data:()=>docs.get(r._k)}),set:(r,v)=>docs.set(r._k,v)})}});p.evaluaciones=async()=>[];
+ await p.guardar({config:{...base,ancla:'erp',cocheras:[]}},{name:'G',role:'Gerente'},d);
+ const congelado=(await p.config()).config.unidades[0].precio_erp;assert.equal(congelado,d.units[0].price);
+ d.units[0].price=111100;await p.guardar({config:(await p.config()).config,revision:(await p.config()).revision},{name:'G',role:'Gerente'},d);
+ assert.equal((await p.config()).config.unidades[0].precio_erp,congelado,'no se reemplaza al guardar');
+ await p.guardar({config:(await p.config()).config,revision:(await p.config()).revision,refrescar_erp:true},{name:'G',role:'Gerente'},d);
+ assert.equal((await p.config()).config.unidades[0].precio_erp,111100,'«Tomar precios ERP de hoy» sí lo actualiza');
+});
+
+test('lectura del mercado: oferta bajo p25, ERP sobre p75 y techo del mercado frente a la meta',()=>{
+ const cfg=limpiarConfig({...base,ancla:'erp',cocheras:[],mercado:{modo:'tope'},unidades:base.unidades.map(u=>({...u,precio_erp:Math.round(u.precio_base*1.3)}))});
+ const mercado={proyecto:'X',comparables:12,comps:[...Array(12)].map((_,i)=>({dormitorios:i%3+1,area:40+i*5,pm2:6800+i*40}))};
+ const r=calcular(cfg,{units:units()},hoy,mercado);
+ assert.equal(r.diagnostico.con_mercado,true);
+ assert.ok(r.diagnostico.erp_sobre_p75.length>0,'ERP +30 % queda sobre el p75');
+ assert.ok(r.unidades.filter(u=>u.kind==='unidad'&&u.mercado).every(u=>!u.precio_sugerido||u.precio_sugerido<=Math.max(u.precio_etapa,Math.round(u.mercado.p75_m2*u.area/100)*100)),'el sugerido no pasa el techo del mercado');
+ assert.ok(r.diagnostico.recomendaciones.some(t=>/percentil 75/.test(t)));
+});
