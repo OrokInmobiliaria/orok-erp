@@ -26,13 +26,40 @@
   }
   // R60 · Si una copia vieja del navegador dejó el botón flotante, se retira (queda solo la acción dentro del panel de la IA).
   function retirarFlotante() { Array.prototype.forEach.call(document.querySelectorAll('.ia-rellenar-boton'), function (b) { b.remove(); }); }
+  // R62 · Íconos junto al chat de cada IA (como prefería Gerencia): 🎤 dicta en la caja del chat y 📎 abre «Dictar o adjuntar»
+  // para llenar la pantalla con lo dictado, imágenes o PDF. En L.O.L.A y G.R.E.T.A el 🎤 del chat ya existe: se agrega solo 📎.
+  var SVG_MIC = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>';
+  var SVG_CLIP = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.5l-8.5 8.5a5 5 0 0 1-7-7L14 5.5a3.5 3.5 0 0 1 5 5L10.5 19a2 2 0 0 1-3-3L15 8.5"></path></svg>';
+  function icono(svg, titulo, fn) {
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'ia-rellenar-accion ia-rellenar-icono no-print'; b.innerHTML = svg; b.title = titulo; b.setAttribute('aria-label', titulo);
+    b.setAttribute('style', 'display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;flex:none;border:1px solid rgba(133,68,42,.35);border-radius:50%;background:rgba(255,255,255,.75);color:#85442A;cursor:pointer;padding:0');
+    b.addEventListener('click', function (e) { e.preventDefault(); ultimoFoco = b; fn(b); }); return b;
+  }
+  var dictadoChat = null;
+  function dictarChat(b) {
+    var caja = document.getElementById('aiIn'), SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (dictadoChat) { dictadoChat.stop(); return; }
+    if (!caja || !SR) { abrir('mic'); return; }
+    var r = new SR(), base = caja.value; r.lang = 'es-PE'; r.continuous = true; r.interimResults = true; dictadoChat = r;
+    b.style.background = '#85442A'; b.style.color = '#fff'; b.title = 'Detener dictado';
+    r.onresult = function (ev) { var t = ''; for (var i = 0; i < ev.results.length; i++) t += ev.results[i][0].transcript; caja.value = (base ? base + ' ' : '') + t; caja.dispatchEvent(new Event('input', { bubbles: true })); };
+    r.onend = r.onerror = function () { dictadoChat = null; b.style.background = 'rgba(255,255,255,.75)'; b.style.color = '#85442A'; b.title = 'Dictar en el chat'; caja.focus(); };
+    try { r.start(); } catch (x) { dictadoChat = null; abrir('mic'); }
+  }
   function inyectar() {
     retirarFlotante();
+    Array.prototype.forEach.call(document.querySelectorAll('.ia-rellenar-accion:not(.ia-rellenar-icono)'), function (b) { b.remove(); });
     if (!modulo()) return;
-    // Paneles del ERP (L.O.L.A y G.R.E.T.A) y de las apps del Evaluador y Contabilidad (M.O.R.A y D.I.A.V.A).
-    Array.prototype.forEach.call(document.querySelectorAll('.lola-panel > .lola-head, #ai > .ai-h'), function (head) {
-      if (head.parentElement.querySelector('.ia-rellenar-accion')) return;
-      head.insertAdjacentElement('afterend', accion());
+    // Evaluador (M.O.R.A) y Contabilidad (D.I.A.V.A): fila bajo la caja del chat, a la izquierda de «Enter envía».
+    var send = document.getElementById('aiSend');
+    if (send) { var fila = (send.parentElement && send.parentElement.parentElement && send.parentElement.parentElement.closest('.row')) || send.parentElement;
+      if (fila && !fila.querySelector('.ia-rellenar-icono')) { var g = document.createElement('span'); g.className = 'ia-rellenar-iconos no-print'; g.setAttribute('style', 'display:inline-flex;gap:6px;align-items:center;margin-right:8px');
+        g.appendChild(icono(SVG_MIC, 'Dictar en el chat', dictarChat)); g.appendChild(icono(SVG_CLIP, 'Adjuntar o dictar para llenar esta pantalla (imágenes o PDF)', function () { abrir('adjuntar'); }));
+        fila.insertBefore(g, fila.firstChild); } }
+    // ERP (L.O.L.A y G.R.E.T.A): 📎 junto al 🎤 del chat.
+    Array.prototype.forEach.call(document.querySelectorAll('.lola-panel .lola-input'), function (f) {
+      if (f.querySelector('.ia-rellenar-icono')) return; var ta = f.querySelector('textarea');
+      f.insertBefore(icono(SVG_CLIP, 'Adjuntar o dictar para llenar esta pantalla (imágenes o PDF)', function () { abrir('adjuntar'); }), ta || f.firstChild);
     });
   }
   function montar() { if (!document.body) return setTimeout(montar, 200); var st = document.createElement('style'); st.textContent = '@media print{.ia-rellenar-accion,.ia-rellenar-dialogo{display:none!important}}.ia-rellenar-accion:hover{background:rgba(133,68,42,.12)!important}.ia-rellenar-accion:focus-visible{outline:2px solid #85442A;outline-offset:2px}'; document.head.appendChild(st); inyectar(); new MutationObserver(inyectar).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-ia-modulo'] }); }
@@ -103,7 +130,7 @@
   var dlg = null;
   function h(tag, attrs, html) { var e = document.createElement(tag); for (var k in attrs || {}) e.setAttribute(k, attrs[k]); if (html != null) e.innerHTML = html; return e; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  function abrir() {
+  function abrir(modo) {
     var m = modulo(); if (!m) return; cerrar();
     var adjuntos = [], escuchando = null;
     dlg = h('div', { class: 'ia-rellenar-dialogo no-print', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'ia-r-t', style: 'position:fixed;inset:0;z-index:2147483001;background:rgba(31,26,23,.45);display:flex;align-items:center;justify-content:center;padding:16px;font:14px system-ui,sans-serif;color:#1F1A17' });
@@ -163,6 +190,8 @@
         cerrar(); aviso('Se aplicaron ' + n + ' cambio(s). Revísalos y guarda como siempre en esta pantalla.');
       };
     }
+    // R62 · Abierto desde los íconos del chat: 🎤 empieza a dictar; 📎 abre el selector de archivos.
+    if (modo === 'mic') $('mic').click(); else if (modo === 'adjuntar') $('archivos').click();
   }
   function cerrar() { if (dlg) { dlg.remove(); dlg = null; } if (ultimoFoco && document.contains(ultimoFoco)) ultimoFoco.focus(); }
   function aviso(t) { var a = h('div', { role: 'status', class: 'no-print', style: 'position:fixed;left:50%;transform:translateX(-50%);bottom:76px;z-index:2147483000;background:#24522F;color:#fff;border-radius:12px;padding:12px 16px;font:600 14px system-ui,sans-serif;max-width:420px' }, esc(t)); document.body.appendChild(a); setTimeout(function () { a.remove(); }, 7000); }
