@@ -154,3 +154,22 @@ label:has(> input.switch){display:inline-flex;align-items:center;min-height:36px
 .project-logo{display:block;max-height:50px;max-width:200px;object-fit:contain;margin-bottom:5px}
 @media print{.orok-wordmark,.orok-logo-text{-webkit-text-fill-color:#85442A;background:none}}
 @media (max-width:640px){.orok-wordmark{font-size:30px}}
+
+/* R51 · Menú lateral por etapas (computadora ≥ 1024 px). */
+.side-nav{display:none}
+@media (min-width:1024px){
+ .has-sidenav{padding-left:256px}
+ .side-nav{display:flex;flex-direction:column;gap:6px;position:fixed;left:0;top:0;bottom:0;width:256px;box-sizing:border-box;overflow-y:auto;z-index:60;padding:18px 12px 14px;background:rgba(255,255,255,.86);border-right:1px solid var(--hair,#e7e0da);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+ .has-sidenav .erp-navigation>.nav-shell,.has-sidenav .module-switch,.has-sidenav .erp-navigation>.appearance-menu{display:none!important}
+ .has-sidenav .erp-navigation{display:none}
+}
+.side-search{display:flex;align-items:center;gap:8px;width:100%;border:1px solid var(--hair,#e7e0da);border-radius:12px;padding:9px 11px;background:#fff;font:inherit;font-size:13px;color:var(--ink-3,#6b625c);cursor:pointer;margin-bottom:6px}
+.side-search span{flex:1;text-align:left}.side-search kbd{font:inherit;font-size:11px;border:1px solid var(--hair,#e7e0da);border-radius:6px;padding:1px 6px}
+.side-sec{display:flex;flex-direction:column;gap:1px;margin-top:6px}
+.side-h{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3,#6b625c);padding:8px 10px 4px}
+.side-item{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;border-radius:10px;padding:8px 10px;font:inherit;font-size:14px;color:var(--ink-1,#3a322d);cursor:pointer;text-align:left;min-height:38px}
+.side-item:hover{background:rgba(120,96,80,.08)}
+.side-item[aria-current="page"]{background:rgba(133,68,42,.13);color:var(--orok-dark,#5e2f1c);font-weight:700}
+.side-item:focus-visible,.side-search:focus-visible{outline:2px solid #85442A;outline-offset:2px}
+.side-foot{margin-top:auto;padding-top:10px;border-top:1px solid var(--hair,#e7e0da)}
+@media print{.has-sidenav{padding-left:0!important}.side-nav{display:none!important}}

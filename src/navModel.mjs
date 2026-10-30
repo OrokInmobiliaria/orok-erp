@@ -71,3 +71,17 @@ export function navGroups(role, module = 'crm') {
     ]},
   ];
 }
+
+// R51 · Menú lateral por etapas del proyecto (computadora). Reúne las pestañas de todos los módulos en el orden
+// en que avanza un proyecto: Proyecto → Evaluar → Vender → Promocionar → Construir y finanzas → Ajustes.
+export function navEtapas(role) {
+  const g = role === 'Gerente';
+  return [
+    {id: 'proyecto', label: 'Proyecto', items: [['proyectos', 'Mis proyectos', 'LayoutGrid'], ['dashboard', 'Panel de control', 'LayoutDashboard'], ['weekly', 'Análisis semanal', 'LineChart']]},
+    ...(g ? [{id: 'evaluar', label: 'Evaluar', items: [['evaluador', 'Evaluación, cabida y mercado', 'Building2'], ['mora', 'Consultas a M.O.R.A', 'Bot'], ['moraAdmin', 'Administración M.O.R.A', 'Settings']]}] : []),
+    {id: 'vender', label: 'Vender', items: [['kanban', 'Leads (Kanban)', 'KanbanSquare'], ['newLead', 'Nuevo lead', 'UserPlus'], ['social', 'Bandeja WhatsApp y redes', 'MessageCircle'], ['inventory', 'Inventario', 'Building2'], ...(g ? [['precios', 'Estrategia de precios', 'LineChart']] : []), ['quotes', 'Cotizaciones', 'FileText'], ...(g ? [['comisiones', 'Comisiones', 'DollarSign']] : [])]},
+    ...(g ? [{id: 'promocionar', label: 'Promocionar', items: [['mkHome', 'Hoy con G.R.E.T.A', 'Home'], ['mkTrends', 'Tendencias', 'LineChart'], ['campaigns', 'Estudio creativo', 'Sparkles'], ['mkForms', 'Formularios', 'FileText'], ['mkPublish', 'Publicar', 'Send'], ['mkKpis', 'Pauta y KPIs', 'PiggyBank'], ['marketing', 'Ventas atribuidas', 'Megaphone'], ['mkBrand', 'Marca', 'Palette']]}] : []),
+    {id: 'construir', label: 'Construir y finanzas', items: g ? [['contabilidad', 'Órdenes, tesorería y finanzas', 'Wallet']] : [['ordenesErp', 'Órdenes OC/OS', 'Wallet']]},
+    {id: 'ajustes', label: 'Ajustes', items: [['integrations', 'Herramientas', 'Wrench'], ...(g ? [['ai', 'IA y automatizaciones', 'Bot'], ['settings', 'Datos del proyecto', 'Settings']] : []), ['help', 'Ayuda', 'BookOpen']]},
+  ];
+}
