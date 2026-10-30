@@ -59,8 +59,45 @@ function Nuevo({empresas, onClose, onCreated}) {
   </div>;
 }
 
+// R58 · Borrar proyecto con doble confirmación: una Gerencia lo solicita (escribiendo el nombre) y OTRA lo confirma;
+// una de las dos debe ser la Gerencia General. El proyecto se archiva: deja de verse, pero sus datos se conservan.
+function Borrar({data, onClose, onDone}) {
+  const candidatos = data.proyectos.filter(p => !p.principal && !p.borrado), pendientes = data.proyectos.filter(p => p.borrado);
+  const [id, setId] = useState(candidatos[0]?.id || ''), [conf, setConf] = useState(''), [motivo, setMotivo] = useState(''), [busy, setBusy] = useState(false), [err, setErr] = useState(''), [ok, setOk] = useState('');
+  const sel = candidatos.find(p => p.id === id), norm = v => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const run = async (fn, msg) => { setBusy(true); setErr(''); setOk(''); try { await fn(); setOk(msg); await onDone(); } catch (x) { setErr(x.message); } finally { setBusy(false); } };
+  const solicitar = e => { e.preventDefault(); run(async () => { await db.proyectoBorrarSolicitar(id, {confirmacion: conf, motivo}); setConf(''); setMotivo(''); }, `Solicitud registrada. Falta la segunda confirmación de otra Gerencia${data.soy_gerencia_general ? '' : ' (debe ser la Gerencia General)'}.`); };
+  const confirmar = p => { if (!window.confirm(`Segunda confirmación: se borrará «${p.nombre}». Dejará de verse en Mis proyectos y en el selector; sus datos quedan archivados (no se eliminan). ¿Continuar?`)) return;
+    run(async () => { await db.proyectoBorrarConfirmar(p.id); if (p.id === data.activo) window.dispatchEvent(new CustomEvent('orok-proyecto', {detail: 'infinity224'})); }, `«${p.nombre}» fue borrado (archivado).`); };
+  const cancelar = p => run(() => db.proyectoBorrarCancelar(p.id), 'Solicitud cancelada.');
+  const lab = {display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, fontWeight: 700};
+  const fecha = v => { try { return new Date(v).toLocaleString('es-PE', {dateStyle: 'medium', timeStyle: 'short'}); } catch { return v; } };
+  return <div style={{position: 'fixed', inset: 0, background: 'rgba(31,26,23,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16}}>
+    <div role="dialog" aria-modal="true" aria-labelledby="bp-t" style={{width: 'min(680px, 100%)', maxHeight: '92vh', overflow: 'auto', background: '#fff', borderRadius: 22, padding: 28, display: 'flex', flexDirection: 'column', gap: 18, color: '#1F1A17'}}>
+      <div><h2 id="bp-t" style={{margin: 0}}>Borrar proyecto</h2><p style={{margin: '6px 0 0', fontSize: 14, color: '#6B625C'}}>Requiere <b>doble confirmación</b>: una Gerencia lo solicita y otra Gerencia lo confirma. Una de las dos debe ser la <b>Gerencia General</b>. El proyecto se archiva: deja de verse, pero sus datos no se eliminan. La solicitud vence en 7 días.</p></div>
+      {pendientes.length > 0 && <div style={{display: 'flex', flexDirection: 'column', gap: 10}}><h3 style={{margin: 0, fontSize: 16}}>Pendientes de segunda confirmación</h3>
+        {pendientes.map(p => <div key={p.id} style={{border: '1px solid #E8C9B8', background: '#FBF5F1', borderRadius: 14, padding: 14, display: 'flex', flexDirection: 'column', gap: 8}}>
+          <div><b>{p.nombre}</b> · solicitado por {p.borrado.por}{p.borrado.gg ? ' (Gerencia General)' : ''} el {fecha(p.borrado.at)}{p.borrado.motivo ? ' · ' + p.borrado.motivo : ''}</div>
+          {!p.borrado.puedo_confirmar && <div style={{fontSize: 13, color: '#6B625C'}}>{p.borrado.mia ? 'Tú hiciste la solicitud: la segunda confirmación debe hacerla otra Gerencia.' : 'La segunda confirmación debe hacerla la Gerencia General.'}</div>}
+          <div style={{display: 'flex', gap: 8, flexWrap: 'wrap'}}>
+            {p.borrado.puedo_confirmar && <button type="button" className="orok-btn" disabled={busy} onClick={() => confirmar(p)} style={{background: '#b91c1c', color: '#fff'}}>Confirmar borrado</button>}
+            <button type="button" className="orok-btn orok-btn-secondary" disabled={busy} onClick={() => cancelar(p)}>Cancelar solicitud</button></div>
+        </div>)}</div>}
+      {candidatos.length > 0 ? <form onSubmit={solicitar} style={{display: 'flex', flexDirection: 'column', gap: 14}}><h3 style={{margin: 0, fontSize: 16}}>Solicitar borrado</h3>
+        <label style={lab}>Proyecto<select className="orok-input" value={id} onChange={e => { setId(e.target.value); setConf(''); }}>{candidatos.map(p => <option key={p.id} value={p.id}>{p.nombre} · {p.etapa_nombre}</option>)}</select></label>
+        <label style={lab}>Escribe el nombre del proyecto para confirmar<input className="orok-input" value={conf} placeholder={sel?.nombre || ''} onChange={e => setConf(e.target.value)} autoComplete="off"/></label>
+        <label style={lab}>Motivo (queda en el historial)<input className="orok-input" value={motivo} maxLength={200} onChange={e => setMotivo(e.target.value)}/></label>
+        <div style={{display: 'flex', justifyContent: 'flex-end'}}><button className="orok-btn" disabled={busy || !sel || norm(conf) !== norm(sel.nombre)} style={{background: '#b91c1c', color: '#fff'}}>{busy ? 'Enviando…' : 'Solicitar borrado'}</button></div>
+      </form> : !pendientes.length && <p style={{margin: 0, color: '#6B625C'}}>No hay proyectos que se puedan borrar. El proyecto principal no se borra.</p>}
+      {err && <p role="alert" style={{color: '#b91c1c', margin: 0}}>{err}</p>}
+      {ok && <p role="status" style={{color: '#24522F', margin: 0}}>{ok}</p>}
+      <div style={{display: 'flex', justifyContent: 'flex-end'}}><button type="button" className="orok-btn orok-btn-secondary" onClick={onClose} disabled={busy}>Cerrar</button></div>
+    </div>
+  </div>;
+}
+
 export default function Proyectos({user}) {
-  const [data, setData] = useState(null), [err, setErr] = useState(''), [filtro, setFiltro] = useState(''), [nuevo, setNuevo] = useState(false), [busy, setBusy] = useState('');
+  const [data, setData] = useState(null), [err, setErr] = useState(''), [filtro, setFiltro] = useState(''), [nuevo, setNuevo] = useState(false), [borrar, setBorrar] = useState(false), [busy, setBusy] = useState('');
   const load = () => Promise.resolve().then(() => db.proyectosListar()).then(setData).catch(e => setErr(e.message));
   useEffect(() => { load(); }, []);
   const lista = useMemo(() => (data?.proyectos || []).filter(p => !filtro || p.etapa === filtro), [data, filtro]);
@@ -76,7 +113,10 @@ export default function Proyectos({user}) {
   return <section style={{display: 'flex', flexDirection: 'column', gap: 20}}>
     <div style={{display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16}}>
       <div><h2 style={{margin: 0, fontSize: 28}}>Mis proyectos</h2><p style={{margin: '6px 0 0', color: '#6B625C', fontSize: 15}}>Cada proyecto es independiente y pueden avanzar varios a la vez. Estás trabajando en <b>{data.proyectos.find(p => p.id === data.activo)?.nombre}</b>.</p></div>
-      {data.puede_crear && <button className="orok-btn orok-btn-primary" onClick={() => setNuevo(true)}>+ Nuevo proyecto</button>}
+      <div style={{display: 'flex', gap: 10, flexWrap: 'wrap'}}>
+        {data.puede_borrar && <button className="orok-btn orok-btn-secondary" onClick={() => setBorrar(true)} style={{color: '#b91c1c', borderColor: '#E8B4B4'}}>Borrar proyecto{data.proyectos.some(p => p.borrado) ? ' (' + data.proyectos.filter(p => p.borrado).length + ' pendiente)' : ''}</button>}
+        {data.puede_crear && <button className="orok-btn orok-btn-primary" onClick={() => setNuevo(true)}>+ Nuevo proyecto</button>}
+      </div>
     </div>
     <div role="group" aria-label="Filtrar por etapa" style={{display: 'flex', flexWrap: 'wrap', gap: 8}}>
       {[['', 'Todos', data.proyectos.length], ...ETAPAS.map(([id, n]) => [id, n, cuenta(id)])].map(([id, n, c]) =>
@@ -90,6 +130,7 @@ export default function Proyectos({user}) {
             <div><div style={{fontSize: 12, color: '#6B625C', fontWeight: 600}}>{[p.empresa, p.distrito].filter(Boolean).join(' · ')}</div><h3 style={{margin: '2px 0 0', fontSize: 22}}>{p.nombre}</h3></div>
             <span style={{padding: '5px 12px', borderRadius: 999, background: COLOR[p.etapa]?.[0], color: COLOR[p.etapa]?.[1], fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap'}}>{activo ? 'Abierto · ' : ''}{p.etapa_nombre}</span>
           </div>
+          {p.borrado && <div role="note" style={{fontSize: 13, background: '#FDECEC', color: '#991b1b', borderRadius: 10, padding: '8px 12px'}}>Borrado solicitado por {p.borrado.por}: falta la segunda confirmación.</div>}
           <Etapas etapa={p.etapa}/>
           <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 12}}>
             {p.etapa === 'evaluacion'
@@ -106,6 +147,7 @@ export default function Proyectos({user}) {
           </div>
         </article>; })}
     </div>
+    {borrar && <Borrar data={data} onClose={() => setBorrar(false)} onDone={load}/>}
     {nuevo && <Nuevo empresas={data.empresas} onClose={() => setNuevo(false)} onCreated={p => { setNuevo(false); window.dispatchEvent(new CustomEvent('orok-proyecto', {detail: p.id})); }}/>}
   </section>;
 }

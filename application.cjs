@@ -527,6 +527,6 @@ function application({store,auth,cache,authCache,config,syncer,historialIA=null,
  // R44 · Conector MCP: usa el mismo despachador rpc() con una sesión breve de la persona que autorizó.
  const mcp=new McpConnector(store,config,{rpc:(m,a,c)=>rpc(m,a,c),issueSession:(id,v)=>auth.issueFor?auth.issueFor(id,v):null,version:require('./package.json').version});
  const resguardo=new Resguardo(store,config,{authSnapshot:auth.snapshot?()=>auth.snapshot():null});
- return {mcp,resguardo,rpc,library,reconcileHistoricalQuotes,uploadSeparationDocument,ingestLola,whatsapp,social,ads,creative,assistant,pipelines,omnichannel,mora,enrollment,projectDrive};
+ return {mcp,resguardo,rpc,library,reconcileHistoricalQuotes,uploadSeparationDocument,ingestLola,whatsapp,social,ads,creative,assistant,pipelines,omnichannel,mora,enrollment,projectDrive,clara};
 }
 module.exports={application,publicSettings};
