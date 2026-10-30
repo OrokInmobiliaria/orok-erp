@@ -7,7 +7,11 @@ const { randomBytes } = require('node:crypto');
 const ETAPAS = ['evaluacion', 'ventas', 'construccion', 'cierre'];
 const ETAPA_NOMBRE = { evaluacion: 'Evaluación', ventas: 'Ventas', construccion: 'Construcción', cierre: 'Cierre' };
 const EMPRESAS = ['BMG', 'MZA', 'MAAS'];
-const METHODS = ['proyectosListar', 'proyectoCrear', 'proyectoUsar', 'proyectoEtapa', 'proyectoEditar'];
+const METHODS = ['proyectosListar', 'proyectoCrear', 'proyectoUsar', 'proyectoEtapa', 'proyectoEditar', 'proyectoBorrarSolicitar', 'proyectoBorrarConfirmar', 'proyectoBorrarCancelar'];
+// R58 · Borrar un proyecto = archivarlo (se oculta; sus datos se conservan, nunca se eliminan). Exige DOBLE confirmación:
+// un Gerente lo solicita escribiendo el nombre y OTRO Gerente lo confirma; uno de los dos debe ser la Gerencia General
+// (cargo «Gerencia General» en Contabilidad › Aprobaciones). La solicitud vence a los 7 días.
+const VENCE_BORRADO_MS = 7 * 86400e3;
 const COOKIE = 'orok_proyecto';
 // R52 · Historial para las IA asistenciales: qué otros proyectos pueden consultar las IA de este proyecto.
 const HISTORIAL = { ninguno: 'Solo este proyecto', empresa: 'Proyectos de la misma empresa', todos: 'Todos los proyectos y empresas' };
@@ -67,6 +71,35 @@ class ProyectosRegistro {
     delete doc.activo;
     await this.store.db.runTransaction(async tx => tx.set(this.col.doc(id), doc));
     return doc;
+  }
+  pendienteBorrado(p, ahora = Date.now()) { const b = p?.borrado; return b && b.estado === 'pendiente' && ahora - Date.parse(b.at) <= VENCE_BORRADO_MS ? b : null; }
+  async guardar(doc) { delete doc.activo; await this.store.db.runTransaction(async tx => tx.set(this.col.doc(doc.id), doc)); return doc; }
+  async borrable(id, user) {
+    if (user?.role !== 'Gerente') throw Error('Borrar un proyecto es solo para Gerencia.');
+    if (!id || id === this.principalId) throw Error('El proyecto principal no se puede borrar.');
+    const p = await this.uno(id); if (!p) throw Error('El proyecto no existe o ya fue borrado.'); return p;
+  }
+  async borrarSolicitar(id, input, user, esGG) {
+    const p = await this.borrable(id, user);
+    if (norm(input?.confirmacion) !== norm(p.nombre)) throw Error('Escribe el nombre exacto del proyecto para confirmar.');
+    if (this.pendienteBorrado(p)) throw Error('Ya hay una solicitud de borrado pendiente: falta la segunda confirmación.');
+    const motivo = text(input?.motivo, 200);
+    const doc = { ...p, borrado: { estado: 'pendiente', por: text(user.name, 80), por_id: String(user.id ?? ''), gg: !!esGG, at: now(), motivo }, historial: [...(p.historial || []), { at: now(), por: user.name, etapa: p.etapa, nota: 'Solicitó borrar el proyecto' + (motivo ? ': ' + motivo : '') }].slice(-50) };
+    return this.guardar(doc);
+  }
+  async borrarConfirmar(id, user, esGG) {
+    const p = await this.borrable(id, user), b = this.pendienteBorrado(p);
+    if (!b) throw Error('No hay una solicitud de borrado vigente para este proyecto.');
+    if (b.por_id && b.por_id === String(user.id ?? '')) throw Error('La segunda confirmación debe hacerla otra Gerencia.');
+    if (!b.gg && !esGG) throw Error('Una de las dos confirmaciones debe ser de la Gerencia General.');
+    const at = now(), doc = { ...p, archivado: true, archivado_at: at, borrado: { ...b, estado: 'confirmado', confirmado_por: text(user.name, 80), confirmado_id: String(user.id ?? ''), confirmado_gg: !!esGG, confirmado_at: at },
+      historial: [...(p.historial || []), { at, por: user.name, etapa: p.etapa, nota: 'Confirmó el borrado (proyecto archivado; datos conservados)' }].slice(-50) };
+    return this.guardar(doc);
+  }
+  async borrarCancelar(id, user) {
+    const p = await this.borrable(id, user); if (!p.borrado) return p;
+    const doc = { ...p, historial: [...(p.historial || []), { at: now(), por: user.name, etapa: p.etapa, nota: 'Canceló la solicitud de borrado' }].slice(-50) }; delete doc.borrado;
+    return this.guardar(doc);
   }
   async editar(id, input, user) {
     this.gerente(user);
@@ -137,7 +170,10 @@ async function historialDe(ctx, p, engine) {
 
 // Conecta el registro con los espacios de datos de cada proyecto. `abrir(id)` crea (o abre) el almacenamiento y
 // `contexto(store, cache, id)` arma la aplicación de ese proyecto. El principal ya viene armado.
-function proyectosHub({ principal, abrir, contexto, registro, onNuevo = () => {} }) {
+function proyectosHub({ principal, abrir, contexto, registro, onNuevo = () => {}, esGerenciaGeneral = null }) {
+  // ¿El usuario tiene el cargo «Gerencia General» en el directorio de Aprobaciones (D.I.A.V.A) del proyecto principal?
+  const esGG = async user => { try { if (esGerenciaGeneral) return !!(await esGerenciaGeneral(user)); const id = String(user?.id ?? ''); if (!id || !principal.app?.clara) return false;
+    return (await principal.app.clara.list('aprobadores')).some(d => d && !d.eliminado && d.activo !== false && d.user_id === id && Array.isArray(d.cargos?.['Gerencia General']) && d.cargos['Gerencia General'].length); } catch { return false; } };
   const ctxs = new Map([[registro.principalId, principal]]), abriendo = new Map();
   async function obtener(id) {
     if (!id || id === registro.principalId) return principal;
@@ -182,12 +218,13 @@ function proyectosHub({ principal, abrir, contexto, registro, onNuevo = () => {}
     async rpc(name, args, user, header) {
       const activo = cookieDe(header) || registro.principalId;
       if (name === 'proyectosListar') {
-        const lista = await registro.todos(), out = [];
+        const lista = await registro.todos(), out = [], gg = await esGG(user), uid = String(user?.id ?? '');
         for (const p of lista) {
           let resumen = null; try { resumen = await resumenDe(await obtener(p.id)); } catch { resumen = null; }
-          out.push({ id: p.id, nombre: p.nombre, empresa: p.empresa, etapa: p.etapa, historial_ia: p.historial_ia || 'ninguno', etapa_nombre: ETAPA_NOMBRE[p.etapa], distrito: p.distrito || '', direccion: p.direccion || '', principal: !!p.principal, creado: p.creado || null, resumen });
+          out.push({ id: p.id, nombre: p.nombre, empresa: p.empresa, etapa: p.etapa, historial_ia: p.historial_ia || 'ninguno', etapa_nombre: ETAPA_NOMBRE[p.etapa], distrito: p.distrito || '', direccion: p.direccion || '', principal: !!p.principal, creado: p.creado || null, resumen,
+            borrado: (b => b ? { por: b.por, gg: b.gg, at: b.at, motivo: b.motivo || '', mia: !!b.por_id && b.por_id === uid, puedo_confirmar: user?.role === 'Gerente' && b.por_id !== uid && (b.gg || gg) } : null)(registro.pendienteBorrado(p)) });
         }
-        return { value: { activo: lista.some(p => p.id === activo) ? activo : registro.principalId, proyectos: out, etapas: ETAPAS.map(id => ({ id, nombre: ETAPA_NOMBRE[id] })), empresas: EMPRESAS, historial_opciones: Object.entries(HISTORIAL).map(([id, nombre]) => ({ id, nombre })), puede_crear: user?.role === 'Gerente' } };
+        return { value: { activo: lista.some(p => p.id === activo) ? activo : registro.principalId, proyectos: out, etapas: ETAPAS.map(id => ({ id, nombre: ETAPA_NOMBRE[id] })), empresas: EMPRESAS, historial_opciones: Object.entries(HISTORIAL).map(([id, nombre]) => ({ id, nombre })), puede_crear: user?.role === 'Gerente', puede_borrar: user?.role === 'Gerente', soy_gerencia_general: gg } };
       }
       if (name === 'proyectoCrear') {
         const doc = await registro.reservar(args[0] || {}, user);
@@ -201,6 +238,13 @@ function proyectosHub({ principal, abrir, contexto, registro, onNuevo = () => {}
         return { value: { ok: true, id: p.id, nombre: p.nombre }, usar: p.id };
       }
       if (name === 'proyectoEtapa') return { value: await registro.etapa(String(args[0] || ''), String(args[1] || ''), user, args[2]) };
+      if (name === 'proyectoBorrarSolicitar') { const p = await registro.borrarSolicitar(String(args[0] || ''), args[1] || {}, user, await esGG(user)); return { value: { ok: true, estado: 'pendiente', nombre: p.nombre, gg: p.borrado.gg } }; }
+      if (name === 'proyectoBorrarConfirmar') {
+        const id = String(args[0] || ''), p = await registro.borrarConfirmar(id, user, await esGG(user)), c = ctxs.get(id);
+        if (c && c !== principal) { ctxs.delete(id); try { (c.cacheBase || c.cache).close(); c.store.close?.(); } catch {} }
+        return { value: { ok: true, estado: 'archivado', nombre: p.nombre }, ...(activo === id ? { usar: registro.principalId } : {}) };
+      }
+      if (name === 'proyectoBorrarCancelar') { await registro.borrarCancelar(String(args[0] || ''), user); return { value: { ok: true } }; }
       if (name === 'proyectoEditar') return { value: await registro.editar(String(args[0] || ''), args[1] || {}, user) };
       throw Error('Acción no válida.');
     },

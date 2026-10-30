@@ -387,11 +387,16 @@ V.datosProyecto=()=>{
    libre incluye el retiro. Todo es editable en % o en m² y se puede agregar piso sobre piso. */
 const CAB_USOS=[['sotano','Sótano / estacionamientos'],['primero','Primer piso'],['tipico','Piso típico'],['azotea','Azotea']];
 function cabPisosDe(p){const m=String(p.uso||'').match(/(\d+)\s*pisos?/i);return m?Math.max(1,Math.min(60,+m[1])):5}
+/* R58 · La municipalidad entrega la altura máxima en pisos o en metros (ya no se usa el coeficiente de edificación).
+   En metros: pisos = 1 + ⌊(altura − altura del primer piso) / altura de entrepiso⌋ (piso a piso, con losa). */
+function cabPisosMax(P){P=P||{};if(P.alturaModo==='metros'&&+P.alturaM>0){const a1=+P.alturaP1>0?+P.alturaP1:3,e=+P.entrepiso>0?+P.entrepiso:2.7;return +P.alturaM<a1?0:Math.max(1,Math.min(60,1+Math.floor((+P.alturaM-a1)/e+1e-9)))}return Math.max(0,Math.min(60,Math.round(+P.pisosMax||0)))}
+function cabAltura(P,n){const a1=+P.alturaP1>0?+P.alturaP1:3,e=+P.entrepiso>0?+P.entrepiso:2.7;return n>0?a1+(n-1)*e:0}
+function cabPisoNum(f){if(f.uso==='primero')return 1;const m=String(f.nivel||'').match(/(\d+)/);return f.uso==='tipico'&&m?+m[1]:null}
 function cabDefault(s,prev){
-  const p=s.p,T=+p.areaTerreno||0,par=Object.assign({libreMin:35,coefMax:0,pisosMax:cabPisosDe(p),azoteaTechable:35,retiro:0,frente:0,fondo:0,eficMeta:85},prev||{}),hu=T*(1-par.libreMin/100),r2=v=>Math.round(v*100)/100,pis=[];
+  const p=s.p,T=+p.areaTerreno||0,par=Object.assign({libreMin:35,alturaModo:'pisos',pisosMax:cabPisosDe(p),alturaM:0,alturaP1:3,entrepiso:2.7,azoteaTechable:35,retiro:0,frente:0,fondo:0,eficMeta:85},prev||{}),hu=T*(1-par.libreMin/100),r2=v=>Math.round(v*100)/100,pis=[];
   if(/s[oó]tano/i.test(p.uso||''))pis.push({nivel:'Sótano 1',uso:'sotano',tech:r2(T),circ:15,muros:5,comun:80,libre:0,libreV:0,und:0,estac:+p.nEstac||0});
   pis.push({nivel:'Piso 1',uso:'primero',tech:r2(hu),circ:15,muros:8,comun:12,libre:r2(T-hu),libreV:0,und:0,estac:0});
-  for(let i=2;i<=par.pisosMax;i++)pis.push({nivel:'Piso '+i,uso:'tipico',tech:r2(hu),circ:12,muros:8,comun:0,libre:0,libreV:0,und:0,estac:0});
+  delete par.coefMax;for(let i=2,n=cabPisosMax(par)||1;i<=n;i++)pis.push({nivel:'Piso '+i,uso:'tipico',tech:r2(hu),circ:12,muros:8,comun:0,libre:0,libreV:0,und:0,estac:0});
   if(/azotea/i.test(p.uso||''))pis.push({nivel:'Azotea',uso:'azotea',tech:r2(hu*par.azoteaTechable/100),circ:12,muros:8,comun:10,libre:r2(hu*(1-par.azoteaTechable/100)),libreV:0,und:0,estac:0});
   (s.units||[]).forEach(u=>{const f=pis.find(x=>x.nivel==='Piso '+u.piso);if(f)f.und++});
   return {param:par,pisos:pis};
@@ -401,7 +406,9 @@ function cabCalc(s){
   const sum=k=>rows.reduce((a,r)=>a+(+r[k]||0),0),sobre=rows.filter(r=>r.uso!=='sotano'),p1=rows.find(r=>r.uso==='primero');
   const t={tech:sum('tech'),circ:sum('circM2'),muros:sum('murosM2'),comun:sum('comunM2'),vend:sum('vend'),libre:sum('libre'),libreV:sum('libreV'),und:sum('und'),estac:sum('estac'),techSobre:sobre.reduce((a,r)=>a+r.tech,0),vendSobre:sobre.reduce((a,r)=>a+r.vend,0)};
   t.coef=T?t.techSobre/T:0;t.efic=t.tech?t.vend/t.tech:0;t.eficSobre=t.techSobre?t.vendSobre/t.techSobre:0;t.libreP1=p1?p1.libre:0;t.libreP1Pct=T&&p1?p1.libre/T:0;t.pisos=rows.filter(r=>r.uso==='primero'||r.uso==='tipico').length;
-  const P=c.param;t.areaMedidas=(+P.frente>0&&+P.fondo>0)?P.frente*P.fondo:0;
+  const P=c.param;t.areaMedidas=(+P.frente>0&&+P.fondo>0)?P.frente*P.fondo:0;t.pisosMax=cabPisosMax(P);t.altura=cabAltura(P,t.pisos);
+  // R58 · Cuadre piso por piso con el cuadro de áreas vendibles (unidades): el tablero alimenta ese cuadro, no lo reemplaza.
+  const us=Array.isArray(s.units)?s.units:[];rows.forEach(r=>{const n=cabPisoNum(r);r.piso=n;const u=n==null?[]:us.filter(x=>+x.piso===n);r.uN=u.length;r.uTech=u.reduce((a,x)=>a+(+x.tech||0),0);r.uLibre=u.reduce((a,x)=>a+(+x.libre||0),0)});
   return {rows,t};
 }
 V.cabida=()=>{
@@ -415,6 +422,7 @@ V.cabida=()=>{
   ${fld('p.comunTechada','Área común techada incl. sótano (m²)',1)}${fld('p.factorLibre','Factor de precio área libre (0–1)')}${fld('p.nEstac','Estacionamientos (und)',1)}${fld('p.precioEstac','Precio por estacionamiento (S/)',1)}</div>
   <p class="note">Los campos resaltados son los insumos de cabida y costo/m². El costo/m² incluye costo directo, gastos generales y utilidad del contratista; el IGV se suma aparte.</p></details>
   ${cabTablero()}
+  ${cabCuadre()}
   <div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">Cuadro de áreas vendibles</h3><button class="btn" data-act="add-unit">+ Agregar unidad</button></div>
   <div class="tw"><table><thead><tr><th>Unidad</th><th>Tipología</th><th>Piso</th><th class="n">Techada m²</th><th class="n">Libre m²</th><th class="n">Equivalente m²</th><th class="n">% vendible</th><th></th></tr></thead>
   <tbody>${rows}<tr class="tot"><td colspan="3">Total vendible</td><td class="n">${nf(M.techV,2)}</td><td class="n">${nf(M.libreV,2)}</td><td class="n">${nf(M.techV+M.libreV*S.p.factorLibre,2)}</td><td class="n">100%</td><td></td></tr></tbody></table></div></div>
@@ -423,13 +431,27 @@ V.cabida=()=>{
   <tr><td>Área techada vendible</td><td class="n">${nf(M.techV,2)} m²</td><td class="n">${pc(M.techV/M.areaTech)}</td></tr>
   <tr><td>Área no vendible (común)</td><td class="n">${nf(nv,2)} m²</td><td class="n">${pc(nv/M.areaTech)}</td></tr>
   <tr><td>Área libre vendible</td><td class="n">${nf(M.libreV,2)} m²</td><td class="n mut">—</td></tr>
-  <tr><td>Coeficiente de edificación (techado / terreno)</td><td class="n">${nf(M.areaTech/S.p.areaTerreno,2)}</td><td class="n mut">—</td></tr>
   <tr><td>Eficiencia (vendible / techado)</td><td class="n">${pc(M.techV/M.areaTech)}</td><td>${M.techV/M.areaTech>=0.75?'<span class="chip ok">eficiente</span>':'<span class="chip w">revisar</span>'}</td></tr>
   <tr><td>Área promedio por unidad</td><td class="n">${nf(M.techV/M.nU,2)} m²</td><td class="n mut">—</td></tr>
   <tr><td>Estacionamientos por unidad</td><td class="n">${nf(S.p.nEstac/M.nU,2)}</td><td class="n mut">—</td></tr></tbody></table></div></div>
   <div class="panel"><h3>Mix de tipologías</h3><div class="tw"><table><thead><tr><th>Tipología</th><th class="n">Und</th><th class="n">% und</th><th class="n">m² prom.</th></tr></thead><tbody>
   ${Object.entries(tipos).map(([t,o])=>`<tr><td>${esc(t)}</td><td class="n">${o.n}</td><td class="n">${pc(o.n/M.nU,0)}</td><td class="n">${nf(o.a/o.n,2)}</td></tr>`).join('')}</tbody></table></div></div></div>`;
 };
+/* R58 · Puente entre el cálculo por piso y el cuadro de áreas vendibles (unidad por unidad, techada y libre). */
+function cabCuadre(){
+  if(!S.cab||!Array.isArray(S.cab.pisos))return '';
+  const {rows}=cabCalc(S),fs=rows.filter(r=>r.piso!=null);if(!fs.length)return '';
+  const ch=(d)=>Math.abs(d)<1?'<span class="chip ok">cuadra</span>':`<span class="chip w">${d>0?'falta asignar':'excede'} ${nf(Math.abs(d),2)} m²</span>`;
+  return `<div class="panel" id="cabCuadre"><h3 style="margin-top:0">Del cálculo por piso al cuadro de áreas vendibles</h3><p class="note" style="margin-top:0">Lo que el cálculo deja vendible en cada piso debe repartirse entre los departamentos de ese piso. «Llevar al cuadro de unidades» crea las unidades de los pisos que aún no tienen ninguna (área repartida en partes iguales, tipología por definir); los pisos que ya tienen unidades no se tocan.</p>
+  <div class="tw"><table><thead><tr><th>Piso</th><th class="n">Vendible techada (cálculo)</th><th class="n">Techada en unidades</th><th></th><th class="n">Libre vendible (cálculo)</th><th class="n">Libre en unidades</th><th class="n">Und cálculo / cuadro</th></tr></thead><tbody>
+  ${fs.map(r=>`<tr><td>${esc(r.nivel)}</td><td class="n">${nf(r.vend,2)}</td><td class="n">${nf(r.uTech,2)}</td><td>${r.uN?ch(r.vend-r.uTech):'<span class="mut">sin unidades</span>'}</td><td class="n">${nf(+r.libreV||0,2)}</td><td class="n">${nf(r.uLibre,2)}</td><td class="n">${nf(+r.und||0,0)} / ${r.uN}</td></tr>`).join('')}</tbody></table></div></div>`;
+}
+function cabLlevar(s){
+  const {rows}=cabCalc(s),nuevos=[],r2=v=>Math.round(v*100)/100;
+  for(const r of rows){if(r.piso==null||r.uN>0)continue;const n=Math.round(+r.und||0);if(n<1||r.vend<=0)continue;
+    for(let k=1;k<=n;k++)nuevos.push({id:String(r.piso*100+k),tipo:'Por definir',piso:r.piso,tech:r2(r.vend/n),libre:r2((+r.libreV||0)/n),aj:0})}
+  return nuevos;
+}
 function cabTablero(){
   if(!S.cab||!Array.isArray(S.cab.pisos))S.cab=cabDefault(S);
   const {rows,t}=cabCalc(S),P=S.cab.param,T=+S.p.areaTerreno||0;
@@ -444,8 +466,8 @@ function cabTablero(){
     <td><div class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn x" data-act="cab-dup" data-i="${i}" title="Repetir este piso encima" aria-label="Repetir ${esc(r.nivel)} encima">⧉</button><button class="btn x" data-act="cab-del" data-i="${i}" aria-label="Eliminar ${esc(r.nivel)}">✕</button></div></td></tr>`).join('');
   const dif=t.vend-M.techV,difMed=t.areaMedidas?t.areaMedidas-T:0;
   return `<div class="panel" id="cabAreas"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px"><h3 style="margin:0">Cálculo de áreas por piso</h3>
-    <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn" data-act="cab-piso">+ Piso encima</button><button class="btn" data-act="cab-sotano">+ Sótano</button><button class="btn" data-act="cab-azotea">+ Azotea</button><button class="btn" data-act="cab-regenerar">Recalcular desde datos generales</button><button class="btn" data-act="cab-usar">Usar en el modelo</button></div></div>
-  <p class="note" style="margin-top:0">Parte de los datos generales y de los parámetros del certificado municipal. Cada piso: <b>techada = circulación + muros y ductos + áreas comunes + vendible</b>. Escribe en % o en m² (se convierten solos); ⧉ repite un piso encima. El coeficiente de edificación no cuenta sótanos.</p>
+    <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn" data-act="cab-piso">+ Piso encima</button><button class="btn" data-act="cab-sotano">+ Sótano</button><button class="btn" data-act="cab-azotea">+ Azotea</button><button class="btn" data-act="cab-regenerar">Recalcular desde datos generales</button><button class="btn" data-act="cab-llevar">Llevar al cuadro de unidades</button><button class="btn" data-act="cab-usar">Usar área común en el modelo</button></div></div>
+  <p class="note" style="margin-top:0">Parte de los datos generales y de los parámetros del certificado municipal. Cada piso: <b>techada = circulación + muros y ductos + áreas comunes + vendible</b>. Escribe en % o en m² (se convierten solos); ⧉ repite un piso encima. Este cuadro es la base: su vendible y su área libre por piso alimentan el <b>cuadro de áreas vendibles</b> de abajo, donde va cada departamento con su área techada y libre.</p>
   <h4 style="margin:6px 0">Terreno y parámetros urbanísticos</h4>
   <div class="fields" style="margin-bottom:10px">
     <div class="f src"><label for="i-p-areaTerreno">Área del terreno total (m²)</label>${inp('p.areaTerreno',S.p.areaTerreno)}</div>
@@ -453,8 +475,11 @@ function cabTablero(){
     <div class="f"><label for="i-cab-param-fondo">Fondo (m)</label>${inp('cab.param.fondo',P.fondo)}</div>
     <div class="f"><label>Área por medidas (frente × fondo)</label><div style="padding:8px 0">${t.areaMedidas?nf(t.areaMedidas,2)+' m² '+(Math.abs(difMed)<0.5?'<span class="chip ok">coincide</span>':`<span class="chip w">difiere ${nf(difMed,2)} m²</span> <button class="btn x" data-act="cab-medidas">Usar como área del terreno</button>`):'<span class="mut">ingresa frente y fondo si los tienes</span>'}</div></div>
     <div class="f src"><label for="i-cab-param-libreMin">Área libre mínima (%)</label>${inp('cab.param.libreMin',P.libreMin)}</div>
-    <div class="f src"><label for="i-cab-param-coefMax">Coeficiente de edificación máx. (0 = sin dato)</label>${inp('cab.param.coefMax',P.coefMax)}</div>
-    <div class="f src"><label for="i-cab-param-pisosMax">Altura máxima (pisos)</label>${inp('cab.param.pisosMax',P.pisosMax)}</div>
+    <div class="f src"><label for="i-cab-param-alturaModo">Altura máxima (según municipalidad)</label><select data-k="cab.param.alturaModo" id="i-cab-param-alturaModo"><option value="pisos"${P.alturaModo!=='metros'?' selected':''}>En número de pisos</option><option value="metros"${P.alturaModo==='metros'?' selected':''}>En metros</option></select></div>
+    ${P.alturaModo==='metros'?`<div class="f src"><label for="i-cab-param-alturaM">Altura máxima (m)</label>${inp('cab.param.alturaM',P.alturaM)}</div>
+    <div class="f"><label for="i-cab-param-alturaP1">Altura del primer piso (m)</label>${inp('cab.param.alturaP1',P.alturaP1)}</div>
+    <div class="f"><label for="i-cab-param-entrepiso">Altura de entrepiso, piso a piso (m)</label>${inp('cab.param.entrepiso',P.entrepiso)}</div>
+    <div class="f"><label>Pisos que entran en esa altura</label><div style="padding:8px 0"><b>${t.pisosMax} pisos</b> <span class="mut">(${nf(+P.alturaP1||3,2)} m + ${Math.max(0,t.pisosMax-1)} × ${nf(+P.entrepiso||2.7,2)} m = ${nf(cabAltura(P,t.pisosMax),2)} m)</span></div></div>`:`<div class="f src"><label for="i-cab-param-pisosMax">Altura máxima (pisos)</label>${inp('cab.param.pisosMax',P.pisosMax)}</div>`}
     <div class="f src"><label for="i-cab-param-azoteaTechable">Azotea techable (% de la huella)</label>${inp('cab.param.azoteaTechable',P.azoteaTechable)}</div>
     <div class="f"><label for="i-cab-param-retiro">Retiro frontal (m)</label>${inp('cab.param.retiro',P.retiro)}</div>
     <div class="f"><label for="i-cab-param-eficMeta">Eficiencia objetivo (vendible/techado %)</label>${inp('cab.param.eficMeta',P.eficMeta)}</div>
@@ -465,9 +490,8 @@ function cabTablero(){
     <tr><td>Área del terreno</td><td class="n">${nf(T,2)} m²${t.areaMedidas?`<div class="mut" style="font-size:11px">${nf(P.frente,2)} m × ${nf(P.fondo,2)} m</div>`:''}</td><td></td></tr>
     <tr><td>Área techada total (incl. sótanos)</td><td class="n">${nf(t.tech,2)} m²</td><td></td></tr>
     <tr><td>Área techada sobre el terreno (sin sótanos)</td><td class="n">${nf(t.techSobre,2)} m²</td><td></td></tr>
-    <tr><td>Coeficiente de edificación (techado sin sótanos / terreno)</td><td class="n">${nf(t.coef,2)}</td><td>${P.coefMax>0?chip(t.coef<=P.coefMax+1e-9,'dentro del máximo '+nf(P.coefMax,2),'supera el máximo '+nf(P.coefMax,2)):'<span class="mut">sin dato</span>'}</td></tr>
     <tr><td>Área libre del primer piso (incluye retiro)</td><td class="n">${nf(t.libreP1,2)} m² · ${pc(t.libreP1Pct,1)}</td><td>${chip(t.libreP1Pct*100>=P.libreMin-1e-6,'cumple '+nf(P.libreMin,0)+'%','menor al '+nf(P.libreMin,0)+'% exigido')}</td></tr>
-    <tr><td>Pisos sobre el terreno</td><td class="n">${t.pisos}</td><td>${P.pisosMax>0?chip(t.pisos<=P.pisosMax,'dentro de la altura','supera la altura'):''}</td></tr>
+    <tr><td>Pisos sobre el terreno</td><td class="n">${t.pisos}${P.alturaModo==='metros'?`<div class="mut" style="font-size:11px">altura aprox. ${nf(t.altura,2)} m de ${nf(+P.alturaM||0,2)} m</div>`:''}</td><td>${t.pisosMax>0?chip(t.pisos<=t.pisosMax,'dentro de la altura máxima ('+t.pisosMax+' pisos)','supera la altura máxima ('+t.pisosMax+' pisos)'):'<span class="mut">sin dato de altura</span>'}</td></tr>
     ${P.retiro>0&&P.frente>0?`<tr><td>Área de retiro (frente × retiro)</td><td class="n">${nf(P.retiro*P.frente,2)} m²</td><td class="mut">parte del área libre</td></tr>`:''}
   </tbody></table></div><div class="tw"><table><tbody>
     <tr><td>Área vendible techada</td><td class="n"><b>${nf(t.vend,2)} m²</b></td><td></td></tr>
@@ -1801,6 +1825,7 @@ document.addEventListener('click',e=>{
   else if(a==='cab-del'){const i=+b.dataset.i;if(S.cab.pisos.length>1&&confirm('¿Eliminar el nivel «'+S.cab.pisos[i].nivel+'»?'))S.cab.pisos.splice(i,1)}
   else if(a==='cab-regenerar'){if(confirm('Rehacer los pisos desde los datos generales y los parámetros? Se reemplazan los valores editados del cuadro de áreas.'))S.cab=cabDefault(S,S.cab&&S.cab.param)}
   else if(a==='cab-medidas'){const P=S.cab.param;if(+P.frente>0&&+P.fondo>0)S.p.areaTerreno=Math.round(P.frente*P.fondo*100)/100}
+  else if(a==='cab-llevar'){const nu=cabLlevar(S);if(!nu.length){alert('No hay pisos para llevar: indica cuántas unidades tiene cada piso (columna Und) en los pisos que aún no tienen unidades en el cuadro.');return}if(confirm('Se agregarán '+nu.length+' unidades al cuadro de áreas vendibles (pisos '+[...new Set(nu.map(u=>u.piso))].join(', ')+'). Los pisos que ya tienen unidades no cambian.')){S.units.push(...nu);S.units.sort((x,y)=>(+x.piso||0)-(+y.piso||0))}}
   else if(a==='cab-usar'){const {t}=cabCalc(S),nv=Math.round((t.tech-t.vend)*100)/100;if(confirm('Usar en el modelo: área común techada (no vendible) = '+nv.toLocaleString('es-PE')+' m² (antes '+(+S.p.comunTechada||0).toLocaleString('es-PE')+' m²). Las áreas vendibles siguen saliendo del cuadro de unidades.'))S.p.comunTechada=nv}
   else if(a==='add-unit'){S.units.push({id:String(900+S.units.length),tipo:'Flat 1D',piso:1,tech:45,libre:0,aj:0})}
   else if(a==='add-gg'){S.gg.push({n:'Nueva partida',u:'mes',link:true,q:M.dur,ded:1,pu:1000})}
