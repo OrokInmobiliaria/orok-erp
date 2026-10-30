@@ -36,6 +36,7 @@ const {Greta,GRETA_METHODS,paraLola}=require('./business/greta');
 const {McpConnector,MCP_METHODS}=require('./business/mcpConnector'); // R44 · conector del ERP para Claude
 const {Resguardo,OPS_METHODS}=require('./business/resguardo'); // R45 · L.O.L.A Operaciones: resguardo externo cifrado // R42 · Marketing con G.R.E.T.A
 const {ProjectDrive}=require('./business/projectDrive');
+const {RellenarIA,IA_RELLENAR_METHODS}=require('./business/rellenarIA'); // R54 · Dictar o adjuntar
 const {DeviceEnrollment,INSTALL_METHODS}=require('./business/deviceEnrollment');
 const managerMethods=new Set(['aplicarPreciosEstrategia','updateSettings','saveIntegrationCredentials','addUnit','updateUnitStatus','updateUnitPlan','syncLocalFolder','clearUnits','clearLeads','deleteLostLead','deleteQuotes','addMarketingExpense','deleteMarketingExpense','reconcileQuoteProfiles','importChannelHistory']);
 const readMethods={getSettings:'settings',getLeads:'leads',getUnits:'units',getQuotes:'quotes',getSeparations:'separations',getMarketingExpenses:'marketing_expenses',getDuplicateDeletionLog:'duplicate_deletion_log'};
@@ -380,6 +381,7 @@ function application({store,auth,cache,authCache,config,syncer,historialIA=null,
   const name=method.split('.')[1];
   if(method.startsWith('db.')){
    if(MORA_METHODS.includes(name)){const value=await mora.rpc(name,args,user,()=>cache.read());if(name==='saveMoraEvaluation'){try{value.drive=await projectDrive.registerEvaluation(args[0]||{},user);}catch(e){value.drive={state:'error',reason:e.message};}}if(name==='getMoraEvaluation')value.drive=await projectDrive.publicProject(value.project?.nombre||args[0],user);return {value};}
+   if(IA_RELLENAR_METHODS.includes(name))return {value:await new RellenarIA({assistant:lolaAssistant,projectDrive}).proponer(args[0]||{},user,await cache.read())};
    if(LOLA_ASSIST_METHODS.includes(name))return {value:await lolaAssistant.rpc(name,args,user,()=>cache.read())};
    if(INSTALL_METHODS.includes(name))return {value:await enrollment.rpc(name,args,user)};
    if(name==='getProjectDrive'){return {value:await projectDrive.publicProject(args[0],user)};}

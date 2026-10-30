@@ -213,7 +213,7 @@ function createServer({config,store,auth,cache,authCache,supportMail,whatsappOpt
     const files={'/evaluador':'index.html','/evaluador/':'index.html','/evaluador/app.js':'app.js','/evaluador/jspdf.umd.min.js':'jspdf.umd.min.js','/evaluador/exceljs.min.js':'exceljs.min.js'},name=files[url.pathname];
     if(!name)return json(404,{error:'Archivo no disponible.'});
     const file=path.join(__dirname,'evaluador',name),type=name.endsWith('.html')?'text/html; charset=utf-8':'text/javascript; charset=utf-8';
-    res.writeHead(200,{'Content-Type':type,'Cache-Control':'private, no-store'});if(req.method==='HEAD')return res.end();return res.end(fs.readFileSync(file));
+    res.writeHead(200,{'Content-Type':type,'Cache-Control':'private, no-store'});if(req.method==='HEAD')return res.end();return res.end(name==='index.html'?(h=>h.includes('</body>')?h.replace('</body>','<script src="/ia-rellenar.js" defer></script></body>'):h+'<script src="/ia-rellenar.js" defer></script>')(fs.readFileSync(file,'utf8')):fs.readFileSync(file)); // R54 · Dictar o adjuntar
    }
    if(url.pathname==='/contabilidad'||url.pathname.startsWith('/contabilidad/')){
     // R34 · ERP · Contabilidad y Finanzas con D.I.A.V.A, servido fuera de dist/ y sin caché.
@@ -222,7 +222,7 @@ function createServer({config,store,auth,cache,authCache,supportMail,whatsappOpt
     const files={'/contabilidad':'index.html','/contabilidad/':'index.html','/contabilidad/app.js':'app.js','/contabilidad/jspdf.umd.min.js':'jspdf.umd.min.js','/contabilidad/exceljs.min.js':'exceljs.min.js'},name=files[url.pathname];
     if(!name)return json(404,{error:'Archivo no disponible.'});
     const file=path.join(__dirname,'contabilidad',name),type=name.endsWith('.html')?'text/html; charset=utf-8':'text/javascript; charset=utf-8';
-    res.writeHead(200,{'Content-Type':type,'Cache-Control':'private, no-store'});if(req.method==='HEAD')return res.end();return res.end(fs.readFileSync(file));
+    res.writeHead(200,{'Content-Type':type,'Cache-Control':'private, no-store'});if(req.method==='HEAD')return res.end();return res.end(name==='index.html'?(h=>h.includes('</body>')?h.replace('</body>','<script src="/ia-rellenar.js" defer></script></body>'):h+'<script src="/ia-rellenar.js" defer></script>')(fs.readFileSync(file,'utf8')):fs.readFileSync(file)); // R54 · Dictar o adjuntar
    }
    if(url.pathname.startsWith('/files/')){await authCache.require(cookie);target=(await proyectos.resolver(req.headers.cookie)).app.library.file(url.pathname.slice(7));res.setHeader('Cache-Control','private, no-store');if(url.searchParams.has('download'))res.setHeader('Content-Disposition','attachment; filename="'+(path.extname(target)==='.csv'?'Cotizaciones.csv':'Documento'+path.extname(target))+'"');}
    else {const dist=path.join(__dirname,'dist'),relative=decodeURIComponent(url.pathname);target=path.resolve(dist,'.'+relative);if(!target.startsWith(dist+path.sep)&&target!==dist)return json(403,{error:'Ruta no válida.'});if(!fs.existsSync(target)||fs.statSync(target).isDirectory()){if(path.extname(relative))return json(404,{error:'Archivo no disponible.'});target=path.join(dist,'index.html');}res.setHeader('Cache-Control',['index.html','sw.js','manifest.webmanifest','version.json'].includes(path.basename(target))?'no-cache':'public,max-age=3600');if(path.basename(target)==='sw.js')res.setHeader('Service-Worker-Allowed','/');}
