@@ -847,12 +847,17 @@ V.cabida=()=>{
 /* R58 · Puente entre el cálculo por piso y el cuadro de áreas vendibles (unidad por unidad, techada y libre). */
 function cabCuadre(){
   if(!S.cab||!Array.isArray(S.cab.pisos))return '';
-  const {rows}=cabCalc(S),fs=rows.filter(r=>r.piso!=null);if(!fs.length)return '';
-  const ch=(d)=>Math.abs(d)<1?'<span class="chip ok">cuadra</span>':`<span class="chip w">${d>0?'falta asignar':'excede'} ${nf(Math.abs(d),2)} m²</span>`;
-  return `<div class="panel" id="cabCuadre"><h3 style="margin-top:0">Del cálculo por piso al cuadro de áreas vendibles</h3><p class="note" style="margin-top:0">Lo que el cálculo deja vendible en cada piso debe repartirse entre los departamentos de ese piso. «Llevar al cuadro de unidades» crea las unidades de los pisos que aún no tienen ninguna (área repartida en partes iguales, tipología por definir); los pisos que ya tienen unidades no se tocan.</p>
-  <div class="tw"><table><thead><tr><th>Piso</th><th class="n">Vendible techada (cálculo)</th><th class="n">Techada en unidades</th><th></th><th class="n">Libre vendible (cálculo)</th><th class="n">Libre en unidades</th><th class="n">Und cálculo / cuadro</th></tr></thead><tbody>
-  ${fs.map(r=>`<tr><td>${esc(r.nivel)}</td><td class="n">${nf(r.vend,2)}</td><td class="n">${nf(r.uTech,2)}</td><td>${r.uN?ch(r.vend-r.uTech):'<span class="mut">sin unidades</span>'}</td><td class="n">${nf(+r.libreV||0,2)}</td><td class="n">${nf(r.uLibre,2)}</td><td class="n">${nf(+r.und||0,0)} / ${r.uN}</td></tr>`).join('')}</tbody></table></div></div>`;
+  const {rows}=cabCalc(S),fs=rows.map((r,i)=>Object.assign({},r,{i})).filter(r=>r.piso!=null);if(!fs.length)return '';
+  const ch=(d)=>Math.abs(d)<1?'<span class="chip ok">cuadra</span>':`<span class="chip w">${d>0?'el cálculo permite '+nf(d,2)+' m² más':'las unidades superan al cálculo en '+nf(-d,2)+' m²'}</span>`;
+  const hayDif=fs.some(r=>r.uN&&Math.abs(r.vend-r.uTech)>=1);
+  return `<div class="panel" id="cabCuadre"><h3 style="margin-top:0">Del cálculo por piso al cuadro de áreas vendibles</h3><p class="note" style="margin-top:0">Lo que el cálculo deja vendible en cada piso debe repartirse entre los departamentos de ese piso. «Llevar al cuadro de unidades» crea las unidades de los pisos que aún no tienen ninguna (área repartida en partes iguales, tipología por definir); los pisos que ya tienen unidades no se tocan.<br>Varios departamentos en un piso: agrega una fila por departamento en el cuadro de áreas vendibles con el <b>mismo número de piso</b>; aquí se suman solos. Si los departamentos ya están diseñados, usa «Ajustar a las unidades» para que el cálculo del piso tome sus áreas reales (techada = vendible ÷ eficiencia del piso).</p>
+  ${hayDif?'<div class="row" style="gap:6px;margin-bottom:8px"><button class="btn" data-act="cab-ajustar-todo">Ajustar todos los pisos a las unidades</button></div>':''}
+  <div class="tw"><table><thead><tr><th>Piso</th><th class="n">Vendible techada (cálculo)</th><th class="n">Techada en unidades</th><th></th><th class="n">Libre vendible (cálculo)</th><th class="n">Libre en unidades</th><th class="n">Und cálculo / cuadro</th><th></th></tr></thead><tbody>
+  ${fs.map(r=>`<tr><td>${esc(r.nivel)}</td><td class="n">${nf(r.vend,2)}</td><td class="n">${nf(r.uTech,2)}</td><td>${r.uN?ch(r.vend-r.uTech):'<span class="mut">sin unidades</span>'}</td><td class="n">${nf(+r.libreV||0,2)}</td><td class="n">${nf(r.uLibre,2)}</td><td class="n">${nf(+r.und||0,0)} / ${r.uN}</td><td>${r.uN&&(Math.abs(r.vend-r.uTech)>=1||Math.abs((+r.libreV||0)-r.uLibre)>=0.01||+r.und!==r.uN)?`<button class="btn x" data-act="cab-ajustar" data-i="${r.i}" title="El cálculo de este piso toma el área de sus unidades">Ajustar a las unidades</button>`:''}</td></tr>`).join('')}</tbody></table></div></div>`;
 }
+// R60 · El piso toma el área real de sus unidades: techada = suma vendible ÷ (1 − circulación − muros − comunes); libre vendible y Und también.
+function cabAjustar(s,i){const f=s.cab&&s.cab.pisos[i];if(!f)return false;const r=cabCalc(s).rows[i];if(!r||!r.uN)return false;
+  const ef=1-Math.min(95,(+f.circ||0)+(+f.muros||0)+(+f.comun||0))/100,r2=v=>Math.round(v*100)/100;f.tech=r2(r.uTech/ef);f.libreV=r2(r.uLibre);f.und=r.uN;return true}
 function cabLlevar(s){
   const {rows}=cabCalc(s),nuevos=[],r2=v=>Math.round(v*100)/100;
   for(const r of rows){if(r.piso==null||r.uN>0)continue;const n=Math.round(+r.und||0);if(n<1||r.vend<=0)continue;
@@ -2232,6 +2237,8 @@ document.addEventListener('click',e=>{
   else if(a==='cab-del'){const i=+b.dataset.i;if(S.cab.pisos.length>1&&confirm('¿Eliminar el nivel «'+S.cab.pisos[i].nivel+'»?'))S.cab.pisos.splice(i,1)}
   else if(a==='cab-regenerar'){if(confirm('Rehacer los pisos desde los datos generales y los parámetros? Se reemplazan los valores editados del cuadro de áreas.'))S.cab=cabDefault(S,S.cab&&S.cab.param)}
   else if(a==='cab-medidas'){const P=S.cab.param;if(+P.frente>0&&+P.fondo>0)S.p.areaTerreno=Math.round(P.frente*P.fondo*100)/100}
+  else if(a==='cab-ajustar'){cabAjustar(S,+b.dataset.i)}
+  else if(a==='cab-ajustar-todo'){if(confirm('Cada piso con unidades tomará el área real de sus departamentos (el área techada del piso se recalcula con su eficiencia). ¿Continuar?'))S.cab.pisos.forEach((_,i)=>cabAjustar(S,i))}
   else if(a==='cab-llevar'){const nu=cabLlevar(S);if(!nu.length){alert('No hay pisos para llevar: indica cuántas unidades tiene cada piso (columna Und) en los pisos que aún no tienen unidades en el cuadro.');return}if(confirm('Se agregarán '+nu.length+' unidades al cuadro de áreas vendibles (pisos '+[...new Set(nu.map(u=>u.piso))].join(', ')+'). Los pisos que ya tienen unidades no cambian.')){S.units.push(...nu);S.units.sort((x,y)=>(+x.piso||0)-(+y.piso||0))}}
   else if(a==='cab-usar'){const {t}=cabCalc(S),nv=Math.round((t.tech-t.vend)*100)/100;if(confirm('Usar en el modelo: área común techada (no vendible) = '+nv.toLocaleString('es-PE')+' m² (antes '+(+S.p.comunTechada||0).toLocaleString('es-PE')+' m²). Las áreas vendibles siguen saliendo del cuadro de unidades.'))S.p.comunTechada=nv}
   else if(a==='add-unit'){S.units.push({id:String(900+S.units.length),tipo:'Flat 1D',piso:1,tech:45,libre:0,aj:0})}

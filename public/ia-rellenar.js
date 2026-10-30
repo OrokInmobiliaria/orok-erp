@@ -24,7 +24,10 @@
     b.addEventListener('click', function () { ultimoFoco = b; abrir(); });
     return b;
   }
+  // R60 · Si una copia vieja del navegador dejó el botón flotante, se retira (queda solo la acción dentro del panel de la IA).
+  function retirarFlotante() { Array.prototype.forEach.call(document.querySelectorAll('.ia-rellenar-boton'), function (b) { b.remove(); }); }
   function inyectar() {
+    retirarFlotante();
     if (!modulo()) return;
     // Paneles del ERP (L.O.L.A y G.R.E.T.A) y de las apps del Evaluador y Contabilidad (M.O.R.A y D.I.A.V.A).
     Array.prototype.forEach.call(document.querySelectorAll('.lola-panel > .lola-head, #ai > .ai-h'), function (head) {

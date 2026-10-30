@@ -1010,7 +1010,7 @@ function DesktopView({ data }) {
       {appModule==='marketing'&&<GretaAssistant user={currentUser} tab={activeTab} onGo={handleTabChange}/>}{/* R42 · G.R.E.T.A actúa como las otras IA asistenciales */}
 
       {/* CONTENT AREA */}
-      <div className="app-content" style={{ '--kanban-toolbar-top': `${kanbanStickyOffsets.header}px`, '--kanban-stage-top': `${kanbanStickyOffsets.header}px`, padding: isKanban ? '10px 40px 40px 40px' : '20px 16px 40px', maxWidth: isKanban ? '100%' : '1400px', margin: '0 auto', transition: 'all 0.3s ease' }}>
+      <div className="app-content" style={{ '--kanban-toolbar-top': `${kanbanStickyOffsets.header}px`, '--kanban-stage-top': `${kanbanStickyOffsets.header}px`, padding: isKanban ? '10px 40px 40px 40px' : '20px 16px 40px', maxWidth: (isKanban || ['evaluador','contabilidad','ordenesErp'].includes(activeTab)) ? '100%' : '1600px', margin: '0 auto', transition: 'all 0.3s ease' }}>
         {searchOpen&&<LeadSearchPalette leads={leads} onClose={()=>setSearchOpen(false)} onOpenLead={id=>{setSearchOpen(false);openLifecycle(id,'full');}} quotes={quotes} onOpenQuotes={lead=>{setSearchOpen(false);setQuoteFilter(lead.lead_number||lead.name||'');setQuotesOpen(true);handleTabChange('quotes');}} onShowInKanban={q=>{setSearchOpen(false);setKanbanSearch(q);handleTabChange('kanban');}} openChat={args=>{setSearchOpen(false);openChat({...args,origin:'busqueda'});}}/>}
         {/* RESTORED_V37_TABS_START */}
       {activeTab === 'kanban' && (<><div ref={kanbanToolbarRef} className="kanban-toolbar no-print" style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
