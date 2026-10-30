@@ -196,7 +196,7 @@ class WhatsAppService extends WhatsAppInbox{
     const d=await this.store.read(),ctx=value.archive_only||value.fixed_reply||value.kind?{state:'not_needed',sources:[],resources:[]}:await this.drive.context(d.settings);
     value.approved_resources=[...resources(d.settings),...ctx.resources];value.drive_context=ctx;
     await this.store.db.runTransaction(async tx=>{const ref=this.jobs.doc(value.id),row=(await tx.get(ref)).data();if(row?.state==='processing'&&row.lease_token===value.lease_token)tx.set(ref,{...row,drive_sources:ctx.sources});});
-    if(this.store.persistence==='postgresql')return {ok:true,job:value};
+    // R64 · La memoria y el historial viajan con el trabajo también en PostgreSQL: el trabajador de n8n de producción no lee la base de datos.
     const chat=await super.conversation(value.lead_id,{limit:24},await this.store.read()),thread=(await this.thread(value.lead_id).get()).data()||{};const memory=await this.memory.context(value.lead_id,chat.messages,thread,await this.store.read());await this.store.db.runTransaction(async tx=>{const ref=this.jobs.doc(value.id),j=(await tx.get(ref)).data();if(j?.lease_token===value.lease_token)tx.set(ref,{...j,memory});});return {ok:true,job:{...value,memory,conversation_state:{booking_phase:thread.booking?.phase||null,appointment:thread.calendar_appointment||null,offer:thread.offer?.state||null},history:chat.messages.map(m=>({direction:m.direction,text:m.text||m.transcript||'['+m.type+']',at:m.at}))}};}
   }return {ok:true,job:null};
  }

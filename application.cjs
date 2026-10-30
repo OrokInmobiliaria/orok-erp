@@ -467,6 +467,9 @@ function application({store,auth,cache,authCache,config,syncer,historialIA=null,
    if(name==='saveLolaFollowupSetup'){if(user.role!=='Gerente')throw Error('Requiere Gerencia.');return {value:await whatsapp.followups.save(args[0],user.name)};}
    if(name==='getLolaDriveStatus'){if(user.role!=='Gerente')throw Error('Requiere Gerencia.');const d=await store.read(),c=await whatsapp.drive.context(d.settings,true);return {value:{...c,sources:c.sources.map(({text,...s})=>({...s,characters:text.length}))}};}
    if(name==='getLolaExperience'){if(user.role!=='Gerente')throw Error('Requiere Gerencia.');return {value:await customerCare.experience()};}
+   // R64 · Precios y promociones que Gerencia autoriza a L.O.L.A (por proyecto).
+   if(name==='getLolaPrecios'){if(user.role!=='Gerente')throw Error('Requiere Gerencia.');const d=await cache.read();return {value:{...(d.settings?.lolaPrecios||{enabled:false,etapa:'preventa',desde:null,hasta:null,promociones:[]}),proyecto:d.settings?.projectName||'',etapas:require('./business/lolaPrecios').ETAPAS}};}
+   if(name==='saveLolaPrecios'){if(user.role!=='Gerente')throw Error('Requiere Gerencia.');const v=require('./business/lolaPrecios').limpiar(args[0]||{},user.name);await store.run(({read,write})=>{const d=read();d.settings={...d.settings,lolaPrecios:v};write(d);});return {value:{ok:true,...v,ejemplo:v.enabled?require('./business/lolaPrecios').respuesta(v,(await cache.read()).settings?.projectName):null}};}
    if(name==='saveLolaExperience'){if(user.role!=='Gerente')throw Error('Requiere Gerencia.');return {value:await customerCare.saveExperience(args[0],user.name)};}
    if(name==='getLolaCustomerCare')return {value:await customerCare.get(args[0])};
    if(name==='saveLolaCustomerCare')return {value:await customerCare.profile(args[0],args[1]||{},user.name)};

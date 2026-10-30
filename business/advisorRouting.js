@@ -1,6 +1,9 @@
 'use strict';
 const {createHash,randomUUID}=require('node:crypto'),{event}=require('./lifecycle'),{ECONOMIC,norm}=require('./lolaPolicy');
-const SHOWROOM=require('./projectLocation');
+const SHOWROOM=require('./projectLocation'),PRECIOS=require('./lolaPrecios');
+// R64 · Lead que llegó por formulario (Meta Lead Ads u otro): pide DNI antes de pasar a un asesor.
+function formLead(lead){return !!(lead&&(lead.form_meta||/formulario|lead ?ads|leadgen/i.test(String(lead.source||''))));}
+const PIDE_DNI='Con gusto te conecto con un asesor para que revise contigo el precio exacto y las condiciones 😊 Para registrar tu atención, ¿me compartes tu número de DNI?';
 const SALES={businessPhone:'51912971742',phones:['51987208622'],email:'ventas@orok.com.pe'};
 const BODY='Equipo de ventas: LOLA recibió una solicitud de asesor. Cliente: {{1}}. Teléfono: {{2}}. Motivo: {{3}}. Revisa la conversación en el CRM para atenderla o coordinar una cita.';
 const TEMPLATE={name:'orok_alerta_asesor_v1',language:'es',category:'UTILITY',components:[{type:'BODY',text:BODY,example:{body_text:[['Cliente de prueba','51900000000','Solicitud de asesor']]}}]};
@@ -18,10 +21,31 @@ function plan(a,{data,lead,t,next,m,input}){
   if(require('./whatsappAgenda').activeOf(lead,t))return {job:a.fixed('Ya tienes una cita registrada. Puedes pedir reprogramarla o cancelarla.'),changed:false};
   next.advisor_request={...r,choice:choice[1]};next.booking={flow:'new',intent:'advisor',modality:choice[1],id:randomUUID().replaceAll('-','').slice(0,24),phase:'contact',profile:{name:lead.name||'',email:lead.email||'',phone:lead.phone||t.phone,interest:lead.unit_interest||''}};return a.contact(next,text);
  }
- if(!requested(text)||t.booking&&['checking','writing','cancel_check','listing'].includes(t.booking.phase))return null;
+ // R64 · Respuesta al pedido de DNI: con el documento (o si prefiere no darlo) se registra la solicitud de asesor; si habla de otra cosa, L.O.L.A sigue su rutina.
+ let motivo=null;
+ if(t.dni_request&&Date.parse(t.dni_request.expires_at)>Date.now()&&!(t.booking&&['checking','writing','cancel_check','listing'].includes(t.booking.phase))){
+  const doc=PRECIOS.documento(text),negativa=PRECIOS.NEGATIVA.test(norm(text));
+  if(doc||negativa||requested(text)){next.dni_request=null;motivo=t.dni_request.reason;
+   if(doc){lead.dni=doc.numero;lead.dni_tipo=doc.tipo;lead.dni_at=new Date().toISOString();lead.dni_source='LOLA · '+a.s.channel;event(lead,'dni_received','LOLA',{channel:a.s.channel,tipo:doc.tipo});}
+   else{lead.dni_status='no_brindado';event(lead,'dni_declined','LOLA',{channel:a.s.channel});}}
+  else return null;
+ }
+ if(!motivo&&(!requested(text)||t.booking&&['checking','writing','cancel_check','listing'].includes(t.booking.phase)))return null;
+ if(!motivo){
+  const economic=ECONOMIC.test(norm(text)),precios=PRECIOS.vigente(data.settings?.lolaPrecios);
+  if(economic)next.economic_count=(t.economic_count||0)+1;
+  // Primera consulta de precio: rango y promociones aprobados por Gerencia (sin IA, sin cifras inventadas).
+  if(economic&&precios&&!t.price_info_at){next.price_info_at=new Date().toISOString();event(lead,'price_range_shared','LOLA',{channel:a.s.channel});return {job:a.fixed(PRECIOS.respuesta(precios,data.settings?.projectName)),changed:true};}
+  // Insiste con el precio (o un lead de formulario pide asesor): primero el DNI, luego el asesor.
+  const insiste=economic&&((t.economic_count||0)>=1||!!t.price_info_at),porFormulario=!economic&&formLead(lead);
+  if(!lead.dni&&lead.dni_status!=='no_brindado'&&(insiste||porFormulario)&&!(t.advisor_request&&Date.parse(t.advisor_request.expires_at)>Date.now())){
+   next.dni_request={at:new Date().toISOString(),expires_at:new Date(Date.now()+86400000).toISOString(),reason:economic?'Consulta de precios o condiciones comerciales':'Solicitud de asesor (lead de formulario)'};
+   event(lead,'dni_requested','LOLA',{channel:a.s.channel,reason:next.dni_request.reason});return {job:a.fixed(PIDE_DNI),changed:true};
+  }
+ }
  next.booking=null;next.cancellation=null;if(t.offer?.state==='pending')next.offer={...t.offer,state:'superseded'};
- if(t.advisor_request&&Date.parse(t.advisor_request.expires_at)>Date.now()){next.advisor_request={...t.advisor_request,insistence:(t.advisor_request.insistence||0)+1};if(lead.advisor_alert)lead.advisor_alert.insistence=next.advisor_request.insistence;event(lead,'advisor_insistence','LOLA',{channel:a.s.channel});return {job:a.fixed('Las condiciones comerciales las revisa un asesor. Tu solicitud ya está registrada. Puedes coordinar una cita por WhatsApp o Meet, o esperar a que el vendedor tome la conversación.',buttons(t.advisor_request.id)),changed:true};}
- const id=randomUUID().replaceAll('-','').slice(0,24),at=new Date().toISOString(),reason=ECONOMIC.test(norm(text))?'Consulta de precios o condiciones comerciales':'Solicitud de asesor';
+ if(!motivo&&t.advisor_request&&Date.parse(t.advisor_request.expires_at)>Date.now()){next.advisor_request={...t.advisor_request,insistence:(t.advisor_request.insistence||0)+1};if(lead.advisor_alert)lead.advisor_alert.insistence=next.advisor_request.insistence;event(lead,'advisor_insistence','LOLA',{channel:a.s.channel});return {job:a.fixed('Las condiciones comerciales las revisa un asesor. Tu solicitud ya está registrada. Puedes coordinar una cita por WhatsApp o Meet, o esperar a que el vendedor tome la conversación.',buttons(t.advisor_request.id)),changed:true};}
+ const id=randomUUID().replaceAll('-','').slice(0,24),at=new Date().toISOString(),reason=motivo||(ECONOMIC.test(norm(text))?'Consulta de precios o condiciones comerciales':'Solicitud de asesor');
  next.advisor_request={id,requested_at:at,expires_at:new Date(Date.now()+86400000).toISOString(),reason};next.handoff={choice:'advisor_scheduling',at,status:'Solicitud registrada; avisos de ventas pendientes'};
  lead.advisor_alert={id,at,reason,email:'pending',whatsapp:'pending',phones:alertPhones(a.s.gateway.setup())};lead.handoff_status='requested';lead.next_action='Atender solicitud de asesor; coordinar WhatsApp o Meet';lead.next_action_at=at;event(lead,'seller_requested','LOLA',{channel:a.s.channel,reason,request_id:id});
  const hasAppointment=!!require('./whatsappAgenda').activeOf(lead,t);if(hasAppointment){next.mode='manual';next.control_version=(t.control_version||0)+1;next.handoff={choice:'seller',at,status:'Solicitud registrada; esperando intervención real del asesor'};lead.lola_paused=true;lead.handoff_status='accepted';}
@@ -55,4 +79,4 @@ class AdvisorAlerts{
   await this.s.store.run(({read,write})=>{const data=read(),l=data.leads.find(l=>l.id===leadId);if(l?.advisor_alert?.id===requestId){l.advisor_alert.whatsapp=outcomes;write(data);}});return {outcomes};
  }
 }
-module.exports={optionsReply,alertPhones,SALES,BODY,TEMPLATE,buttons,requested,plan,meetUrl,confirmation,humanizeConfirmedReply,AdvisorAlerts};
+module.exports={formLead,PIDE_DNI,optionsReply,alertPhones,SALES,BODY,TEMPLATE,buttons,requested,plan,meetUrl,confirmation,humanizeConfirmedReply,AdvisorAlerts};

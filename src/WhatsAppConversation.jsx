@@ -4,7 +4,7 @@ import {api} from './dataService';
 import './whatsappInbox.css';
 import WhatsAppRecovery from './WhatsAppRecovery';
 import WhatsAppConsent from './WhatsAppConsent';
-import {LolaExperience} from './LolaCare';
+import {LolaExperience,LolaPrecios} from './LolaCare';
 const date=value=>{const d=new Date(value);return Number.isFinite(d.getTime())?d.toLocaleString('es-PE',{timeZone:'America/Lima',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';};
 const modes={observer:'Solo registro',manual:'Manual',suggest:'Sugerencias',auto:'Lola automática'};
 const states={received:'Recibido',sent:'Enviado',delivered:'Entregado',read:'Leído',failed:'Fallido',imported:'Importado'};
@@ -23,7 +23,7 @@ export function Connection({onSaved}){
  {form.environment==='test'&&<label>Teléfono de avisos al asesor en el ensayo<input value={form.testAdvisorPhone} onChange={e=>field('testAdvisorPhone',e.target.value)} placeholder="51 seguido del número autorizado"/></label>}
  {[['accessToken','Token de acceso'],['appSecret','App Secret de Meta'],['verifyToken','Token de verificación del webhook']].map(([key,label])=><label key={key}>{label}<input type="password" autoComplete="new-password" value={form[key]} onChange={e=>field(key,e.target.value)}/></label>)}
  {[['enabled','Habilitar conexión'],['sendingEnabled','Permitir envíos desde el CRM'],['automaticEnabled','Permitir activar Lola automática'],['agendaEnabled','Habilitar agenda y gestión de citas con Calendar']].map(([key,label])=><label className="wa-check" key={key}><input type="checkbox" checked={form[key]} onChange={e=>field(key,e.target.checked)}/>{label}</label>)}
- <button className="orok-btn orok-btn-primary" disabled={busy}>{busy?'Guardando…':'Guardar conexión'}</button></form>:<p>Cargando configuración…</p>}<LolaExperience/>{error&&<p role="status">{error}</p>}</div>;
+ <button className="orok-btn orok-btn-primary" disabled={busy}>{busy?'Guardando…':'Guardar conexión'}</button></form>:<p>Cargando configuración…</p>}<LolaPrecios/><LolaExperience/>{error&&<p role="status">{error}</p>}</div>;
 }
 export default function WhatsAppConversation({lead,onClose,user,origin='kanban'}){
  const [chat,setChat]=useState(null),[messages,setMessages]=useState([]),[busy,setBusy]=useState(false),[sending,setSending]=useState(false),[error,setError]=useState(''),[draft,setDraft]=useState(''),[setup,setSetup]=useState(false),[audio,setAudio]=useState(null),[attachment,setAttachment]=useState(null),[recording,setRecording]=useState(false),[audioURL,setAudioURL]=useState(''),[buttons,setButtons]=useState(null),[handoffResolveOpen,setHandoffResolveOpen]=useState(false),[handoffReason,setHandoffReason]=useState('');
