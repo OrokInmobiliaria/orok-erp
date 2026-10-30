@@ -119,7 +119,7 @@ function crmBoot(){
   document.head.append(st);
   crmBar();crmAi=true;aiState='on';aiLogEl().innerHTML='';aiSync();
   const t=document.getElementById('saved');if(t)t.title='Borrador en este equipo. Usa «Guardar en el CRM» para compartirlo con Gerencia.';
-  crmRefresh();mSunat();
+  crmRefresh().then(()=>{if(!SIN_BORRADOR||!OROK_PROY||OROK_PROY==='principal')return;const ult=crmList.slice().sort((a,b)=>String(b.updated_at||'').localeCompare(String(a.updated_at||'')))[0];if(ult)return crmLoad(ult.id);delete S._crm;S.p.nombre=(document.querySelector('meta[name="orok-proyecto-nombre"]')||{}).content||'';S.p.direccion='';S.ventas=[];if(S.mercado)S.mercado.comps=[];save();render();crmFill();crmMsg('Proyecto sin evaluación todavía: completa sus datos (el modelo de referencia es solo una plantilla).');});mSunat(); // R55 · al abrir un proyecto sin borrador se trae su última evaluación
 }
 `;
 
