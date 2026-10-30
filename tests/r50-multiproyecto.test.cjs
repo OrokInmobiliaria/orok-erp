@@ -91,3 +91,24 @@ test('R52 · historial para las IA: apagado por defecto, por empresa o todos, so
   const l=await s.call('db.proyectosListar');assert.equal(l.proyectos.find(p=>p.id===a.proyecto.id).historial_ia,'todos');assert.equal(l.historial_opciones.length,3);
  }finally{await s.close();}
 });
+
+test('R53 · carpetas de Drive: el trabajador de n8n crea la carpeta del proyecto nuevo con sus 14 subcarpetas',async()=>{
+ const s=await arrancar();
+ try{
+  const dir=s.server.proyectos.ctxs.get('infinity224').app.projectDrive.dir,ROOT='1RaizBMGcarpetaORK0001',SECRET='x'.repeat(32);
+  fs.writeFileSync(path.join(dir,'project-drive.json'),JSON.stringify({enabled:true,roots:{BMG:ROOT}}));
+  fs.writeFileSync(path.join(dir,'integracion-ia-webhooks.json'),JSON.stringify({webhookSecret:SECRET}));
+  const c=await s.call('db.proyectoCrear',[{nombre:'Ventura',empresa:'BMG',etapa:'evaluacion'}]),ctx=await s.server.proyectos.obtener(c.proyecto.id);
+  const reg=await ctx.app.projectDrive.registerEvaluation({id:'ev-ventura',project:{nombre:'Ventura',empresa:'BMG'}},{name:'Martín',role:'Gerente'});assert.equal(reg.state,'pending');
+  const base='http://127.0.0.1:'+s.server.address().port,hook=async p=>{const r=await fetch(base+'/api/integrations/lola',{method:'POST',headers:{'Content-Type':'application/json','X-Orok-Webhook-Secret':SECRET},body:JSON.stringify(p)});const j=await r.json();if(j.error)throw Error(j.error);return j.value;};
+  // 1) La carpeta raíz «Ventura» dentro de la carpeta de BMG (los trabajos viven en el espacio del proyecto Ventura).
+  let r=await hook({action:'project_drive_claim',batch:true});assert.equal(r.jobs.length,1);assert.equal(r.jobs[0].name,'Ventura');assert.equal(r.jobs[0].parent_id,ROOT);
+  await hook({action:'project_drive_complete',job_id:r.jobs[0].id,lease_token:r.jobs[0].lease_token,file:{id:'1CarpetaVentura000000',name:'Ventura',parents:[ROOT],mimeType:'application/vnd.google-apps.folder'}});
+  // 2) Las 14 subcarpetas dentro de «Ventura».
+  r=await hook({action:'project_drive_claim',batch:true});assert.equal(r.jobs.length,14);assert.ok(r.jobs.every(j=>j.parent_id==='1CarpetaVentura000000'));
+  assert.deepEqual(r.jobs.map(j=>j.name).sort(),require('../business/projectDrive').FOLDERS.slice().sort());
+  for(const [i,j] of r.jobs.entries())await hook({action:'project_drive_complete',job_id:j.id,lease_token:j.lease_token,file:{id:'1Sub'+String(i).padStart(2,'0')+'carpeta00000000',name:j.name,parents:['1CarpetaVentura000000'],mimeType:'application/vnd.google-apps.folder'}});
+  const p=await ctx.app.projectDrive.publicProject('Ventura',{role:'Gerente'});assert.equal(p.state,'ready');assert.equal(p.root_id,'1CarpetaVentura000000');
+  assert.equal((await hook({action:'project_drive_claim'})).job,null);
+ }finally{await s.close();}
+});
