@@ -13,11 +13,26 @@
     return IAS[m] ? m : null;
   }
   function raiz() { return document.querySelector('[data-ia-raiz]') || document.querySelector('.app-content') || document.querySelector('main') || document.body; }
-  var css = 'position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:2147483000;display:flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:12px 18px;background:#1F1A17;color:#fff;font:700 14px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.25);cursor:pointer;min-height:44px';
-  var boton = document.createElement('button'); boton.type = 'button'; boton.className = 'no-print ia-rellenar-boton'; boton.setAttribute('style', css);
-  boton.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg><span></span>';
-  function refrescarBoton() { var m = modulo(); boton.style.display = m ? 'flex' : 'none'; if (m) { boton.querySelector('span').textContent = IAS[m] + ' · Dictar o adjuntar'; boton.setAttribute('aria-label', 'Dictar o adjuntar para que ' + IAS[m] + ' llene esta pantalla'); } }
-  function montar() { if (!document.body) return setTimeout(montar, 200); var st = document.createElement('style'); st.textContent = '@media (max-width:760px){.ia-rellenar-boton{bottom:calc(92px + env(safe-area-inset-bottom))!important;padding:10px 14px!important;font-size:13px!important}}@media print{.ia-rellenar-boton,.ia-rellenar-dialogo{display:none!important}}'; document.head.appendChild(st); document.body.appendChild(boton); refrescarBoton(); new MutationObserver(refrescarBoton).observe(document.body, { attributes: true, attributeFilter: ['data-ia-modulo'] }); }
+  // R56 · Un solo botón por IA: «Dictar o adjuntar» vive DENTRO del panel de la IA del módulo (L.O.L.A, G.R.E.T.A, M.O.R.A, D.I.A.V.A),
+  // como la acción «Llenar esta pantalla». Ya no hay un botón flotante aparte.
+  var ultimoFoco = null;
+  function accion() {
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'ia-rellenar-accion no-print';
+    b.setAttribute('style', 'display:flex;align-items:center;justify-content:center;gap:8px;width:calc(100% - 24px);margin:8px 12px;border:1px dashed rgba(133,68,42,.55);border-radius:12px;padding:10px 12px;background:rgba(133,68,42,.06);color:inherit;font:600 13px inherit;font-family:inherit;cursor:pointer;min-height:44px;box-sizing:border-box');
+    b.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg><span>Llenar esta pantalla · dictar o adjuntar</span>';
+    b.title = 'Dicta, escribe o adjunta imágenes o PDF; la IA propone los valores de los campos de esta pantalla y tú eliges cuáles aplicar.';
+    b.addEventListener('click', function () { ultimoFoco = b; abrir(); });
+    return b;
+  }
+  function inyectar() {
+    if (!modulo()) return;
+    // Paneles del ERP (L.O.L.A y G.R.E.T.A) y de las apps del Evaluador y Contabilidad (M.O.R.A y D.I.A.V.A).
+    Array.prototype.forEach.call(document.querySelectorAll('.lola-panel > .lola-head, #ai > .ai-h'), function (head) {
+      if (head.parentElement.querySelector('.ia-rellenar-accion')) return;
+      head.insertAdjacentElement('afterend', accion());
+    });
+  }
+  function montar() { if (!document.body) return setTimeout(montar, 200); var st = document.createElement('style'); st.textContent = '@media print{.ia-rellenar-accion,.ia-rellenar-dialogo{display:none!important}}.ia-rellenar-accion:hover{background:rgba(133,68,42,.12)!important}.ia-rellenar-accion:focus-visible{outline:2px solid #85442A;outline-offset:2px}'; document.head.appendChild(st); inyectar(); new MutationObserver(inyectar).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-ia-modulo'] }); }
   montar();
 
   // ---------- Campos de la pantalla ----------
@@ -146,8 +161,7 @@
       };
     }
   }
-  function cerrar() { if (dlg) { dlg.remove(); dlg = null; } boton.focus(); }
+  function cerrar() { if (dlg) { dlg.remove(); dlg = null; } if (ultimoFoco && document.contains(ultimoFoco)) ultimoFoco.focus(); }
   function aviso(t) { var a = h('div', { role: 'status', class: 'no-print', style: 'position:fixed;left:50%;transform:translateX(-50%);bottom:76px;z-index:2147483000;background:#24522F;color:#fff;border-radius:12px;padding:12px 16px;font:600 14px system-ui,sans-serif;max-width:420px' }, esc(t)); document.body.appendChild(a); setTimeout(function () { a.remove(); }, 7000); }
-  boton.addEventListener('click', abrir);
   window.iaRellenar = { campos: campos, abrir: abrir, aplicarValor: aplicarValor };
 })();

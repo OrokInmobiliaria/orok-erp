@@ -51,5 +51,6 @@ test('cableado: botón en CRM/Marketing, Evaluador y Contabilidad; puente del na
  const rd=f=>fs.readFileSync(path.join(__dirname,'..',f),'utf8');
  assert.match(rd('index.html'),/<script src="\/ia-rellenar\.js" defer><\/script>/);assert.ok(rd('server.cjs').includes(`h+'<script src="/ia-rellenar.js" defer></script>'`));
  assert.match(rd('src/App.jsx'),/setAttribute\('data-ia-modulo',m\)/);assert.ok(rd('src/cloudBridge.js').includes("'iaRellenar'"));
- const w=rd('public/ia-rellenar.js');for(const t of ['/evaluador','/contabilidad','Proponer cambios','Aplicar los marcados',"dispatchEvent(new Event('input'"])assert.ok(w.includes(t),t);
+ const w=rd('public/ia-rellenar.js');for(const t of ['/evaluador','/contabilidad','Proponer cambios','Aplicar los marcados',"dispatchEvent(new Event('input'","'.lola-panel > .lola-head, #ai > .ai-h'",'Llenar esta pantalla'])assert.ok(w.includes(t),t);
+ assert.ok(!w.includes('ia-rellenar-boton'),'sin botón flotante aparte (R56)');
 });
