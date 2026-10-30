@@ -151,7 +151,7 @@ ${JSON.stringify(ctx)}`;
     if (!msgs.length || msgs[msgs.length - 1].role !== 'user') throw Error('Escribe tu consulta.');
     for (let i = msgs.length - 1; i > 0; i--) if (msgs[i].role === msgs[i - 1].role) { msgs[i - 1].text += '\n' + msgs[i].text; msgs.splice(i, 1); }
     await this.count(user, c);
-    const ctx=await this.context(user,d);if(this.projectDrive){const drive=await this.projectDrive.context('lola',d.settings?.projectName||'Infinity224',user);if(drive?.fuentes.length)ctx.drive=drive;}
+    const ctx=await this.context(user,d);if(this.projectDrive){const drive=await this.projectDrive.context('lola',d.settings?.projectName||'Infinity224',user);if(drive?.fuentes?.length||drive?.historial_otros_proyectos)ctx.drive=drive;}
     const reply = await this.call(c, k.key, this.system(ctx, input?.voice === true), msgs);
     if (!reply) throw Error('El asistente no devolvió respuesta. Intenta de nuevo.');
     return { reply: reply.slice(0, 4000), provider: PROVIDERS[c.provider].label };

@@ -69,6 +69,7 @@ export default function Proyectos({user}) {
     const nota = window.prompt(`Pasar «${p.nombre}» a ${sig[1]}. Nota para el historial (opcional):`, ''); if (nota === null) return;
     setBusy(p.id); setErr(''); try { await db.proyectoEtapa(p.id, sig[0], nota); await load(); } catch (e) { setErr(e.message); } finally { setBusy(''); }
   };
+  const historial = async (p, modo) => { setBusy(p.id); setErr(''); try { await db.proyectoEditar(p.id, {historial_ia: modo}); await load(); } catch (e) { setErr(e.message); } finally { setBusy(''); } };
   const entrar = async id => { setBusy(id); try { await usarProyecto(id); } catch (e) { setErr(e.message); } finally { setBusy(''); } };
   if (!data) return <section className="orok-card" style={{padding: 20}}>{err ? <p role="alert" style={{color: '#b91c1c'}}>{err}</p> : 'Cargando proyectos…'}</section>;
   const cuenta = id => data.proyectos.filter(p => p.etapa === id).length;
@@ -95,6 +96,10 @@ export default function Proyectos({user}) {
               ? <><div><div style={{fontSize: 12, color: '#6B625C'}}>Evaluaciones</div><div style={{fontSize: 20, fontWeight: 800}}>{r.evaluaciones ?? '—'}</div></div><div><div style={{fontSize: 12, color: '#6B625C'}}>Unidades</div><div style={{fontSize: 20, fontWeight: 800}}>{r.unidades ?? '—'}</div></div><div><div style={{fontSize: 12, color: '#6B625C'}}>Leads</div><div style={{fontSize: 20, fontWeight: 800}}>{r.leads_activos ?? '—'}</div></div></>
               : <><div><div style={{fontSize: 12, color: '#6B625C'}}>Meta de recaudación</div><div style={{fontSize: 18, fontWeight: 800}}>{S(r.meta_recaudacion)}</div></div><div><div style={{fontSize: 12, color: '#6B625C'}}>Vendido</div><div style={{fontSize: 18, fontWeight: 800}}>{r.vendidas ?? 0} de {r.unidades ?? 0}</div></div><div><div style={{fontSize: 12, color: '#6B625C'}}>Leads activos</div><div style={{fontSize: 18, fontWeight: 800}}>{r.leads_activos ?? 0}</div></div></>}
           </div>
+          {data.puede_crear && <label style={{display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, fontWeight: 700, color: '#57534e'}}>Las IA de este proyecto pueden usar el historial de
+            <select className="orok-input" aria-label={'Historial para las IA de ' + p.nombre} value={p.historial_ia || 'ninguno'} disabled={busy === p.id} onChange={e => historial(p, e.target.value)} style={{fontSize: 13, padding: '6px 10px'}}>
+              {(data.historial_opciones || []).map(o => <option key={o.id} value={o.id}>{o.nombre}</option>)}</select>
+            <span style={{fontWeight: 400}}>Cifras agregadas (precios, ventas, leads por fuente, inversión, evaluaciones, proveedores); nunca datos personales de clientes.</span></label>}
           <div style={{display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 'auto'}}>
             <button className="orok-btn orok-btn-primary" style={{flex: 1}} disabled={busy === p.id} onClick={() => entrar(p.id)}>{activo ? 'Ir al proyecto' : busy === p.id ? 'Abriendo…' : 'Entrar al proyecto'}</button>
             {data.puede_crear && sig && <button className="orok-btn orok-btn-secondary" disabled={busy === p.id} onClick={() => avanzar(p)}>Pasar a {sig[1]}…</button>}

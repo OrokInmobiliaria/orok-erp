@@ -66,3 +66,28 @@ test('PostgreSQL: los proyectos nuevos no dejan pendientes en la cola de copia a
  assert.ok(queries.some(q=>/INSERT INTO lola_unified.documents/.test(q)));assert.ok(!queries.some(q=>/firebase_outbox/.test(q)));
  const srv=fs.readFileSync(path.join(__dirname,'..','server.cjs'),'utf8');assert.match(srv,/firebase:null,outbox:false/);
 });
+
+test('R52 · historial para las IA: apagado por defecto, por empresa o todos, solo cifras y llega al contexto de las IA',async()=>{
+ const s=await arrancar();
+ try{
+  const a=await s.call('db.proyectoCrear',[{nombre:'Residencial Sol',empresa:'MZA',etapa:'ventas'}]);
+  const b=await s.call('db.proyectoCrear',[{nombre:'Torre Norte',empresa:'BMG',etapa:'evaluacion'}]);
+  await s.call('db.proyectoUsar',['infinity224']);
+  const hub=s.server.proyectos;assert.ok(hub,'el servidor expone el registro de proyectos');
+  assert.equal(await hub.historial('infinity224','lola'),null,'apagado por defecto');
+  await s.call('db.proyectoEditar',['infinity224',{historial_ia:'empresa'}]);
+  let h=await hub.historial('infinity224','lola');assert.deepEqual(h.proyectos.map(p=>p.proyecto),['Torre Norte'],'misma empresa (BMG)');
+  await s.call('db.proyectoEditar',['infinity224',{historial_ia:'todos'}]);
+  h=await hub.historial('infinity224','mora');assert.deepEqual(h.proyectos.map(p=>p.proyecto).sort(),['Residencial Sol','Torre Norte']);
+  assert.ok(Array.isArray(h.proyectos[0].evaluaciones));assert.match(h.regla,/no instrucciones/);
+  // El otro proyecto ve a Infinity 224 solo si su propio control lo permite, y sin datos personales.
+  await s.call('db.proyectoEditar',[a.proyecto.id,{historial_ia:'todos'}]);
+  const hs=await hub.historial(a.proyecto.id,'lola'),inf=hs.proyectos.find(p=>p.proyecto==='Infinity 224');
+  assert.equal(inf.ventas.unidades,1);assert.equal(inf.leads.total,1);assert.doesNotMatch(JSON.stringify(hs),/Cliente Infinity|999/);
+  await assert.rejects(s.call('db.proyectoEditar',['infinity224',{historial_ia:'x'}]),/no válida/);
+  // Llega al contexto que usan las IA (mismo punto que las fuentes del Drive).
+  const ctx=await hub.obtener(a.proyecto.id),c=await ctx.app.projectDrive.context('lola','Residencial Sol',{role:'Gerente',name:'G'});
+  assert.ok(c.historial_otros_proyectos.proyectos.length>=1);assert.deepEqual(c.fuentes,[]);
+  const l=await s.call('db.proyectosListar');assert.equal(l.proyectos.find(p=>p.id===a.proyecto.id).historial_ia,'todos');assert.equal(l.historial_opciones.length,3);
+ }finally{await s.close();}
+});

@@ -45,7 +45,7 @@ const mutationMethods=new Set(['aplicarPreciosEstrategia','addLead','addLeadComm
 function qualificationPending(lead){return [['budget','Presupuesto'],['unit_interest','Tipología de interés'],['purchase_horizon','Horizonte de compra']].filter(([key])=>key==='budget'?!(Number(lead[key])>0):!String(lead[key]||'').trim()).map(([,label])=>label);}
 function leadAssignment(user,settings={}){const fallback=String(settings.defaultSalesOwner||settings.agentName||user.name||'').trim();if(user.role==='Broker'&&String(user.brokerName||'').trim())return {actor:user.name,sales_owner:user.brokerName,broker_name:user.brokerName};return {actor:user.name,sales_owner:fallback};}
 function publicSettings(settings){const result={...settings};for(const key of Object.keys(result))if(/password|secret|token|api.?key|manager.?pin/i.test(key))delete result[key];result.geminiConfigured=!!settings.geminiApiKey;result.salesAccessEmail='soportetecnologico@orok.com.pe';return result;}
-function application({store,auth,cache,authCache,config,syncer,supportMail,whatsappOptions={},socialOptions={},creativeOptions={},backups={run:async()=>({skipped:true})},sla={preview:async()=>({enabled:false,eligible:0,changes:[],moves:[],assessments:[]}),run:async()=>({enabled:false,eligible:0,updated:0,moved:0})}}){
+function application({store,auth,cache,authCache,config,syncer,historialIA=null,supportMail,whatsappOptions={},socialOptions={},creativeOptions={},backups={run:async()=>({skipped:true})},sla={preview:async()=>({enabled:false,eligible:0,changes:[],moves:[],assessments:[]}),run:async()=>({enabled:false,eligible:0,updated:0,moved:0})}}){
  const approvalMail=supportMail||require('./cloud-approval-mail.cjs').createCloudApprovalMail(config);
  const library=assets(path.join(config.privateDir,'files')),jobs=new Map(),analyticsCache=new Map();
  const whatsapp=new WhatsAppService(store,config,whatsappOptions);const customerCare=new CustomerCare(store,whatsapp);
@@ -53,6 +53,8 @@ function application({store,auth,cache,authCache,config,syncer,supportMail,whats
  const creative=new CreativeCampaigns(store,config,ads,creativeOptions);const assistant=new MarketingAssistant(store,config,ads,creative);const pipelines=new Pipelines(store,config,creative);const leadExport=new LeadExport(store,config,creativeOptions.leadExport||{});const publications=new PublicationAnalytics(store,config,creativeOptions);
  const omnichannel=new Omnichannel(store,config,whatsapp,social,socialOptions);social.common=omnichannel;const crmConversation=new CrmConversation(store,config);omnichannel.crm=crmConversation;crmConversation.engine.alerts=whatsapp.alerts;
  const projectDrive=new ProjectDrive(store,config);
+ // R52 · Las IA (L.O.L.A, G.R.E.T.A, M.O.R.A, D.I.A.V.A) reciben, junto a las fuentes del Drive, el historial agregado de otros proyectos si Gerencia lo permitió.
+ if(historialIA){const base=projectDrive.context.bind(projectDrive);projectDrive.context=async(module,reference,user)=>{const c=await base(module,reference,user);let h=null;try{h=await historialIA(module);}catch(_){h=null;}if(!h)return c;return {...(c||{}),fuentes:c?.fuentes||[],historial_otros_proyectos:h};};}
  whatsapp.projectDrive=projectDrive;crmConversation.engine.projectDrive=projectDrive;
  const mora=new MoraIntegration(store,config);
  const precios=new PreciosEstrategia(store,{origin:config.origin});mora.precios=precios;
