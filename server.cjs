@@ -44,12 +44,14 @@ function createServer({config,store,auth,cache,authCache,supportMail,whatsappOpt
   const backups=dir?backupScheduler({store:st,privateDir:dir}):{run:async()=>({skipped:true}),start(){},stop(){}};
   const sla=slaScheduler({store:st});
   const syncer=sheetSync({store:st,cache:ca,onNewLeads:({added,source})=>backups.run({reason:source+' · '+added+' lead(s) nuevo(s)'})});
-  const app=application({store:st,auth,cache:ca,authCache,config,syncer,backups,sla,supportMail,whatsappOptions,socialOptions,creativeOptions});
+  const app=application({store:st,auth,cache:ca,authCache,config,syncer,historialIA:engine=>hubRef?hubRef.historial(id||config.project,engine):null,backups,sla,supportMail,whatsappOptions,socialOptions,creativeOptions});
   return {id:id||config.project,store:st,cache:ca,app,backups,sla,syncer};
  };
+ let hubRef=null;
  const principal=contexto(store,cache,null),{backups,sla,syncer,app}=principal,hits=new Map();
  let escuchando=false;
  const proyectos=proyectosHub({principal,registro:new ProyectosRegistro(store,{principalId:config.project||'infinity224',principalNombre:'Infinity 224'}),abrir:(id,inicial)=>abrirProyecto(store,id,inicial),contexto,onNuevo:c=>{if(escuchando){c.syncer.start();c.sla.start();}}});
+ hubRef=proyectos;
  const server=http.createServer(async(req,res)=>{
   const json=(status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
   res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','SAMEORIGIN');
@@ -231,6 +233,7 @@ function createServer({config,store,auth,cache,authCache,supportMail,whatsappOpt
   escuchando=true;for(const c of proyectos.ctxs.values()){c.syncer.start();c.sla.start();}app.resguardo?.start(); // R45 · resguardo externo (solo si Gerencia lo activó)
  });
  server.on('close',()=>{for(const c of proyectos.ctxs.values()){c.syncer.stop();c.sla.stop();c.backups.stop();}app.resguardo?.stop();proyectos.cerrar();});
+ server.proyectos=proyectos; // R52 · acceso de pruebas y diagnóstico
  return server;
 }
 async function start(){
