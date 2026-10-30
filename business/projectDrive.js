@@ -9,9 +9,18 @@ const clean=(s,n=180)=>String(s||'').replace(/[\u0000-\u001f\\/:*?"<>|]/g,' ').r
 const normalized=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
 const driveId=s=>/^[\w-]{15,160}$/.test(String(s||''));
 const MODULES={greta:[4,5,7,8,9,12,13],mora:[0,6,7,8,9,10,11,12],clara:[0,1,6,10,11],lola:[4,5,7,12,13]};
+const DEFAULT_ROOTS={BMG:'1o9icm7jGl9wA6sTfPljLwr3ZBAx8wejz',MZA:'1i_sBkEj828HqA2zwSoXFAnAQf3I1nAIY',MAAS:'14kMlSLPiNxtpCoprA2d1yo2DiVaPvt4R'};
 class ProjectDrive{
  constructor(store,config){this.store=store;this.dir=config.privateDir;this.projects=store.ref.collection('erp_drive_projects');this.jobs=store.ref.collection('erp_drive_jobs');this.index=store.ref.collection('erp_drive_index');}
- config(){try{return JSON.parse(fs.readFileSync(path.join(this.dir,'project-drive.json'),'utf8'));}catch{return {enabled:false};}}
+ // R59 · Carpetas por empresa: si el servidor no tiene project-drive.json se usan las carpetas de Mi unidad de ÖRÖK
+ // (BMG → 1.BMG › ÖRÖK; MZA → 2.Montezuma Arquitectos; MAAS → 3. MAAS Constructora). Gerencia las cambia desde el ERP.
+ file(){return path.join(this.dir,'project-drive.json')}
+ leerArchivo(){try{return JSON.parse(fs.readFileSync(this.file(),'utf8'))}catch{return null}}
+ config(){const f=this.leerArchivo()||{};return {...f,enabled:f.enabled!==false,roots:{...DEFAULT_ROOTS,...(f.roots||{})}};}
+ publicConfig(user){if(user.role!=='Gerente')throw Error('Requiere Gerencia.');const c=this.config();return {enabled:c.enabled,roots:c.roots,urls:Object.fromEntries(Object.entries(c.roots).map(([k,v])=>[k,driveId(v)?'https://drive.google.com/drive/folders/'+v:null])),origen:this.leerArchivo()?'guardado':'predeterminado'};}
+ saveConfig(input,user){if(user.role!=='Gerente')throw Error('Requiere Gerencia.');const f=this.leerArchivo()||{},roots={...(f.roots||{})};
+  for(const k of ['BMG','MZA','MAAS'])if(input?.roots&&input.roots[k]!=null){const raw=String(input.roots[k]).trim(),m=raw.match(/folders\/([\w-]{10,})/),id=m?m[1]:raw;if(id&&!driveId(id))throw Error('La carpeta de '+k+' no es un enlace o identificador de Drive válido.');if(id)roots[k]=id;else delete roots[k];}
+  const next={...f,enabled:input?.enabled!==false,roots,updated_at:now(),updated_by:user.name};fs.mkdirSync(this.dir,{recursive:true});fs.writeFileSync(this.file(),JSON.stringify(next,null,2));return this.publicConfig(user);}
  async projectFor(reference){const rows=(await this.projects.limit(300).get()).docs.map(d=>d.data());const key=normalized(reference).replace(/ensayo$/,'');return rows.find(p=>p.id===reference||p.evaluation_id===reference||normalized(p.nombre).replace(/ensayo$/,'')===key||normalized(p.source_project_id)===key)||null;}
  async registerEvaluation(input,user){
   const cfg=this.config();if(!cfg.enabled)return {state:'not_configured'};

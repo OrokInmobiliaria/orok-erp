@@ -1,0 +1,1116 @@
+{
+  "name": "ERP PRODUCCIÓN · Carpetas de proyectos y archivo en Drive",
+  "nodes": [
+    {
+      "id": "d99ca73e-3760-4e3f-950d-b9d2d959ec01",
+      "name": "Manual · ensayo",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "7e0240d8-7743-4684-9b3e-8a7d23e058a0",
+      "name": "Revisar cola cada 30 segundos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "secondsInterval": 30
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "3c7e2568-4167-454b-b1a8-88a1df3ed409",
+      "name": "Tomar cola ERP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://erp.orok.com.pe/api/integrations/lola",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({action:'project_drive_claim',batch:true}) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "id": "9cb00dba-d0b0-471b-a662-ebdffeb90d9c",
+      "name": "Conservar trabajo Drive",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const jobs=$input.first().json.value?.jobs||[];return jobs.map(j=>({json:j,pairedItem:{item:0}}));"
+      }
+    },
+    {
+      "id": "483fbbe2-5a5d-4999-bc57-29dd962c22c4",
+      "name": "Es lectura de carpeta",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1d5d3208-0361-4ef6-8fa3-389b70309a54",
+              "leftValue": "={{ $json.kind==='scan' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "45dc4d6f-747e-4d64-bfd3-d2da5d4a9662",
+      "name": "Listar fuentes sin modificar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ \"'\"+$('Conservar trabajo Drive').item.json.parent_id+\"' in parents and trashed=false\" }}"
+            },
+            {
+              "name": "pageSize",
+              "value": "100"
+            },
+            {
+              "name": "pageToken",
+              "value": "={{ $('Conservar trabajo Drive').item.json.page_token }}"
+            },
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "includeItemsFromAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "fields",
+              "value": "nextPageToken,files(id,name,mimeType,parents,modifiedTime,size,webViewLink)"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "e4787812-ac77-4386-a41b-7c09e83a6bb1",
+      "name": "Confirmar índice",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://erp.orok.com.pe/api/integrations/lola",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({action:'project_drive_complete',job_id:$('Conservar trabajo Drive').item.json.id,lease_token:$('Conservar trabajo Drive').item.json.lease_token,result:$json}) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "id": "aa7855c0-01d7-4801-b445-a9c90a12bc4c",
+      "name": "Es lectura de documento",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        220
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a6d9eada-08b9-4ace-b06c-b92507099f32",
+              "leftValue": "={{ $json.kind==='index_file' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "63595a8d-842f-4a2b-811a-c95fbceff8ee",
+      "name": "Descargar fuente autorizada",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        220
+      ],
+      "parameters": {
+        "url": "={{ 'https://www.googleapis.com/drive/v3/files/'+$('Conservar trabajo Drive').item.json.file_id+(['application/vnd.google-apps.document','application/vnd.google-apps.spreadsheet','application/vnd.google-apps.presentation'].includes($('Conservar trabajo Drive').item.json.mime)?'/export?mimeType='+encodeURIComponent(($('Conservar trabajo Drive').item.json.mime==='application/vnd.google-apps.document'?'text/plain':$('Conservar trabajo Drive').item.json.mime==='application/vnd.google-apps.spreadsheet'?'text/csv':'application/pdf')):'?alt=media&supportsAllDrives=true') }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "1c7bc030-db14-466c-aa08-2ff4df258b4f",
+      "name": "Es PDF",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        220
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a1ab78bf-7dfe-4a27-9b08-d31a73607729",
+              "leftValue": "={{ $('Conservar trabajo Drive').item.json.mime==='application/pdf'||$('Conservar trabajo Drive').item.json.mime==='application/vnd.google-apps.presentation' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "a1610200-9435-4226-bd45-471351281132",
+      "name": "Extraer PDF",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        220
+      ],
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "fe571f7f-502d-45b0-80f5-b09578f140a7",
+      "name": "Es Excel",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        220
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f288bf32-b1e3-42f4-a7b9-56e7287fbb98",
+              "leftValue": "={{ $('Conservar trabajo Drive').item.json.mime==='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "ccb3a632-e418-4558-9ec3-980db27643ef",
+      "name": "Extraer Excel",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        220
+      ],
+      "parameters": {
+        "operation": "xlsx",
+        "options": {}
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "25b7161b-250e-4301-8ff2-115fcaf431a8",
+      "name": "Leer texto UTF8",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        220
+      ],
+      "parameters": {
+        "jsCode": "const rows=[];for(let i=0;i<$input.all().length;i++){const b=await this.helpers.getBinaryDataBuffer(i,'data');rows.push({json:{text:b.toString('utf8').slice(0,30000)},pairedItem:{item:i}});}return rows;"
+      }
+    },
+    {
+      "id": "f3c4d2be-79fd-4570-ad9e-53931f62accf",
+      "name": "Preparar textos por trabajo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        440
+      ],
+      "parameters": {
+        "jsCode": "const out=new Map();for(let i=0;i<$input.all().length;i++){const item=$input.all()[i];const j=$('Conservar trabajo Drive').itemMatching(i).json;let v=out.get(j.id);if(!v){v={json:{job_id:j.id,lease_token:j.lease_token,text:''},pairedItem:{item:i}};out.set(j.id,v);}v.json.text+=(item.json.text||JSON.stringify(item.json))+'\\n';v.json.text=v.json.text.slice(0,30000);}return [...out.values()];"
+      }
+    },
+    {
+      "id": "d2cc9070-2cc7-416d-9e0e-e810a04a8004",
+      "name": "Confirmar texto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        440
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://erp.orok.com.pe/api/integrations/lola",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({action:'project_drive_complete',job_id:$json.job_id,lease_token:$json.lease_token,text:$json.text}) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "id": "b0b0a5cc-dd8f-4da7-adfd-8af7dfbfa67b",
+      "name": "Buscar elemento exacto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        440
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ \"'\"+$('Conservar trabajo Drive').item.json.parent_id+\"' in parents and name='\"+$('Conservar trabajo Drive').item.json.name.replace(/\\\\/g,'\\\\\\\\').replace(/'/g,\"\\\\'\")+\"' and trashed=false\" }}"
+            },
+            {
+              "name": "pageSize",
+              "value": "100"
+            },
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "includeItemsFromAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "fields",
+              "value": "files(id,name,mimeType,parents,size,webViewLink)"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "19cdc134-38cd-4a37-8f28-0d226db5d9f3",
+      "name": "Resolver coincidencia",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        440
+      ],
+      "parameters": {
+        "jsCode": "return $input.all().map((it,i)=>{const j=$('Conservar trabajo Drive').itemMatching(i).json;const rows=(it.json.files||[]).filter(f=>f.mimeType===j.mime);if(rows.length>1)throw Error('Más de un elemento idéntico; revisar sin borrar.');if(rows[0]&&j.kind==='file'&&Number(rows[0].size)!==Number(j.size))throw Error('El archivo existente no coincide en tamaño.');return {json:{file:rows[0]||null},pairedItem:{item:i}};});"
+      }
+    },
+    {
+      "id": "7f8475d5-2f88-45a0-bb92-9197da217751",
+      "name": "Ya existe",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        440
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d26e63fe-c383-43a1-9eb9-a7f73f5aaa96",
+              "leftValue": "={{ !!$json.file }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "fe5c3bdd-27e4-447f-a38d-ef938ca89883",
+      "name": "Confirmar existente",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        440
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://erp.orok.com.pe/api/integrations/lola",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({action:'project_drive_complete',job_id:$('Conservar trabajo Drive').item.json.id,lease_token:$('Conservar trabajo Drive').item.json.lease_token,file:$json.file}) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "id": "2fe65686-9043-4304-9feb-bc4d5fec6766",
+      "name": "Crear carpeta",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1440,
+        440
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7541ce6f-bbab-4054-8be7-6e63f5f055f3",
+              "leftValue": "={{ $('Conservar trabajo Drive').item.json.kind==='folder' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "78229ca8-2549-410c-b607-ff5a2e2c939d",
+      "name": "Crear carpeta autorizada",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        660
+      ],
+      "parameters": {
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "method": "POST",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "fields",
+              "value": "id,name,mimeType,parents,webViewLink"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({name:$('Conservar trabajo Drive').item.json.name,mimeType:\"application/vnd.google-apps.folder\",parents:[$('Conservar trabajo Drive').item.json.parent_id]}) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "d20b3c59-0023-4f54-85fa-97bcca36d8eb",
+      "name": "Confirmar carpeta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        660
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://erp.orok.com.pe/api/integrations/lola",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({action:'project_drive_complete',job_id:$('Conservar trabajo Drive').item.json.id,lease_token:$('Conservar trabajo Drive').item.json.lease_token,file:$json}) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "id": "680a016d-7a2f-4842-abe5-1d3a79113915",
+      "name": "Obtener archivo privado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        660
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://erp.orok.com.pe/api/integrations/lola",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({action:'project_drive_content',job_id:$('Conservar trabajo Drive').item.json.id,lease_token:$('Conservar trabajo Drive').item.json.lease_token}) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "id": "aa639b6a-3936-4e16-9075-c151060b0120",
+      "name": "Preparar binario privado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        660
+      ],
+      "parameters": {
+        "jsCode": "const rows=[];for(let i=0;i<$input.all().length;i++){const v=$input.all()[i].json.value;if(!v?.data_base64)throw Error('Sin contenido autorizado.');rows.push({json:{},binary:{data:await this.helpers.prepareBinaryData(Buffer.from(v.data_base64,'base64'),v.name,v.mime)},pairedItem:{item:i}});}return rows;"
+      }
+    },
+    {
+      "id": "0f5e4f37-96c3-4d57-b74e-a14ffc2b584e",
+      "name": "Archivar en Marketing",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        960,
+        660
+      ],
+      "parameters": {
+        "resource": "file",
+        "operation": "upload",
+        "inputDataFieldName": "data",
+        "name": "={{ $('Conservar trabajo Drive').item.json.name }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Conservar trabajo Drive').item.json.parent_id }}"
+        },
+        "options": {
+          "simplifyOutput": false
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PF18WbIo4xxp4VsW",
+          "name": "Google Drive account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "fa392f77-bb99-4e96-a77d-7eddd738016d",
+      "name": "Confirmar archivo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        660
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://erp.orok.com.pe/api/integrations/lola",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({action:'project_drive_complete',job_id:$('Conservar trabajo Drive').item.json.id,lease_token:$('Conservar trabajo Drive').item.json.lease_token,file:$json}) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "id": "dfa61853-d5dc-487d-a0aa-827741e46024",
+      "name": "Registrar fallo visible",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        660
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://erp.orok.com.pe/api/integrations/lola",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({action:'project_drive_fail',job_id:$('Conservar trabajo Drive').item.json.id,lease_token:$('Conservar trabajo Drive').item.json.lease_token,error:String($json.error?.message||$json.message||'Drive no confirmó el trabajo').slice(0,300)}) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Header Auth account 2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Manual · ensayo": {
+      "main": [
+        [
+          {
+            "node": "Tomar cola ERP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revisar cola cada 30 segundos": {
+      "main": [
+        [
+          {
+            "node": "Tomar cola ERP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tomar cola ERP": {
+      "main": [
+        [
+          {
+            "node": "Conservar trabajo Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conservar trabajo Drive": {
+      "main": [
+        [
+          {
+            "node": "Es lectura de carpeta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es lectura de carpeta": {
+      "main": [
+        [
+          {
+            "node": "Listar fuentes sin modificar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Es lectura de documento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Listar fuentes sin modificar": {
+      "main": [
+        [
+          {
+            "node": "Confirmar índice",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Registrar fallo visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es lectura de documento": {
+      "main": [
+        [
+          {
+            "node": "Descargar fuente autorizada",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Buscar elemento exacto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descargar fuente autorizada": {
+      "main": [
+        [
+          {
+            "node": "Es PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Registrar fallo visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es PDF": {
+      "main": [
+        [
+          {
+            "node": "Extraer PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Es Excel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es Excel": {
+      "main": [
+        [
+          {
+            "node": "Extraer Excel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Leer texto UTF8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer PDF": {
+      "main": [
+        [
+          {
+            "node": "Preparar textos por trabajo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Registrar fallo visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer Excel": {
+      "main": [
+        [
+          {
+            "node": "Preparar textos por trabajo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Registrar fallo visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer texto UTF8": {
+      "main": [
+        [
+          {
+            "node": "Preparar textos por trabajo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar textos por trabajo": {
+      "main": [
+        [
+          {
+            "node": "Confirmar texto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar elemento exacto": {
+      "main": [
+        [
+          {
+            "node": "Resolver coincidencia",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Registrar fallo visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolver coincidencia": {
+      "main": [
+        [
+          {
+            "node": "Ya existe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ya existe": {
+      "main": [
+        [
+          {
+            "node": "Confirmar existente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Crear carpeta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear carpeta": {
+      "main": [
+        [
+          {
+            "node": "Crear carpeta autorizada",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Obtener archivo privado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear carpeta autorizada": {
+      "main": [
+        [
+          {
+            "node": "Confirmar carpeta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Registrar fallo visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener archivo privado": {
+      "main": [
+        [
+          {
+            "node": "Preparar binario privado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar binario privado": {
+      "main": [
+        [
+          {
+            "node": "Archivar en Marketing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Archivar en Marketing": {
+      "main": [
+        [
+          {
+            "node": "Confirmar archivo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Registrar fallo visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "timezone": "America/Lima",
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "pinData": {},
+  "versionId": "09c4a749-482f-4360-9f71-8f51b8944414",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
