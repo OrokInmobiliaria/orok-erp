@@ -15,6 +15,6 @@ test('cableado: botones de ajuste, ancho completo y versión en la dirección de
  for(const t of ["a==='cab-ajustar'","a==='cab-ajustar-todo'",'Ajustar todos los pisos a las unidades','mismo número de piso'])assert.ok(src.includes(t),t);
  assert.match(R('src/App.jsx'),/\['evaluador','contabilidad','ordenesErp'\]\.includes\(activeTab\)\) \? '100%'/);
  assert.ok(R('server.cjs').includes("ia-rellenar.js?v='+encodeURIComponent(require('./package.json').version)"));
- assert.ok(R('build.mjs').includes('ia-rellenar.js?v='));assert.ok(R('dist/index.html').includes('/ia-rellenar.js?v=67.6.45-r60'));
+ assert.ok(R('build.mjs').includes('ia-rellenar.js?v='));assert.ok(R('dist/index.html').includes('/ia-rellenar.js?v='+JSON.parse(R('package.json')).version));
  assert.ok(R('public/ia-rellenar.js').includes('retirarFlotante'));
 });
