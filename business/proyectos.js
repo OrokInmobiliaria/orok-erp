@@ -214,6 +214,15 @@ function proyectosHub({ principal, abrir, contexto, registro, onNuevo = () => {}
       if (id && /^[\w-]{1,100}$/.test(id)) for (const c of lista) { try { if ((await c.app.projectDrive.jobs.doc(id).get()).data()) return c.app.projectDrive.action(payload); } catch {} }
       return principal.app.projectDrive.action(payload);
     },
+    // R63 · M.O.R.A (consultas y lectura de avisos del estudio de mercado): el trabajador de n8n no sabe de qué proyecto es
+    // cada trabajo. Se toma el primero pendiente de cualquier proyecto y la respuesta vuelve al proyecto dueño del trabajo.
+    async mora(payload) {
+      const a = String(payload?.action || ''), lista = await this.todos(), leer = c => () => c.cache.read();
+      if (a === 'mora_job_claim' || a === 'mora_market_claim') { for (const c of lista) { const r = await c.app.mora.action(payload, leer(c)); if (r?.job) return r; } return { ok: true, job: null }; }
+      const col = a === 'mora_job_complete' ? 'jobs' : a === 'mora_market_complete' ? 'market' : null, id = String(payload?.job_id || '');
+      if (col && /^[\w-]{1,200}$/.test(id)) for (const c of lista) { try { if ((await c.app.mora[col].doc(id).get()).data()) return c.app.mora.action(payload, leer(c)); } catch {} }
+      return principal.app.mora.action(payload, leer(principal));
+    },
     cerrar() { for (const [id, c] of ctxs) if (id !== registro.principalId) { try { (c.cacheBase || c.cache).close(); c.store.close?.(); } catch {} } },
     async rpc(name, args, user, header) {
       const activo = cookieDe(header) || registro.principalId;

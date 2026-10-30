@@ -114,6 +114,7 @@ function createServer({config,store,auth,cache,authCache,supportMail,whatsappOpt
     // a lead and cannot be delayed by a Firestore transaction.
     // R53 · Trabajos de carpetas de Drive de todos los proyectos (no solo del principal).
     if(/^project_drive_/.test(String(payload?.action||'')))return json(200,{value:await proyectos.drive(payload)});
+    if(/^mora_(job|market)_/.test(String(payload?.action||'')))return json(200,{value:await proyectos.mora(payload)}); // R63 · M.O.R.A para todos los proyectos
     if(payload?.action==='connection_check')return json(200,{value:{ok:true,connection:true,version:require('./package.json').version,writes:0}});
     return json(200,{value:await (payload?.project?(await proyectos.porNombre(payload.project)).app:app).ingestLola(payload)});
    }
