@@ -125,6 +125,18 @@ class MoraIntegration {
     return next;
   }
 
+  // R63 · Contexto de la consulta que antes leía n8n directo de PostgreSQL (mora.context_for_job): mismo alcance y forma.
+  // Así el trabajador de n8n sirve a cualquier proyecto sin credenciales de base de datos.
+  async contextFor(job) {
+    const ev = (await this.evaluations.doc(String(job.evaluation_id || '')).get()).data();
+    if (!ev || ev.active === false) throw Error('Evaluación no disponible');
+    const scope = await this.scopeFor({ role: job.actor_role, uid: job.actor_uid, id: job.actor_uid }, job.evaluation_id);
+    const history = (await this.messages.where('thread_id', '==', String(job.thread_id || '')).limit(201).get()).docs.map(x => x.data())
+      .filter(m => m.actor_uid === job.actor_uid).sort((a, b) => String(b.sort_key).localeCompare(String(a.sort_key))).slice(0, 12).reverse()
+      .map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', text: String(m.text || '').slice(0, 1200), at: m.at }));
+    const evaluation = scope === 'completo' ? { project: ev.project, summary: ev.summary, analysis: ev.analysis, inputs: ev.inputs, engine_version: ev.engine_version } : { project: ev.project, summary: ev.summary };
+    return { ok: true, job_id: job.id, scope, evaluation, history, memory: { storage: 'erp', turns: history.length, scope } };
+  }
   // ---------- Permisos (mismo criterio que mora.context_for_job) ----------
   async scopeFor(user, evaluationId) {
     if (user.role === 'Gerente') return 'completo';
@@ -315,7 +327,7 @@ class MoraIntegration {
         const next = { ...j, state: 'processing', attempts: (j.attempts || 0) + 1, lease_token: token, lease_until: new Date(Date.now() + LEASE_MS).toISOString(), updated_at: now() };
         tx.set(ref, next); return next;
       });
-      if (got) {let drive_context=null;if(this.projectDrive&&got.actor_role==='Gerente'){const ev=(await this.evaluations.doc(got.evaluation_id).get()).data();drive_context=await this.projectDrive.context('mora',ev?.project?.nombre||got.evaluation_id,{role:got.actor_role});}return { ok: true, job: { id: got.id, engine: 'mora', lease_token: got.lease_token, evaluation_id: got.evaluation_id, thread_id: got.thread_id, actor_uid: got.actor_uid, actor_role: got.actor_role, question: got.question, tier: got.tier, view: got.view,drive_context } };}
+      if (got) {let drive_context=null;if(this.projectDrive&&got.actor_role==='Gerente'){const ev=(await this.evaluations.doc(got.evaluation_id).get()).data();drive_context=await this.projectDrive.context('mora',ev?.project?.nombre||got.evaluation_id,{role:got.actor_role});}let context=null;try{context=await this.contextFor(got);}catch{context=null;}return { ok: true, job: { id: got.id, engine: 'mora', lease_token: got.lease_token, evaluation_id: got.evaluation_id, thread_id: got.thread_id, actor_uid: got.actor_uid, actor_role: got.actor_role, question: got.question, tier: got.tier, view: got.view,drive_context,context } };}
     }
     return { ok: true, job: null };
   }

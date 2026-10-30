@@ -227,3 +227,17 @@ test('R33c: el estudio parte de la dirección del proyecto y calcula distancias 
   assert.ok(fs.existsSync(path.join(t.privateDir,'mora-geocode-cache.json')));
  }finally{await t.close();}
 });
+
+test('R63 · el trabajo de M.O.R.A trae su contexto (evaluación, alcance e historial) y el trabajador de producción no usa PostgreSQL',async()=>{
+ const t=await setup();try{
+  await t.call('saveMoraConfig',[{enabled:true}]);await t.call('saveMoraEvaluation',[EVAL]);
+  await ask(t,'manager','¿Cuál es el margen?');
+  const job=(await t.n8n('mora_job_claim')).data.value.job,c=job.context;
+  assert.equal(c.ok,true);assert.equal(c.job_id,job.id);assert.equal(c.scope,'completo');assert.ok(c.evaluation.inputs&&c.evaluation.inputs.p);assert.ok(Array.isArray(c.evaluation.inputs.units));
+  assert.equal(c.history.length,1);assert.equal(c.history[0].role,'user');assert.match(c.history[0].text,/margen/);
+  const w=JSON.parse(require('node:fs').readFileSync(require('node:path').join(__dirname,'..','n8n','MORA-R63-PRODUCCION.json'),'utf8'));
+  assert.equal(w.active,false);assert.ok(!w.nodes.some(n=>/postgres/i.test(n.type)));assert.equal(w.nodes.filter(n=>n.parameters.url==='https://erp.orok.com.pe/api/integrations/lola').length,6);
+  assert.ok(w.nodes.find(n=>n.name==='Conservar consulta M.O.R.A').parameters.jsCode.includes('context: job.context'));
+  assert.ok(w.connections['Conservar consulta M.O.R.A'].main[0].some(d=>d.node==='Contexto entregado por el ERP'));
+ }finally{await t.close();}
+});

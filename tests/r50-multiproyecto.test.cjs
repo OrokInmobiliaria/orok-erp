@@ -138,3 +138,19 @@ test('R57 · un proyecto nuevo usa la clave de IA de Ajustes de Infinity 224 (so
   assert.equal((await ctx.cacheBase.read()).settings.geminiApiKey,undefined,'no se copia a los datos del proyecto');
  }finally{await s.close();}
 });
+
+test('R63 · M.O.R.A: el trabajador de n8n toma y responde las lecturas de mercado de un proyecto nuevo (no solo de Infinity 224)',async()=>{
+ const s=await arrancar();
+ try{
+  const dir=s.server.proyectos.ctxs.get('infinity224').app.projectDrive.dir,SECRET='y'.repeat(32);
+  fs.writeFileSync(path.join(dir,'integracion-ia-webhooks.json'),JSON.stringify({webhookSecret:SECRET}));
+  await s.call('db.saveMoraConfig',[{enabled:true}]);
+  const c=await s.call('db.proyectoCrear',[{nombre:'Ventura',empresa:'BMG',etapa:'evaluacion'}]);
+  const pedido=await s.call('db.requestMoraMarket',[{url:'https://urbania.pe/buscar/venta-de-departamentos-en-rimac--lima--lima',distrito:'Rímac'}]);
+  const base='http://127.0.0.1:'+s.server.address().port,hook=async p=>{const r=await fetch(base+'/api/integrations/lola',{method:'POST',headers:{'Content-Type':'application/json','X-Orok-Webhook-Secret':SECRET},body:JSON.stringify(p)});const j=await r.json();if(j.error)throw Error(j.error);return j.value;};
+  const r=await hook({action:'mora_market_claim'});assert.ok(r.job,'toma la lectura pedida desde Ventura');assert.equal(r.job.distrito,'Rímac');
+  const ok=await hook({action:'mora_market_complete',job_id:r.job.id,lease_token:r.job.lease_token,result:{avisos:[{proyecto:'Edificio X',precio:350000,moneda:'PEN',area:60}]}});assert.ok(ok);
+  const ventura=await s.server.proyectos.obtener(c.proyecto.id);assert.equal((await ventura.app.mora.market.doc(r.job.id).get()).data().state,'done');
+  assert.equal((await hook({action:'mora_market_claim'})).job,null);void pedido;
+ }finally{await s.close();}
+});
