@@ -4,11 +4,14 @@ const SHOWROOM=require('./projectLocation'),PRECIOS=require('./lolaPrecios');
 // R64 · Lead que llegó por formulario (Meta Lead Ads u otro): pide DNI antes de pasar a un asesor.
 function formLead(lead){return !!(lead&&(lead.form_meta||/formulario|lead ?ads|leadgen/i.test(String(lead.source||''))));}
 const PIDE_DNI='Con gusto te conecto con un asesor para que revise contigo el precio exacto y las condiciones 😊 Para registrar tu atención, ¿me compartes tu número de DNI?';
-const SALES={businessPhone:'51912971742',phones:['51987208622'],email:'ventas@orok.com.pe'};
+// R66 · Ningún celular fijo en el código: los avisos «cliente pide asesor» van a los celulares de asesores que Gerencia registra
+// en la conexión de WhatsApp (y al correo de ventas). El número de Gerencia no se usa en ningún lado.
+const SALES={businessPhone:'51912971742',phones:[],email:'ventas@orok.com.pe'};
+function advisorPhones(setup={}){return [...new Set((Array.isArray(setup.advisorPhones)?setup.advisorPhones:[]).map(v=>String(v).replace(/\D/g,'')).filter(v=>/^\d{7,15}$/.test(v)&&v!==SALES.businessPhone))];}
 const BODY='Equipo de ventas: LOLA recibió una solicitud de asesor. Cliente: {{1}}. Teléfono: {{2}}. Motivo: {{3}}. Revisa la conversación en el CRM para atenderla o coordinar una cita.';
 const TEMPLATE={name:'orok_alerta_asesor_v1',language:'es',category:'UTILITY',components:[{type:'BODY',text:BODY,example:{body_text:[['Cliente de prueba','51900000000','Solicitud de asesor']]}}]};
 const hash=s=>createHash('sha256').update(s).digest('hex');
-function alertPhones(setup={}){return setup.environment==='test'&&setup.testAdvisorPhone?[setup.testAdvisorPhone]:SALES.phones;}
+function alertPhones(setup={}){return setup.environment==='test'&&setup.testAdvisorPhone?[setup.testAdvisorPhone]:advisorPhones(setup);}
 function optionsReply(delivered){return delivered?'Registramos tu solicitud y avisamos a Ventas. El asesor revisará contigo las condiciones comerciales. Puedes coordinar una cita por WhatsApp o Meet, o esperar su intervención.':'Tu solicitud está registrada; el aviso por correo necesita revisión. Puedes coordinar una cita por WhatsApp o Meet, o esperar al asesor.';}
 function buttons(id){return {buttons:[['whatsapp','Cita por WhatsApp'],['meet','Cita por Meet'],['wait','Esperar al asesor']].map(([v,title])=>({type:'reply',reply:{id:'orok:advisor:'+v+':'+id,title}}))};}
 function requested(text){return ECONOMIC.test(norm(text))||/\b(?:quiero|necesito|deseo|hablar|contactar|comunicarme|dame|pasa|pasame)\b.{0,60}\b(?:asesor|vendedor|persona real|humano)\b/.test(norm(text));}
@@ -79,4 +82,4 @@ class AdvisorAlerts{
   await this.s.store.run(({read,write})=>{const data=read(),l=data.leads.find(l=>l.id===leadId);if(l?.advisor_alert?.id===requestId){l.advisor_alert.whatsapp=outcomes;write(data);}});return {outcomes};
  }
 }
-module.exports={formLead,PIDE_DNI,optionsReply,alertPhones,SALES,BODY,TEMPLATE,buttons,requested,plan,meetUrl,confirmation,humanizeConfirmedReply,AdvisorAlerts};
+module.exports={advisorPhones,formLead,PIDE_DNI,optionsReply,alertPhones,SALES,BODY,TEMPLATE,buttons,requested,plan,meetUrl,confirmation,humanizeConfirmedReply,AdvisorAlerts};

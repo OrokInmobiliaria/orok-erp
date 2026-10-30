@@ -47,3 +47,8 @@ test('trabajador de producción de L.O.L.A: sin PostgreSQL, todo a erp.orok.com.
  const sm=w.nodes.find(n=>n.parameters?.options?.systemMessage?.includes('Eres Lola')).parameters.options.systemMessage;assert.match(sm,/el servidor lo solicita solo cuando el cliente insiste/);assert.match(sm,/rango y las promociones que autorizó Gerencia/);
  assert.ok(w.nodes.find(n=>n.name==='Memoria entregada por el ERP'));assert.ok(!w.nodes.find(n=>n.name==='Aplicar memoria a la conversación').parameters.jsCode.includes("'postgresql'"));
 });
+test('R66 · el número de Gerencia no aparece en el código ni en el trabajador de producción; avisos a asesores registrados',()=>{
+ const fs=require('node:fs'),path=require('node:path'),R=f=>fs.readFileSync(path.join(__dirname,'..',f),'utf8');
+ for(const f of ['business/advisorRouting.js','business/whatsappService.js','n8n/LOLA-R64-PRODUCCION.json'])assert.ok(!R(f).includes('987208622'),f);
+ const {alertPhones,advisorPhones}=require('../business/advisorRouting');assert.deepEqual(alertPhones({environment:'production'}),[]);assert.deepEqual(advisorPhones({advisorPhones:['51 911 111 111','51912971742']}),['51911111111']);
+});
