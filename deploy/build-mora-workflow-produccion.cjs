@@ -22,6 +22,8 @@ for (const n of w.nodes) {
     n.parameters = { jsCode: "// R63 · El ERP entrega el contexto autorizado de la consulta (mismo criterio que mora.context_for_job).\nconst c = $('Conservar consulta M.O.R.A').first().json.context;\nif (!c || c.ok !== true) throw Error('El ERP no entregó el contexto de la consulta');\nreturn [{ json: { value: c } }];\n" };
   }
 }
+// R63b · La lectura de avisos (Urbania, etc.) venía apagada en el ensayo: en producción se enciende su disparador de 15 s.
+for (const n of w.nodes) if (n.name === 'Consultar lecturas de mercado cada 15 segundos') delete n.disabled;
 if (!w.nodes.some(n => n.name === CTX)) throw Error('No se encontró el paso de PostgreSQL.');
 const ren = x => x === PG ? CTX : x;
 w.connections = Object.fromEntries(Object.entries(w.connections).map(([k, v]) => [ren(k), { ...v, main: (v.main || []).map(o => (o || []).map(d => ({ ...d, node: ren(d.node) }))) }]));
