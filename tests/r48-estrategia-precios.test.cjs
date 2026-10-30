@@ -8,7 +8,7 @@ const G={name:'Martín Montezuma',role:'Gerente'},V={name:'Antonio',role:'Vended
 const U=[['D101_2','Loft Garden',1,59.2,'Si',378300],['D201_2','Flat 3D',2,91.67,'No',590500],['D302_2','Flat 2D',3,53.79,'Si',349200],['D301_2','Duplex 2D',3,80.62,'Si',523400],['D402_2','Duplex 2D',4,68.87,'No',450600],['D501_2','Flat 1D',5,52.82,'No',348300],['D601_2','Flat 1D',6,46.06,'Si',306100],['D602_2','Flat 1D',6,43.31,'Si',287800],['D701_2','Duplex 2D',7,77.05,'No',516000],['D702_2','Flat 2D',7,57.36,'No',384100],['D801_2','Duplex 2D',8,98.57,'No',665100]];
 const cfgIn={proyecto:'Infinity 224',meta_recaudacion:5337000,linea_base:5342560,unidades:U.map(u=>({unidad:u[0],tipo:u[1],piso:u[2],area:u[3],ancla:u[4],precio_base:u[5]})),
  etapas:[{nombre:'Etapa 1',alza:0},{nombre:'Etapa 2',alza:.07,umbral:.35},{nombre:'Etapa 3',alza:.11,umbral:.7}],
- feria:{fecha_inicio:'2026-11-06',descuento_cupo:30000,cupos:3,metas:{preventas:3,reservas:3,calificados:60,citas:25}},fuente:{tipo:'excel',nombre:'infinity224-estrategia-feria.xlsx'}};
+ feria:{fecha_inicio:'2026-11-06',descuento_cupo:30000,cupos:3,metas:{preventas:3,reservas:3,calificados:60,citas:25}},fuente:{tipo:'excel',nombre:'infinity224-estrategia-feria.xlsx'},cocheras:[]}; // R49: estas pruebas son solo de departamentos
 const units=()=>U.map((u,i)=>({id:'u'+i,unit_number:u[0].slice(1,4),price:400000,status:'AVAILABLE'}));
 const ventas=[{unit_id:'u7',status:'CONFIRMED',final_price:257800,confirmed_at:'2026-11-06T15:00:00Z'},{unit_id:'u6',status:'CONFIRMED',final_price:276100,confirmed_at:'2026-11-07T15:00:00Z'},{unit_id:'u2',status:'CONFIRMED',final_price:319200,confirmed_at:'2026-11-07T18:00:00Z'},{unit_id:'u0',status:'CONFIRMED',final_price:378300,confirmed_at:'2026-11-08T16:00:00Z'},{unit_id:'u9',status:'RELEASED',final_price:384100,confirmed_at:'2026-11-08T17:00:00Z'}];
 
@@ -69,7 +69,7 @@ test('integración: servidor, puente del navegador, menú de Ventas (solo Gerenc
  assert.match(R('src/navModel.mjs'),/\['precios', 'Estrategia de precios'/);assert.match(R('src/navModel.mjs'),/MANAGER_ONLY = \['precios'/);
  assert.match(R('src/App.jsx'),/activeTab==='precios'&&currentUser\.role==='Gerente'&&<EstrategiaPrecios\/>/);
  assert.match(R('business/moraIntegration.js'),/this\.precios\.paraMora\(d\)/);
- const ui=R('src/EstrategiaPrecios.jsx');for(const s of ['Importar Excel de estrategia','Cuadro final','Aplicar precios sugeridos','Línea base vs real','Historial de precios aplicados','/evaluador/exceljs.min.js'])assert.ok(ui.includes(s),s);
+ const ui=R('src/EstrategiaPrecios.jsx');for(const s of ['Importar Excel de estrategia','Cuadro final','Aplicar precios','Línea base vs real','Historial de precios aplicados','/evaluador/exceljs.min.js'])assert.ok(ui.includes(s),s);
 });
 
 test('feria: preventa y reserva para cualquier unidad, cupos por modalidad registrada en la cotización y oferta para el vendedor',()=>{

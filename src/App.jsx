@@ -412,10 +412,11 @@ function DesktopView({ data }) {
 
   // R48 · Oferta de feria vigente (preventa en planos o reserva) para cualquier unidad; el servidor fija el descuento y los cupos.
   const [feriaOferta, setFeriaOferta] = useState({vigente:false,ofertas:[]});
+  const [cocheras, setCocheras] = useState([{codigo:'A',precio:56000,disponible:true},{codigo:'B',precio:56000,disponible:true},{codigo:'C',precio:56000,disponible:true},{codigo:'D',precio:56000,disponible:true}]);
   // R48 · Resumen de cotizaciones colapsable y filtrable; el buscador global lleva a las cotizaciones del lead.
   const [quotesOpen, setQuotesOpen] = useState(true), [quoteFilter, setQuoteFilter] = useState('');
   const [quoteModal, setQuoteModal] = useState({ open: false, unit: null, leadId: '', leadSearch: '', clientName:'', dni: '', phone:'', email:'', address:'', unitInterest:'', budget:'', discountPct: 0, teaPct: lastTea(), financingType: 'Hipotecario', customInitialPct: 10, parking: 'Ninguno', brokerName: '', directCreditMonths: settings.directCreditMonths || 12, recontactAt: '' });
-  useEffect(()=>{if(!quoteModal.open)return;let live=true;Promise.resolve(window.crmDB?.preciosOfertaFeria?.()).then(r=>{if(live&&r)setFeriaOferta(r);}).catch(()=>{});return()=>{live=false;};},[quoteModal.open]);
+  useEffect(()=>{if(!quoteModal.open)return;let live=true;Promise.resolve(window.crmDB?.preciosOfertaFeria?.()).then(r=>{if(live&&r)setFeriaOferta(r);}).catch(()=>{});Promise.resolve().then(()=>window.crmDB?.preciosCocheras?.()).then(r=>{if(live&&Array.isArray(r))setCocheras(r);}).catch(()=>{});return()=>{live=false;};},[quoteModal.open]);
   const [separationModal,setSeparationModal]=useState(null);
   const [separationDecision,setSeparationDecision]=useState(null);
   const [separationDocuments,setSeparationDocuments]=useState(null);
@@ -854,10 +855,7 @@ function DesktopView({ data }) {
                       <label style={{fontWeight:'600', fontSize:'14px', color:'#991b1b'}}>Incluir Estacionamiento</label>
                       <select className="orok-input orok-select" value={quoteModal.parking} onChange={e => setQuoteModal({...quoteModal, parking: e.target.value})}>
                           <option value="Ninguno">Ninguno</option>
-                          <option value="A">Estacionamiento A (+ S/ 56,000)</option>
-                          <option value="B">Estacionamiento B (+ S/ 56,000)</option>
-                          <option value="C">Estacionamiento C (+ S/ 56,000)</option>
-                          <option value="D">Estacionamiento D (+ S/ 56,000)</option>
+                          {cocheras.map(c=><option key={c.codigo} value={c.codigo} disabled={!c.disponible}>Estacionamiento {c.codigo} (+ S/ {Number(c.precio).toLocaleString('es-PE')}){c.disponible?'':' · separado'}</option>)}
                       </select>
                   </div>
                   <div>

@@ -73,10 +73,15 @@ function Barra({c}) {
   </div>;
 }
 
+const COCHERAS_DEFECTO = ['A', 'B', 'C', 'D'].map(codigo => ({codigo, precio_base: 56000, manual: null}));
+// R49 · Ajuste manual: en pantalla el % va como número entero (3 = +3 %); en la estrategia se guarda como fracción (0.03).
+const manualUI = m => !m ? {modo: 'auto', valor: ''} : {modo: m.modo, valor: m.modo === 'pct' ? String(Math.round(m.valor * 10000) / 100) : String(m.valor)};
+const manualCfg = e => !e || e.modo === 'auto' || e.valor === '' || !Number.isFinite(Number(e.valor)) ? null : e.modo === 'pct' ? {modo: 'pct', valor: Number(e.valor) / 100} : {modo: 'precio', valor: Number(e.valor)};
+
 function Editor({config, revision, evaluaciones, onSaved}) {
   const [f, setF] = useState(config);
   const [busy, setBusy] = useState(false), [err, setErr] = useState('');
-  useEffect(() => setF(config), [config]);
+  useEffect(() => setF({...config, cocheras: config.cocheras || COCHERAS_DEFECTO}), [config]);
   const set = (path, value) => setF(prev => { const next = structuredClone(prev); let o = next; const k = path.split('.'); k.slice(0, -1).forEach(p => { o = o[p]; }); o[k.at(-1)] = value; return next; });
   const numIn = (path, value, step = 'any', label) => <label style={{display: 'grid', gap: 4, fontSize: 12}}>{label}<input className="orok-input" type="number" step={step} value={value ?? ''} onChange={e => set(path, e.target.value === '' ? null : Number(e.target.value))}/></label>;
   const save = async () => { setBusy(true); setErr(''); try { await db.preciosEstrategiaGuardar({config: f, revision}); onSaved('Estrategia guardada.'); } catch (e) { setErr(e.message); } finally { setBusy(false); } };
@@ -114,6 +119,13 @@ function Editor({config, revision, evaluaciones, onSaved}) {
       <tbody>{f.unidades.map((u, i) => <tr key={u.unidad} style={{borderTop: '1px solid rgba(148,163,184,.3)'}}><td style={{padding: 6}}>{u.unidad}</td><td style={{padding: 6}}>{u.tipo}</td><td style={{padding: 6}}>{u.piso}</td><td style={{padding: 6}}>{N(u.area)}</td>
         <td style={{padding: 6}}><input type="checkbox" checked={!!u.ancla} onChange={e => set(`unidades.${i}.ancla`, e.target.checked)} aria-label={'Unidad ancla ' + u.unidad}/></td>
         <td style={{padding: 6}}><input className="orok-input" type="number" step="100" value={u.precio_base} onChange={e => set(`unidades.${i}.precio_base`, Number(e.target.value))} style={{maxWidth: 140}}/></td></tr>)}</tbody></table></div>
+    <h4 style={{margin: '14px 0 6px'}}>Estacionamientos <span style={{fontWeight: 400, fontSize: 12}}>(entran en la meta y siguen las mismas etapas y ajustes que los departamentos)</span></h4>
+    <div className="table-scroll"><table style={{width: '100%', fontSize: 12, borderCollapse: 'collapse'}}><thead><tr>{['Código', 'Precio Etapa 1 (S/)', ''].map(h => <th key={h} style={{textAlign: 'left', padding: 6}}>{h}</th>)}</tr></thead>
+      <tbody>{(f.cocheras || []).map((c, i) => <tr key={i} style={{borderTop: '1px solid rgba(148,163,184,.3)'}}>
+        <td style={{padding: 6}}><input className="orok-input" aria-label={'Código de estacionamiento ' + (i + 1)} value={c.codigo} onChange={e => set(`cocheras.${i}.codigo`, e.target.value.toUpperCase())} style={{maxWidth: 90}}/></td>
+        <td style={{padding: 6}}><input className="orok-input" type="number" step="100" aria-label={'Precio Etapa 1 estacionamiento ' + c.codigo} value={c.precio_base ?? ''} onChange={e => set(`cocheras.${i}.precio_base`, Number(e.target.value))} style={{maxWidth: 140}}/></td>
+        <td style={{padding: 6}}><button type="button" className="orok-btn orok-btn-secondary" onClick={() => setF(p => ({...p, cocheras: p.cocheras.filter((_, k) => k !== i)}))}>Quitar</button></td></tr>)}</tbody></table></div>
+    <button type="button" className="orok-btn orok-btn-secondary" style={{marginTop: 6}} onClick={() => setF(p => { const cs = p.cocheras || []; const ultimo = cs.at(-1); return {...p, cocheras: [...cs, {codigo: String.fromCharCode(65 + cs.length), precio_base: ultimo?.precio_base || 56000, manual: null}]}; })}>Agregar estacionamiento</button>
     {err && <p role="alert" style={{color: '#b91c1c'}}>{err}</p>}
     <div style={{display: 'flex', justifyContent: 'flex-end', marginTop: 10}}><button className="orok-btn orok-btn-primary" disabled={busy} onClick={save}>{busy ? 'Guardando…' : 'Guardar estrategia'}</button></div>
   </details>;
@@ -155,19 +167,32 @@ function Solicitudes({onCambio}) {
 
 export default function EstrategiaPrecios() {
   const [state, setState] = useState({busy: true, data: null, error: ''});
-  const [msg, setMsg] = useState(''), [err, setErr] = useState(''), [sel, setSel] = useState(new Set()), [confirm, setConfirm] = useState(false), [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(''), [err, setErr] = useState(''), [sel, setSel] = useState(new Set()), [confirm, setConfirm] = useState(false), [busy, setBusy] = useState(false), [manual, setManual] = useState({}), [masivo, setMasivo] = useState({modo: 'pct', valor: ''});
   const load = () => Promise.resolve().then(() => db.preciosEstrategia()).then(data => setState({busy: false, data, error: ''})).catch(e => setState({busy: false, data: null, error: e.message}));
   useEffect(() => { load(); }, []);
   const c = state.data?.calculo;
-  const candidatos = useMemo(() => (c?.unidades || []).filter(u => u.precio_sugerido && u.en_erp && u.precio_sugerido !== u.precio_actual), [c]);
+  const candidatos = useMemo(() => (c?.unidades || []).filter(u => u.precio_objetivo && u.en_erp && u.precio_objetivo !== u.precio_actual), [c]);
+  const pendientesManual = Object.keys(manual).length;
+  const editarManual = (key, patch) => setManual(prev => { const row = (c?.unidades || []).find(u => u.unidad === key); return {...prev, [key]: {...(prev[key] || manualUI(row?.manual)), ...patch}}; });
+  const asignarMasivo = modo => { const patch = modo === 'auto' ? {modo: 'auto', valor: ''} : {...masivo}; setManual(prev => { const n = {...prev}; for (const k of sel) n[k] = patch; return n; }); };
+  const guardarManual = async () => {
+    setBusy(true); setErr(''); setMsg('');
+    try {
+      const cfg = structuredClone(state.data.config); cfg.cocheras = cfg.cocheras || COCHERAS_DEFECTO;
+      for (const u of cfg.unidades) if (manual[u.unidad]) u.manual = manualCfg(manual[u.unidad]);
+      for (const k of cfg.cocheras) if (manual['EST-' + k.codigo]) k.manual = manualCfg(manual['EST-' + k.codigo]);
+      await db.preciosEstrategiaGuardar({config: cfg, revision: state.data.revision});
+      setMsg(`Ajustes manuales guardados (${pendientesManual}). El resto de precios se recalculó para la meta; revisa y pulsa «Aplicar precios».`); setManual({}); await load();
+    } catch (e) { setErr(e.message); } finally { setBusy(false); }
+  };
   const importar = async file => {
     if (!file) return; setErr(''); setMsg(''); setBusy(true);
-    try { const config = await leerExcel(file); await db.preciosEstrategiaGuardar({config, revision: state.data?.revision || 0}); setMsg(`Estrategia importada de «${file.name}»: ${config.unidades.length} unidades.`); await load(); }
+    try { const config = await leerExcel(file); const prev = state.data?.config; if (prev) { config.cocheras = prev.cocheras; const man = new Map((prev.unidades || []).map(u => [u.unidad, u.manual])); config.unidades.forEach(u => { u.manual = man.get(String(u.unidad).match(/(\d{3,4})/)?.[1] || u.unidad) || null; }); } await db.preciosEstrategiaGuardar({config, revision: state.data?.revision || 0}); setMsg(`Estrategia importada de «${file.name}»: ${config.unidades.length} unidades.`); await load(); }
     catch (e) { setErr(e.message); } finally { setBusy(false); }
   };
   const aplicar = async () => {
     setBusy(true); setErr('');
-    try { const r = await db.aplicarPreciosEstrategia([...sel]); setMsg(`Precios aplicados en Inventario (${r.cambios.length} unidades, ${r.etapa}). Quedó registrado en el historial.`); setConfirm(false); setSel(new Set()); await load(); }
+    try { const r = await db.aplicarPreciosEstrategia([...sel]); setMsg(`Precios aplicados (${r.cambios.length}: ${r.cambios.filter(x => !x.cochera).length} en Inventario, ${r.cambios.filter(x => x.cochera).length} estacionamientos). Quedó registrado en el historial.`); setConfirm(false); setSel(new Set()); await load(); }
     catch (e) { setErr(e.message); } finally { setBusy(false); }
   };
   const importBtn = <label className="orok-btn orok-btn-secondary" style={{cursor: busy ? 'wait' : 'pointer'}}>{busy ? 'Leyendo…' : 'Importar Excel de estrategia'}<input type="file" accept=".xlsx" hidden disabled={busy} onChange={e => { importar(e.target.files?.[0]); e.target.value = ''; }}/></label>;
@@ -191,11 +216,11 @@ export default function EstrategiaPrecios() {
     {err && <p role="alert" style={{color: '#b91c1c', margin: 0}}>{err}</p>}{msg && <p role="status" style={{color: '#166534', margin: 0}}>{msg}</p>}
     <div data-responsive-grid="true" style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(170px,1fr))', gap: 10}}>
       {kpi('Meta de recaudación', S(c.meta_recaudacion), 'Línea base del modelo ' + S(c.linea_base))}
-      {kpi('Recaudado (real)', S(c.recaudado), `${c.unidades_vendidas} de ${c.unidades_total} unidades · ${P(c.avance_valor_pct)} del valor`)}
-      {kpi('Proyectado al cierre', S(c.proyectado), 'Lo vendido + lo que falta según las etapas')}
+      {kpi('Recaudado (real)', S(c.recaudado), `${c.unidades_vendidas} de ${c.unidades_total} dptos.${c.cocheras_total ? ` · ${c.cocheras_vendidas} de ${c.cocheras_total} estac.` : ''} · ${P(c.avance_valor_pct)} del valor`)}
+      {kpi('Proyectado al cierre', S(c.proyectado), c.manual_total ? `Incluye ${S(c.manual_total)} con precio manual` : 'Lo vendido + lo que falta según las etapas')}
       {kpi('Brecha vs meta', S(c.brecha_vs_meta), c.brecha_vs_meta >= 0 ? 'Se alcanza la meta' : 'Falta para la meta', tone(c.brecha_vs_meta))}
       {kpi('Etapa activa', c.etapa_activa, c.siguiente_etapa ? `${c.siguiente_etapa.nombre} al ${P(c.siguiente_etapa.umbral_pct)} · faltan ${S(c.siguiente_etapa.falta_lista)} de lista` : 'Última etapa')}
-      {kpi('Ajuste sugerido', P(c.ajuste_sugerido_pct), 'Sobre el precio de la etapa activa, en las unidades restantes', c.ajuste_sugerido_pct > 0 ? '#9a3412' : '#166534')}
+      {kpi('Ajuste automático', P(c.ajuste_sugerido_pct), 'Sobre la etapa activa, solo en lo que no tiene precio manual', c.ajuste_sugerido_pct > 0 ? '#9a3412' : '#166534')}
     </div>
     <div className="orok-card" style={{padding: 16, display: 'grid', gap: 10}}>
       <h3 style={{margin: 0}}>Recaudado y proyectado frente a la meta</h3><Barra c={c}/>
@@ -214,18 +239,34 @@ export default function EstrategiaPrecios() {
     </div>
     <div className="orok-card" style={{padding: 16}}><h3 style={{marginTop: 0}}>Línea base vs real</h3><Curva curva={c.curva} meta={c.meta_recaudacion}/></div>
     <div className="orok-card" style={{padding: 16}}>
-      <div style={{display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', alignItems: 'center'}}><h3 style={{margin: 0}}>Precios por unidad</h3>
-        {!confirm ? <button className="orok-btn orok-btn-primary" disabled={!candidatos.length || busy} onClick={() => setConfirm(true)}>Aplicar precios sugeridos{sel.size ? ` (${sel.size})` : candidatos.length ? ` (${candidatos.length})` : ''}</button>
-          : <span style={{display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap'}}><b>¿Cambiar la lista de Inventario?</b><button className="orok-btn orok-btn-secondary" disabled={busy} onClick={() => setConfirm(false)}>Cancelar</button><button className="orok-btn orok-btn-primary" disabled={busy} onClick={aplicar}>{busy ? 'Aplicando…' : 'Sí, aplicar'}</button></span>}</div>
-      <p style={{fontSize: 12}}>Sugerido = lista Etapa 1 × alza de la etapa activa × ajuste para la meta, redondeado a S/ 100{c.mercado?.modo === 'tope' ? ', sin pasar el percentil 75 del mercado (⤓ = limitado por mercado)' : ''}. Marca unidades para aplicar solo esas; sin marcar se aplican todas las que cambian. Antes de aplicar se guarda un respaldo.</p>
-      <div className="table-scroll"><table style={{width: '100%', fontSize: 12, borderCollapse: 'collapse'}}><thead><tr>{['', 'Unidad', 'Tipo', 'Área', 'Estado', 'Etapa 1', 'Etapa activa', 'Actual ERP', 'Sugerido', 'Dif. vs actual', 'S/ m²', 'Mercado S/ m²', 'Posición'].map(h => <th key={h} style={{textAlign: 'left', padding: 6}}>{h}</th>)}</tr></thead>
-        <tbody>{c.unidades.map(u => <tr key={u.unidad} style={{borderTop: '1px solid rgba(148,163,184,.3)', opacity: u.estado === 'Disponible' ? 1 : .7}}>
-          <td style={{padding: 6}}>{u.precio_sugerido && u.en_erp && u.precio_sugerido !== u.precio_actual && <input type="checkbox" aria-label={'Seleccionar ' + u.unidad} checked={sel.has(u.unidad)} onChange={e => setSel(prev => { const n = new Set(prev); e.target.checked ? n.add(u.unidad) : n.delete(u.unidad); return n; })}/>}</td>
-          <td style={{padding: 6, fontWeight: 700}}>{u.unidad}{u.ancla ? ' ⚓' : ''}{!u.en_erp && <span title="No existe en Inventario" style={{color: '#b91c1c'}}> (sin inventario)</span>}</td><td style={{padding: 6}}>{u.tipo}</td><td style={{padding: 6}}>{N(u.area)}</td>
+      <div style={{display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', alignItems: 'center'}}><h3 style={{margin: 0}}>Precios por unidad y estacionamiento</h3>
+        <span style={{display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center'}}>
+          {pendientesManual > 0 && <><button className="orok-btn orok-btn-secondary" disabled={busy} onClick={() => setManual({})}>Descartar cambios</button><button className="orok-btn orok-btn-primary" disabled={busy} onClick={guardarManual}>{busy ? 'Guardando…' : `Guardar ajustes manuales (${pendientesManual})`}</button></>}
+          {!confirm ? <button className="orok-btn orok-btn-primary" disabled={!candidatos.length || busy || pendientesManual > 0} title={pendientesManual ? 'Primero guarda los ajustes manuales' : ''} onClick={() => setConfirm(true)}>Aplicar precios{sel.size ? ` (${sel.size} marcadas)` : candidatos.length ? ` (${candidatos.length})` : ''}</button>
+          : <span style={{display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap'}}><b>¿Cambiar la lista vigente?</b><button className="orok-btn orok-btn-secondary" disabled={busy} onClick={() => setConfirm(false)}>Cancelar</button><button className="orok-btn orok-btn-primary" disabled={busy} onClick={aplicar}>{busy ? 'Aplicando…' : 'Sí, aplicar'}</button></span>}</span></div>
+      <p style={{fontSize: 12}}>Cada fila puede ir en <b>automático</b> (etapa activa × ajuste para la meta, redondeado a S/ 100{c.mercado?.modo === 'tope' ? ', sin pasar el percentil 75 del mercado, ⤓' : ''}), con un <b>% manual</b> de alza o descuento sobre la etapa activa (−5 = 5 % menos), o con un <b>precio fijo</b>. Lo manual no se toca; el ajuste automático se reparte en las demás para llegar a la meta. Guarda los ajustes, revisa el precio objetivo y aplica (todas o solo las marcadas). Antes de aplicar se guarda un respaldo.</p>
+      {sel.size > 0 && <div style={{display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'end', padding: 10, borderRadius: 10, background: 'rgba(133,68,42,.07)', marginBottom: 8}}>
+        <b style={{fontSize: 13, alignSelf: 'center'}}>Marcadas ({sel.size}):</b>
+        <label style={{display: 'grid', gap: 4, fontSize: 12}}>Tipo<select className="orok-input" value={masivo.modo} onChange={e => setMasivo({...masivo, modo: e.target.value})}><option value="pct">% sobre etapa activa</option><option value="precio">Precio fijo (S/)</option></select></label>
+        <label style={{display: 'grid', gap: 4, fontSize: 12}}>{masivo.modo === 'pct' ? 'Porcentaje (−5 = descuento)' : 'Precio (S/)'}<input className="orok-input" type="number" step={masivo.modo === 'pct' ? 0.5 : 100} value={masivo.valor} onChange={e => setMasivo({...masivo, valor: e.target.value})} style={{maxWidth: 140}}/></label>
+        <button className="orok-btn orok-btn-secondary" disabled={masivo.valor === ''} onClick={() => asignarMasivo(masivo.modo)}>Asignar a marcadas</button>
+        <button className="orok-btn orok-btn-secondary" onClick={() => asignarMasivo('auto')}>Volver a automático</button>
+        <button className="orok-btn orok-btn-secondary" onClick={() => setSel(new Set())}>Desmarcar</button>
+      </div>}
+      <div className="table-scroll"><table style={{width: '100%', fontSize: 12, borderCollapse: 'collapse'}}><thead><tr>{['', 'Unidad', 'Tipo', 'Área', 'Estado', 'Etapa 1', 'Etapa activa', 'Vigente', 'Automático', 'Ajuste manual', 'Precio objetivo', 'Dif. vs vigente', 'S/ m²', 'Mercado S/ m²', 'Posición'].map(h => <th key={h} style={{textAlign: 'left', padding: 6, whiteSpace: 'nowrap'}}>{h}</th>)}</tr></thead>
+        <tbody>{c.unidades.map(u => { const libre = u.estado === 'Disponible', ed = manual[u.unidad] || manualUI(u.manual), cambiado = !!manual[u.unidad];
+          return <tr key={u.unidad} style={{borderTop: '1px solid rgba(148,163,184,.3)', opacity: libre ? 1 : .7, background: u.kind === 'cochera' ? 'rgba(148,163,184,.08)' : undefined}}>
+          <td style={{padding: 6}}>{libre && u.en_erp && <input type="checkbox" aria-label={'Seleccionar ' + u.unidad} checked={sel.has(u.unidad)} onChange={e => setSel(prev => { const n = new Set(prev); e.target.checked ? n.add(u.unidad) : n.delete(u.unidad); return n; })}/>}</td>
+          <td style={{padding: 6, fontWeight: 700, whiteSpace: 'nowrap'}}>{u.kind === 'cochera' ? 'Estac. ' + u.codigo : u.unidad}{u.ancla ? ' ⚓' : ''}{!u.en_erp && <span title="No existe en Inventario" style={{color: '#b91c1c'}}> (sin inventario)</span>}</td><td style={{padding: 6}}>{u.tipo}</td><td style={{padding: 6}}>{u.area ? N(u.area) : '—'}</td>
           <td style={{padding: 6}}>{u.estado}{u.precio_real ? ' · ' + S(u.precio_real) : ''}</td><td style={{padding: 6}}>{S(u.precio_base)}</td><td style={{padding: 6}}>{S(u.precio_etapa)}</td><td style={{padding: 6}}>{S(u.precio_actual)}</td>
-          <td style={{padding: 6, fontWeight: 700}}>{S(u.precio_sugerido)}</td><td style={{padding: 6, color: u.diferencia_vs_actual > 0 ? '#9a3412' : '#166534'}}>{u.diferencia_vs_actual == null ? '—' : (u.diferencia_vs_actual > 0 ? '+' : '') + S(u.diferencia_vs_actual)}</td><td style={{padding: 6}}>{N(u.ratio_sugerido_m2)}{u.topado_por_mercado ? ' ⤓' : ''}</td>
+          <td style={{padding: 6, opacity: u.origen === 'manual' ? .55 : 1}}>{S(u.precio_sugerido)}</td>
+          <td style={{padding: 6, whiteSpace: 'nowrap'}}>{libre ? <span style={{display: 'flex', gap: 4, alignItems: 'center'}}>
+            <select className="orok-input" aria-label={'Modo de precio ' + u.unidad} value={ed.modo} onChange={e => editarManual(u.unidad, {modo: e.target.value, valor: e.target.value === 'auto' ? '' : ed.valor})} style={{maxWidth: 92, padding: '4px 6px', outline: cambiado ? '2px solid #d97706' : undefined}}><option value="auto">Auto</option><option value="pct">%</option><option value="precio">S/</option></select>
+            {ed.modo !== 'auto' && <input className="orok-input" type="number" aria-label={(ed.modo === 'pct' ? 'Porcentaje ' : 'Precio ') + u.unidad} step={ed.modo === 'pct' ? 0.5 : 100} value={ed.valor} onChange={e => editarManual(u.unidad, {valor: e.target.value})} style={{maxWidth: ed.modo === 'pct' ? 70 : 110, padding: '4px 6px'}}/>}</span> : '—'}</td>
+          <td style={{padding: 6, fontWeight: 700}}>{S(u.precio_objetivo)}{u.origen === 'manual' && <div style={{fontSize: 10, fontWeight: 400, color: '#9a3412'}}>manual{u.manual?.modo === 'pct' ? ` ${u.manual.valor > 0 ? '+' : ''}${Math.round(u.manual.valor * 10000) / 100} %` : ''}</div>}{cambiado && <div style={{fontSize: 10, fontWeight: 400, color: '#d97706'}}>sin guardar</div>}</td>
+          <td style={{padding: 6, color: u.diferencia_vs_actual > 0 ? '#9a3412' : '#166534'}}>{u.diferencia_vs_actual == null ? '—' : (u.diferencia_vs_actual > 0 ? '+' : '') + S(u.diferencia_vs_actual)}</td><td style={{padding: 6}}>{u.ratio_sugerido_m2 ? N(u.ratio_sugerido_m2) : '—'}{u.topado_por_mercado ? ' ⤓' : ''}</td>
           <td style={{padding: 6}} title={u.mercado ? `${u.mercado.criterio} · ${u.mercado.n} comparables · rango ${N(u.mercado.p25_m2)}–${N(u.mercado.p75_m2)}` : 'Sin estudio de mercado'}>{u.mercado ? <>{N(u.mercado.mediana_m2)}<div style={{fontSize: 10, opacity: .7}}>{u.mercado.criterio} · {u.mercado.n}</div></> : '—'}</td>
-          <td style={{padding: 6, color: u.posicion_mercado === 'Sobre el mercado' ? '#9a3412' : u.posicion_mercado === 'Bajo el mercado' ? '#1d4ed8' : '#166534'}}>{u.posicion_mercado || '—'}</td></tr>)}</tbody></table></div>
+          <td style={{padding: 6, color: u.posicion_mercado === 'Sobre el mercado' ? '#9a3412' : u.posicion_mercado === 'Bajo el mercado' ? '#1d4ed8' : '#166534'}}>{u.posicion_mercado || '—'}</td></tr>; })}</tbody></table></div>
     </div>
     <Solicitudes onCambio={load}/>
     {c.feria && <div className="orok-card" style={{padding: 16}}>
