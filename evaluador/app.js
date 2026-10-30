@@ -380,16 +380,41 @@ V.datosProyecto=()=>{
  ${Object.keys(folders).length?`<div class="fields">${Object.entries(folders).map(([name,id])=>`<div>${id?`<a href="https://drive.google.com/drive/folders/${esc(id)}" target="_blank" rel="noopener">${esc(name)}</a>`:`${esc(name)} · pendiente`}</div>`).join('')}</div>`:''}
  ${typeof CRM!=='undefined'&&CRM?'<button class="btn" data-act="project-drive-status">Consultar estado de carpetas</button><button class="btn" data-act="project-drive-scan">Leer fuentes del proyecto</button>':''}</div>${(S._driveSources||[]).length?`<div class="panel"><h3>Fuentes del proyecto</h3><p class="note">La lectura respeta las carpetas de cada módulo. Marca solo documentos comerciales revisados para L.O.L.A.</p>${S._driveSources.map(f=>`<div><a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a> · ${esc(f.folder)} · ${f.read?'leído':'pendiente'} ${['5.Marketing','6.Ventas','8.Proyecto Aprobado','13.Catalogos','14. Solo Web'].includes(f.folder)?`<label><input type="checkbox" data-source-approve="${esc(f.id)}"${f.approved?' checked':''}> Aprobado para L.O.L.A</label>`:''}</div>`).join('')}</div>`:''}`;
 };
+/* ---------- R57 · Cálculo de áreas por piso (cabida) ----------
+   Método de prefactibilidad usado en Lima: huella = terreno × (1 − área libre mínima); área techada = huella por piso
+   (+ azotea según % techable); cada piso se desglosa en circulación (escaleras, ascensor, pasadizos, lobby), muros y ductos,
+   y áreas comunes; lo que queda es vendible. El coeficiente de edificación no cuenta sótanos ni estacionamientos y el área
+   libre incluye el retiro. Todo es editable en % o en m² y se puede agregar piso sobre piso. */
+const CAB_USOS=[['sotano','Sótano / estacionamientos'],['primero','Primer piso'],['tipico','Piso típico'],['azotea','Azotea']];
+function cabPisosDe(p){const m=String(p.uso||'').match(/(\d+)\s*pisos?/i);return m?Math.max(1,Math.min(60,+m[1])):5}
+function cabDefault(s,prev){
+  const p=s.p,T=+p.areaTerreno||0,par=Object.assign({libreMin:35,coefMax:0,pisosMax:cabPisosDe(p),azoteaTechable:35,retiro:0,frente:0,fondo:0,eficMeta:85},prev||{}),hu=T*(1-par.libreMin/100),r2=v=>Math.round(v*100)/100,pis=[];
+  if(/s[oó]tano/i.test(p.uso||''))pis.push({nivel:'Sótano 1',uso:'sotano',tech:r2(T),circ:15,muros:5,comun:80,libre:0,libreV:0,und:0,estac:+p.nEstac||0});
+  pis.push({nivel:'Piso 1',uso:'primero',tech:r2(hu),circ:15,muros:8,comun:12,libre:r2(T-hu),libreV:0,und:0,estac:0});
+  for(let i=2;i<=par.pisosMax;i++)pis.push({nivel:'Piso '+i,uso:'tipico',tech:r2(hu),circ:12,muros:8,comun:0,libre:0,libreV:0,und:0,estac:0});
+  if(/azotea/i.test(p.uso||''))pis.push({nivel:'Azotea',uso:'azotea',tech:r2(hu*par.azoteaTechable/100),circ:12,muros:8,comun:10,libre:r2(hu*(1-par.azoteaTechable/100)),libreV:0,und:0,estac:0});
+  (s.units||[]).forEach(u=>{const f=pis.find(x=>x.nivel==='Piso '+u.piso);if(f)f.und++});
+  return {param:par,pisos:pis};
+}
+function cabCalc(s){
+  const c=s.cab,T=+s.p.areaTerreno||0,rows=c.pisos.map(f=>{const tech=+f.tech||0,nv=Math.min(100,(+f.circ||0)+(+f.muros||0)+(+f.comun||0));return Object.assign({},f,{tech,circM2:tech*(+f.circ||0)/100,murosM2:tech*(+f.muros||0)/100,comunM2:tech*(+f.comun||0)/100,vend:tech*(1-nv/100),efic:tech?1-nv/100:0})});
+  const sum=k=>rows.reduce((a,r)=>a+(+r[k]||0),0),sobre=rows.filter(r=>r.uso!=='sotano'),p1=rows.find(r=>r.uso==='primero');
+  const t={tech:sum('tech'),circ:sum('circM2'),muros:sum('murosM2'),comun:sum('comunM2'),vend:sum('vend'),libre:sum('libre'),libreV:sum('libreV'),und:sum('und'),estac:sum('estac'),techSobre:sobre.reduce((a,r)=>a+r.tech,0),vendSobre:sobre.reduce((a,r)=>a+r.vend,0)};
+  t.coef=T?t.techSobre/T:0;t.efic=t.tech?t.vend/t.tech:0;t.eficSobre=t.techSobre?t.vendSobre/t.techSobre:0;t.libreP1=p1?p1.libre:0;t.libreP1Pct=T&&p1?p1.libre/T:0;t.pisos=rows.filter(r=>r.uso==='primero'||r.uso==='tipico').length;
+  const P=c.param;t.areaMedidas=(+P.frente>0&&+P.fondo>0)?P.frente*P.fondo:0;
+  return {rows,t};
+}
 V.cabida=()=>{
   const rows=M.units.map((u,i)=>`<tr><td>${inp(`units.${i}.id`,u.id,'xs','text')}</td><td>${inp(`units.${i}.tipo`,u.tipo,'w','text')}</td><td>${inp(`units.${i}.piso`,u.piso,'xs')}</td>
   <td>${inp(`units.${i}.tech`,u.tech,'s')}</td><td>${inp(`units.${i}.libre`,u.libre,'s')}</td><td class="n">${nf(u.tech+u.libre*S.p.factorLibre,2)}</td><td class="n">${pc(u.tech/M.techV)}</td><td><button class="btn x" data-act="del" data-g="units" data-i="${i}" aria-label="Eliminar unidad ${esc(u.id)}">✕</button></td></tr>`).join('');
   const nv=M.areaTech-M.techV;
   const tipos={};M.units.forEach(u=>{const t=u.tipo.replace(/ azotea/i,'');tipos[t]=tipos[t]||{n:0,a:0};tipos[t].n++;tipos[t].a+=u.tech});
   return `<div class="sect-h"><h2>Cabida arquitectónica</h2><p>Fuente principal del modelo: áreas por unidad, área común y los valores por m². Todo lo demás se recalcula a partir de aquí.</p></div>
-  <div class="panel"><h3>Datos generales</h3><div class="fields">${fld('p.nombre','Proyecto')}${fld('p.direccion','Dirección')}${fld('p.uso','Uso / tipología')}${fld('p.inicio','Mes de inicio (AAAA-MM)')}
+  <details class="panel" id="cabDatos"${S._ui&&S._ui.cabDatos?' open':''}><summary style="cursor:pointer"><h3 style="display:inline">Datos generales</h3> <span class="mut" style="font-size:12px">· ${esc(S.p.nombre||'')} · terreno ${nf(S.p.areaTerreno,2)} m² · costo S/ ${nf(S.p.costoM2,2)}/m² · venta S/ ${nf(S.p.precioM2,2)}/m² · tocar para ver o editar</span></summary><div class="fields" style="margin-top:10px">${fld('p.nombre','Proyecto')}${fld('p.direccion','Dirección')}${fld('p.uso','Uso / tipología')}${fld('p.inicio','Mes de inicio (AAAA-MM)')}
   ${fld('p.areaTerreno','Área de terreno (m²)',1)}${fld('p.precioTerrenoM2','Precio terreno (S/ por m²)',1)}${fld('p.costoM2','Costo construcción (S/ por m², sin IGV)',1)}${fld('p.precioM2','Precio de venta (S/ por m², con IGV)',1)}
   ${fld('p.comunTechada','Área común techada incl. sótano (m²)',1)}${fld('p.factorLibre','Factor de precio área libre (0–1)')}${fld('p.nEstac','Estacionamientos (und)',1)}${fld('p.precioEstac','Precio por estacionamiento (S/)',1)}</div>
-  <p class="note">Los campos resaltados son los insumos de cabida y costo/m². El costo/m² incluye costo directo, gastos generales y utilidad del contratista; el IGV se suma aparte.</p></div>
+  <p class="note">Los campos resaltados son los insumos de cabida y costo/m². El costo/m² incluye costo directo, gastos generales y utilidad del contratista; el IGV se suma aparte.</p></details>
+  ${cabTablero()}
   <div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">Cuadro de áreas vendibles</h3><button class="btn" data-act="add-unit">+ Agregar unidad</button></div>
   <div class="tw"><table><thead><tr><th>Unidad</th><th>Tipología</th><th>Piso</th><th class="n">Techada m²</th><th class="n">Libre m²</th><th class="n">Equivalente m²</th><th class="n">% vendible</th><th></th></tr></thead>
   <tbody>${rows}<tr class="tot"><td colspan="3">Total vendible</td><td class="n">${nf(M.techV,2)}</td><td class="n">${nf(M.libreV,2)}</td><td class="n">${nf(M.techV+M.libreV*S.p.factorLibre,2)}</td><td class="n">100%</td><td></td></tr></tbody></table></div></div>
@@ -405,6 +430,55 @@ V.cabida=()=>{
   <div class="panel"><h3>Mix de tipologías</h3><div class="tw"><table><thead><tr><th>Tipología</th><th class="n">Und</th><th class="n">% und</th><th class="n">m² prom.</th></tr></thead><tbody>
   ${Object.entries(tipos).map(([t,o])=>`<tr><td>${esc(t)}</td><td class="n">${o.n}</td><td class="n">${pc(o.n/M.nU,0)}</td><td class="n">${nf(o.a/o.n,2)}</td></tr>`).join('')}</tbody></table></div></div></div>`;
 };
+function cabTablero(){
+  if(!S.cab||!Array.isArray(S.cab.pisos))S.cab=cabDefault(S);
+  const {rows,t}=cabCalc(S),P=S.cab.param,T=+S.p.areaTerreno||0;
+  const pct2=(i,k)=>`<div class="row" style="gap:4px;flex-wrap:nowrap">${inp(`cab.pisos.${i}.${k}`,S.cab.pisos[i][k],'xs')}<span class="mut">%</span>${inp(`cab.pisos.${i}.${k}M2`,Math.round(rows[i][k+'M2']*100)/100,'s')}<span class="mut">m²</span></div>`;
+  const chip=(ok,a,b)=>ok?`<span class="chip ok">${a}</span>`:`<span class="chip w">${b}</span>`;
+  const uso=(i,v)=>`<select data-k="cab.pisos.${i}.uso" id="i-cab-pisos-${i}-uso" aria-label="Uso del nivel ${esc(S.cab.pisos[i].nivel)}">${CAB_USOS.map(([k,l])=>`<option value="${k}"${k===v?' selected':''}>${l}</option>`).join('')}</select>`;
+  const filas=rows.map((r,i)=>`<tr${r.uso==='sotano'?' class="mut"':''}><td>${inp(`cab.pisos.${i}.nivel`,r.nivel,'s','text')}</td><td>${uso(i,r.uso)}</td>
+    <td>${inp(`cab.pisos.${i}.tech`,r.tech,'s')}</td><td class="n">${T?pc(r.tech/T,0):'—'}</td>
+    <td>${pct2(i,'circ')}</td><td>${pct2(i,'muros')}</td><td>${pct2(i,'comun')}</td>
+    <td class="n"><b>${nf(r.vend,2)}</b><div class="mut" style="font-size:11px">${pc(r.efic,0)}</div></td>
+    <td>${inp(`cab.pisos.${i}.libre`,r.libre,'s')}</td><td>${inp(`cab.pisos.${i}.libreV`,r.libreV,'s')}</td><td>${r.uso==='sotano'?inp(`cab.pisos.${i}.estac`,r.estac,'xs'):inp(`cab.pisos.${i}.und`,r.und,'xs')}</td>
+    <td><div class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn x" data-act="cab-dup" data-i="${i}" title="Repetir este piso encima" aria-label="Repetir ${esc(r.nivel)} encima">⧉</button><button class="btn x" data-act="cab-del" data-i="${i}" aria-label="Eliminar ${esc(r.nivel)}">✕</button></div></td></tr>`).join('');
+  const dif=t.vend-M.techV,difMed=t.areaMedidas?t.areaMedidas-T:0;
+  return `<div class="panel" id="cabAreas"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px"><h3 style="margin:0">Cálculo de áreas por piso</h3>
+    <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn" data-act="cab-piso">+ Piso encima</button><button class="btn" data-act="cab-sotano">+ Sótano</button><button class="btn" data-act="cab-azotea">+ Azotea</button><button class="btn" data-act="cab-regenerar">Recalcular desde datos generales</button><button class="btn" data-act="cab-usar">Usar en el modelo</button></div></div>
+  <p class="note" style="margin-top:0">Parte de los datos generales y de los parámetros del certificado municipal. Cada piso: <b>techada = circulación + muros y ductos + áreas comunes + vendible</b>. Escribe en % o en m² (se convierten solos); ⧉ repite un piso encima. El coeficiente de edificación no cuenta sótanos.</p>
+  <h4 style="margin:6px 0">Terreno y parámetros urbanísticos</h4>
+  <div class="fields" style="margin-bottom:10px">
+    <div class="f src"><label for="i-p-areaTerreno">Área del terreno total (m²)</label>${inp('p.areaTerreno',S.p.areaTerreno)}</div>
+    <div class="f"><label for="i-cab-param-frente">Frente (m)</label>${inp('cab.param.frente',P.frente)}</div>
+    <div class="f"><label for="i-cab-param-fondo">Fondo (m)</label>${inp('cab.param.fondo',P.fondo)}</div>
+    <div class="f"><label>Área por medidas (frente × fondo)</label><div style="padding:8px 0">${t.areaMedidas?nf(t.areaMedidas,2)+' m² '+(Math.abs(difMed)<0.5?'<span class="chip ok">coincide</span>':`<span class="chip w">difiere ${nf(difMed,2)} m²</span> <button class="btn x" data-act="cab-medidas">Usar como área del terreno</button>`):'<span class="mut">ingresa frente y fondo si los tienes</span>'}</div></div>
+    <div class="f src"><label for="i-cab-param-libreMin">Área libre mínima (%)</label>${inp('cab.param.libreMin',P.libreMin)}</div>
+    <div class="f src"><label for="i-cab-param-coefMax">Coeficiente de edificación máx. (0 = sin dato)</label>${inp('cab.param.coefMax',P.coefMax)}</div>
+    <div class="f src"><label for="i-cab-param-pisosMax">Altura máxima (pisos)</label>${inp('cab.param.pisosMax',P.pisosMax)}</div>
+    <div class="f src"><label for="i-cab-param-azoteaTechable">Azotea techable (% de la huella)</label>${inp('cab.param.azoteaTechable',P.azoteaTechable)}</div>
+    <div class="f"><label for="i-cab-param-retiro">Retiro frontal (m)</label>${inp('cab.param.retiro',P.retiro)}</div>
+    <div class="f"><label for="i-cab-param-eficMeta">Eficiencia objetivo (vendible/techado %)</label>${inp('cab.param.eficMeta',P.eficMeta)}</div>
+  </div>
+  <div class="tw"><table><thead><tr><th>Nivel</th><th>Uso</th><th class="n">Techada m²</th><th class="n">% terreno</th><th>Circulación</th><th>Muros y ductos</th><th>Áreas comunes</th><th class="n">Vendible m²</th><th class="n">Área libre m²</th><th class="n">Libre vendible m²</th><th class="n">Und / Estac.</th><th></th></tr></thead>
+  <tbody>${filas}<tr class="tot"><td colspan="2">Total</td><td class="n">${nf(t.tech,2)}</td><td class="n">${T?pc(t.tech/T,0):'—'}</td><td class="n">${nf(t.circ,2)} m² · ${pc(t.tech?t.circ/t.tech:0,1)}</td><td class="n">${nf(t.muros,2)} m² · ${pc(t.tech?t.muros/t.tech:0,1)}</td><td class="n">${nf(t.comun,2)} m² · ${pc(t.tech?t.comun/t.tech:0,1)}</td><td class="n"><b>${nf(t.vend,2)}</b><div style="font-size:11px">${pc(t.efic,1)}</div></td><td class="n">${nf(t.libre,2)}</td><td class="n">${nf(t.libreV,2)}</td><td class="n">${nf(t.und,0)} / ${nf(t.estac,0)}</td><td></td></tr></tbody></table></div>
+  <div class="grid2" style="margin-top:10px"><div class="tw"><table><tbody>
+    <tr><td>Área del terreno</td><td class="n">${nf(T,2)} m²${t.areaMedidas?`<div class="mut" style="font-size:11px">${nf(P.frente,2)} m × ${nf(P.fondo,2)} m</div>`:''}</td><td></td></tr>
+    <tr><td>Área techada total (incl. sótanos)</td><td class="n">${nf(t.tech,2)} m²</td><td></td></tr>
+    <tr><td>Área techada sobre el terreno (sin sótanos)</td><td class="n">${nf(t.techSobre,2)} m²</td><td></td></tr>
+    <tr><td>Coeficiente de edificación (techado sin sótanos / terreno)</td><td class="n">${nf(t.coef,2)}</td><td>${P.coefMax>0?chip(t.coef<=P.coefMax+1e-9,'dentro del máximo '+nf(P.coefMax,2),'supera el máximo '+nf(P.coefMax,2)):'<span class="mut">sin dato</span>'}</td></tr>
+    <tr><td>Área libre del primer piso (incluye retiro)</td><td class="n">${nf(t.libreP1,2)} m² · ${pc(t.libreP1Pct,1)}</td><td>${chip(t.libreP1Pct*100>=P.libreMin-1e-6,'cumple '+nf(P.libreMin,0)+'%','menor al '+nf(P.libreMin,0)+'% exigido')}</td></tr>
+    <tr><td>Pisos sobre el terreno</td><td class="n">${t.pisos}</td><td>${P.pisosMax>0?chip(t.pisos<=P.pisosMax,'dentro de la altura','supera la altura'):''}</td></tr>
+    ${P.retiro>0&&P.frente>0?`<tr><td>Área de retiro (frente × retiro)</td><td class="n">${nf(P.retiro*P.frente,2)} m²</td><td class="mut">parte del área libre</td></tr>`:''}
+  </tbody></table></div><div class="tw"><table><tbody>
+    <tr><td>Área vendible techada</td><td class="n"><b>${nf(t.vend,2)} m²</b></td><td></td></tr>
+    <tr><td>Eficiencia total (vendible / techado)</td><td class="n">${pc(t.efic,1)}</td><td></td></tr>
+    <tr><td>Eficiencia sobre el terreno (sin sótanos)</td><td class="n">${pc(t.eficSobre,1)}</td><td>${chip(t.eficSobre*100>=P.eficMeta-1e-6,'≥ objetivo '+nf(P.eficMeta,0)+'%','bajo el objetivo '+nf(P.eficMeta,0)+'%')}</td></tr>
+    <tr><td>No vendible techado (circulación + muros + comunes)</td><td class="n">${nf(t.tech-t.vend,2)} m²</td><td class="mut">área común del modelo: ${nf(+S.p.comunTechada||0,2)} m²</td></tr>
+    <tr><td>Vendible según cuadro de unidades</td><td class="n">${nf(M.techV,2)} m²</td><td>${Math.abs(dif)<1?'<span class="chip ok">cuadra</span>':`<span class="chip w">${dif>0?'faltan':'sobran'} ${nf(Math.abs(dif),2)} m² por asignar</span>`}</td></tr>
+    <tr><td>Área libre vendible (patios, terrazas)</td><td class="n">${nf(t.libreV,2)} m²</td><td class="mut">cuadro de unidades: ${nf(M.libreV,2)} m²</td></tr>
+  </tbody></table></div></div></div>`;
+}
+
 function salesControls(){const base=Number(S.p.velocidad)||.8;return `<div class="panel"><h3>Escenario de velocidad de venta</h3><div class="fields" role="radiogroup" aria-label="Escenario de velocidad de venta">${[['base','Base','velocidad',base],['optimista','Optimista','velocidadOptimista',S.p.velocidadOptimista??base*1.25],['pesimista','Pesimista','velocidadPesimista',S.p.velocidadPesimista??base*.7]].map(([key,name,field,value])=>`<div class="f"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="radio" name="salesScenario" data-k="p.escenarioVenta" value="${key}" ${(S.p.escenarioVenta||'base')===key?'checked':''} style="width:16px;height:16px;margin:0;accent-color:var(--accent)">${name} (unidades/mes)</label><input type="number" min="0.05" step="any" id="i-p-${field}" data-k="p.${field}" aria-label="Velocidad ${name} (unidades/mes)" value="${esc(value)}"></div>`).join('')}</div><p class="note">Activo: ${nf(M.p.velocidad,2)} unidades/mes · última venta: ${ml(M.finVentas)}. Cambia ventas, cobranzas, financiamiento y plazo; conserva precios y costos. Las ventas registradas del CRM se conservan en Seguimiento.</p></div>`}
 function monthAt(offset){const [y,m]=S.p.inicio.split('-').map(Number);const d=new Date(Date.UTC(y,m-1+offset,1));return d.toISOString().slice(0,7)}
 function dateControl(key,offset){return `<input type="month" aria-label="Fecha ${esc(key)}" data-date="${key}" value="${monthAt(offset)}">`}
@@ -1719,6 +1793,15 @@ document.addEventListener('click',e=>{
   else if(a==='base-cancel'){baseAsk=false;render();return}
   else if(a==='base-set'){const nm=($('#baseName')?.value||'').trim()||'Reevaluación';S.base={nombre:nm,fecha:new Date().toISOString().slice(0,10),snap:JSON.parse(JSON.stringify(Object.fromEntries(SNAPKEYS.map(k=>[k,S[k]]))))};baseAsk=false}
   else if(a==='crm-import'){try{const o=JSON.parse($('#crmIn').value);const v=Array.isArray(o)?o:o.ventas;if(!Array.isArray(v))throw 0;S.ventas=v.map(x=>{const e=String(x.etapa??x.estado??'Separación');return {u:String(x.u??x.unidad??''),f:String(x.f??x.fecha??S.estr.corte).slice(0,7),precio:+(x.precio??0),estado:ETAPAS.includes(e)?e:(ETAPA_MAP[e.toLowerCase()]||'Separación'),canal:String(x.canal??x.campana??x.campaña??'')}});if(o.estrategia)Object.assign(S.estr,o.estrategia);save();render();$('#crmMsg').textContent=S.ventas.length+' ventas importadas'}catch(_){$('#crmMsg').textContent='No se pudo leer: revisa que sea JSON con una lista "ventas".'}return}
+  else if(a==='cab-piso'||a==='cab-sotano'||a==='cab-azotea'||a==='cab-dup'){const P=S.cab.pisos,az=P.findIndex(f=>f.uso==='azotea');
+    if(a==='cab-sotano'){const n=P.filter(f=>f.uso==='sotano').length+1;P.unshift({nivel:'Sótano '+n,uso:'sotano',tech:+S.p.areaTerreno||0,circ:15,muros:5,comun:80,libre:0,libreV:0,und:0,estac:0})}
+    else if(a==='cab-azotea'){if(az<0){const b=P.filter(f=>f.uso!=='sotano').slice(-1)[0];P.push({nivel:'Azotea',uso:'azotea',tech:Math.round((b?+b.tech:0)*S.cab.param.azoteaTechable)/100,circ:12,muros:8,comun:10,libre:0,libreV:0,und:0,estac:0})}}
+    else{const i=a==='cab-dup'?+b.dataset.i:(az<0?P.length-1:az-1),b=P[i]||P[P.length-1],n=P.filter(f=>f.uso==='primero'||f.uso==='tipico').length+1,nuevo=Object.assign({},b,{nivel:b.uso==='sotano'?'Sótano '+(P.filter(f=>f.uso==='sotano').length+1):'Piso '+n,uso:b.uso==='primero'?'tipico':b.uso,libre:b.uso==='primero'?0:b.libre,libreV:b.uso==='primero'?0:b.libreV});
+      const pos=b.uso==='sotano'?i:(az<0?P.length:az);P.splice(b.uso==='sotano'?pos:pos,0,nuevo)}}
+  else if(a==='cab-del'){const i=+b.dataset.i;if(S.cab.pisos.length>1&&confirm('¿Eliminar el nivel «'+S.cab.pisos[i].nivel+'»?'))S.cab.pisos.splice(i,1)}
+  else if(a==='cab-regenerar'){if(confirm('Rehacer los pisos desde los datos generales y los parámetros? Se reemplazan los valores editados del cuadro de áreas.'))S.cab=cabDefault(S,S.cab&&S.cab.param)}
+  else if(a==='cab-medidas'){const P=S.cab.param;if(+P.frente>0&&+P.fondo>0)S.p.areaTerreno=Math.round(P.frente*P.fondo*100)/100}
+  else if(a==='cab-usar'){const {t}=cabCalc(S),nv=Math.round((t.tech-t.vend)*100)/100;if(confirm('Usar en el modelo: área común techada (no vendible) = '+nv.toLocaleString('es-PE')+' m² (antes '+(+S.p.comunTechada||0).toLocaleString('es-PE')+' m²). Las áreas vendibles siguen saliendo del cuadro de unidades.'))S.p.comunTechada=nv}
   else if(a==='add-unit'){S.units.push({id:String(900+S.units.length),tipo:'Flat 1D',piso:1,tech:45,libre:0,aj:0})}
   else if(a==='add-gg'){S.gg.push({n:'Nueva partida',u:'mes',link:true,q:M.dur,ded:1,pu:1000})}
   else if(a==='add-inv'){S.inv.push({n:'Nuevo tramo',monto:30000,tasa:10,plazo:18})}
@@ -1756,12 +1839,14 @@ document.addEventListener('change',e=>{
   if(k==='p.tc'||k==='mercado.tc')return;
   if(['p.velocidad','p.velocidadOptimista','p.velocidadPesimista','p.costoM2'].includes(k)&&(!Number.isFinite(Number(el.value))||Number(el.value)<.05)){el.setCustomValidity('Ingresa un valor mayor o igual a 0.05.');el.reportValidity();el.addEventListener('input',()=>el.setCustomValidity(''),{once:true});return}
   if(k==='p.inicio'&&!/^\d{4}-\d{2}$/.test(el.value))return;
+  {const m=k.match(/^cab\.pisos\.(\d+)\.(circ|muros|comun)M2$/);if(m){const f=S.cab.pisos[+m[1]],v=parseFloat(el.value);if(f&&isFinite(v)&&+f.tech>0){f[m[2]]=Math.round(Math.max(0,Math.min(100,v/f.tech*100))*100)/100;save();const id=el.id;render();const n=document.getElementById(id);if(n)n.focus({preventScroll:true})}return}}
   let v=el.type==='checkbox'?el.checked:el.value;
   if(el.type==='number'){v=parseFloat(v);if(isNaN(v))v=0}
   if(/^mercado\.comps\.\d+\.distCuadras$/.test(k)){const c=S.mercado.comps[Number(k.split('.')[2])];if(c){mDistManual(c,el.value);save();const id=el.id;render();const n=document.getElementById(id);if(n)n.focus({preventScroll:true})}return}
   setP(k,v);if(/^mercado\.comps\.\d+\.incl$/.test(k)){const i=Number(k.split('.')[2]);if(S.mercado.comps[i])S.mercado.comps[i].scopeOverride=true}if(k.startsWith('estr.')&&k!=='estr.estado')S.estr.estado='propuesta';save();
   const id=el.id;render();const n=document.getElementById(id);if(n&&n.type!=='checkbox')n.focus({preventScroll:true});
 });
+document.addEventListener('toggle',e=>{if(e.target&&e.target.id==='cabDatos'){S._ui=S._ui||{};S._ui.cabDatos=e.target.open;save()}},true); // R57 · recuerda si «Datos generales» está abierto
 render();
 
 /* ---------- R33b · Modo CRM ÖRÖK (solo dentro de /evaluador) ---------- */

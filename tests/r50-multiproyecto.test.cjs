@@ -126,3 +126,15 @@ test('R55 · Evaluador y Contabilidad saben qué proyecto está abierto (borrado
   assert.match(ct,/LKEY=CRM\?'orok-contab-crm-v1'\+\(OROK_PROY&&OROK_PROY!=='principal'\?'::'\+OROK_PROY:''\)/);
  }finally{await s.close();}
 });
+
+test('R57 · un proyecto nuevo usa la clave de IA de Ajustes de Infinity 224 (solo en el servidor)',async()=>{
+ const s=await arrancar();
+ try{
+  await s.store.run(async({read,write})=>{const d=read();d.settings.geminiApiKey='AIza-clave-de-prueba-0000000000';write(d);});
+  await new Promise(r=>setTimeout(r,300));
+  const c=await s.call('db.proyectoCrear',[{nombre:'Ventura',empresa:'BMG',etapa:'evaluacion'}]),ctx=await s.server.proyectos.obtener(c.proyecto.id);
+  assert.equal((await ctx.cache.read()).settings.geminiApiKey,'AIza-clave-de-prueba-0000000000');
+  const pub=await s.call('db.getSettings');assert.equal(pub.projectName,'Ventura');assert.equal(pub.geminiConfigured,true);assert.ok(!('geminiApiKey'in pub),'la clave no llega al navegador');
+  assert.equal((await ctx.cacheBase.read()).settings.geminiApiKey,undefined,'no se copia a los datos del proyecto');
+ }finally{await s.close();}
+});

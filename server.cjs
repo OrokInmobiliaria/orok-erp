@@ -39,13 +39,17 @@ function validSecret(expected,provided){
 }
 function createServer({config,store,auth,cache,authCache,supportMail,whatsappOptions={},socialOptions={},creativeOptions={}}){
  // R50 · Una aplicación por proyecto (mismos usuarios). El principal se arma como siempre; los demás al primer uso.
- const contexto=(st,ca,id)=>{
+ // R57 · Proyectos nuevos: las claves de IA e integraciones guardadas en Ajustes de Infinity 224 (p. ej. la de Gemini) sirven
+ // también para ellos mientras no registren una propia. Solo en el servidor: al navegador nunca llegan claves.
+ const CLAVES_HEREDADAS=['geminiApiKey'];
+ const conClaves=ca=>({...ca,read:async()=>{const d=await ca.read(),ps=(await cache.read()).settings||{};d.settings={...(d.settings||{})};for(const k of CLAVES_HEREDADAS)if(!d.settings[k]&&ps[k])d.settings[k]=ps[k];return d;},readKind:ca.readKind?async kind=>{const v=await ca.readKind(kind);if(kind!=='settings')return v;const ps=(await cache.read()).settings||{},out={...(v||{})};for(const k of CLAVES_HEREDADAS)if(!out[k]&&ps[k])out[k]=ps[k];return out;}:undefined});
+ const contexto=(st,ca0,id)=>{const ca=id?conClaves(ca0):ca0;
   const dir=id&&config.privateDir?path.join(config.privateDir,'proyectos',id):config.privateDir;
   const backups=dir?backupScheduler({store:st,privateDir:dir}):{run:async()=>({skipped:true}),start(){},stop(){}};
   const sla=slaScheduler({store:st});
   const syncer=sheetSync({store:st,cache:ca,onNewLeads:({added,source})=>backups.run({reason:source+' · '+added+' lead(s) nuevo(s)'})});
   const app=application({store:st,auth,cache:ca,authCache,config,syncer,historialIA:engine=>hubRef?hubRef.historial(id||config.project,engine):null,backups,sla,supportMail,whatsappOptions,socialOptions,creativeOptions});
-  return {id:id||config.project,store:st,cache:ca,app,backups,sla,syncer};
+  return {id:id||config.project,store:st,cache:ca,cacheBase:ca0,app,backups,sla,syncer};
  };
  let hubRef=null;
  // R55 · Evaluador y Contabilidad: la página sabe qué proyecto está abierto (borrador local por proyecto) y trae «Dictar o adjuntar».
@@ -228,7 +232,7 @@ function createServer({config,store,auth,cache,authCache,supportMail,whatsappOpt
     res.writeHead(200,{'Content-Type':type,'Cache-Control':'private, no-store'});if(req.method==='HEAD')return res.end();return res.end(name==='index.html'?(await paginaConProyecto(fs.readFileSync(file,'utf8'),req.headers.cookie)):fs.readFileSync(file)); // R54 · Dictar o adjuntar
    }
    if(url.pathname.startsWith('/files/')){await authCache.require(cookie);target=(await proyectos.resolver(req.headers.cookie)).app.library.file(url.pathname.slice(7));res.setHeader('Cache-Control','private, no-store');if(url.searchParams.has('download'))res.setHeader('Content-Disposition','attachment; filename="'+(path.extname(target)==='.csv'?'Cotizaciones.csv':'Documento'+path.extname(target))+'"');}
-   else {const dist=path.join(__dirname,'dist'),relative=decodeURIComponent(url.pathname);target=path.resolve(dist,'.'+relative);if(!target.startsWith(dist+path.sep)&&target!==dist)return json(403,{error:'Ruta no válida.'});if(!fs.existsSync(target)||fs.statSync(target).isDirectory()){if(path.extname(relative))return json(404,{error:'Archivo no disponible.'});target=path.join(dist,'index.html');}res.setHeader('Cache-Control',['index.html','sw.js','manifest.webmanifest','version.json'].includes(path.basename(target))?'no-cache':'public,max-age=3600');if(path.basename(target)==='sw.js')res.setHeader('Service-Worker-Allowed','/');}
+   else {const dist=path.join(__dirname,'dist'),relative=decodeURIComponent(url.pathname);target=path.resolve(dist,'.'+relative);if(!target.startsWith(dist+path.sep)&&target!==dist)return json(403,{error:'Ruta no válida.'});if(!fs.existsSync(target)||fs.statSync(target).isDirectory()){if(path.extname(relative))return json(404,{error:'Archivo no disponible.'});target=path.join(dist,'index.html');}res.setHeader('Cache-Control',['index.html','sw.js','manifest.webmanifest','version.json','ia-rellenar.js'].includes(path.basename(target))?'no-cache':'public,max-age=3600');if(path.basename(target)==='sw.js')res.setHeader('Service-Worker-Allowed','/');}
    if(!fs.existsSync(target))return json(404,{error:'Archivo no disponible.'});const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.pdf':'application/pdf','.csv':'text/csv; charset=utf-8','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.webmanifest':'application/manifest+json; charset=utf-8','.json':'application/json; charset=utf-8'}[path.extname(target)]||'application/octet-stream';res.setHeader('Content-Type',mime);res.setHeader('Content-Length',fs.statSync(target).size);if(req.method==='HEAD')return res.end();fs.createReadStream(target).on('error',()=>res.destroy()).pipe(res);
   }catch(error){if(res.headersSent)return res.destroy();const message=String(error.message||'No se pudo completar la solicitud.');const safe=/credential|private.?key|service.?account|invalid_grant|ENOENT|PERMISSION_DENIED|GOOGLE_APPLICATION/i.test(message)?'No se pudo completar la operación del servidor.':message;json(/Inicia sesión|validación de|contraseña temporal/.test(safe)?401:400,{error:safe});}
  });

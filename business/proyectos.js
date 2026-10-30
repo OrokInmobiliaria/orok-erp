@@ -178,7 +178,7 @@ function proyectosHub({ principal, abrir, contexto, registro, onNuevo = () => {}
       if (id && /^[\w-]{1,100}$/.test(id)) for (const c of lista) { try { if ((await c.app.projectDrive.jobs.doc(id).get()).data()) return c.app.projectDrive.action(payload); } catch {} }
       return principal.app.projectDrive.action(payload);
     },
-    cerrar() { for (const [id, c] of ctxs) if (id !== registro.principalId) { try { c.cache.close(); c.store.close?.(); } catch {} } },
+    cerrar() { for (const [id, c] of ctxs) if (id !== registro.principalId) { try { (c.cacheBase || c.cache).close(); c.store.close?.(); } catch {} } },
     async rpc(name, args, user, header) {
       const activo = cookieDe(header) || registro.principalId;
       if (name === 'proyectosListar') {
