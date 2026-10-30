@@ -3,7 +3,7 @@ import {LayoutDashboard, LineChart, KanbanSquare, UserPlus, MessageCircle, FileT
 
 // R31 · Menú agrupado (escritorio: barra de cristal con menús; celular: barra inferior + hoja).
 // Solo reorganiza el acceso: cada pestaña conserva su control de permisos original.
-import {navGroups as model} from './navModel.mjs';
+import {navGroups as model, navEtapas} from './navModel.mjs';
 const ICONS = {LayoutDashboard, LineChart, KanbanSquare, UserPlus, MessageCircle, FileText, Building2, DollarSign, Megaphone, Sparkles, Palette, GitCompare, PiggyBank, Send, Mail, Wallet, Wrench, Bot, Settings, BookOpen, Home, Briefcase, LayoutGrid};
 export const navGroups = (role, module = 'crm') => model(role, module).map(g => ({...g, icon: ICONS[g.icon], items: g.items.map(([id, label, icon, hint]) => [id, label, ICONS[icon], hint])}));
 
@@ -48,7 +48,7 @@ export default function GroupedNav({role, module = 'crm', active, onChange, onSe
     {sheet && <>
       <div className="sheet-veil" onClick={() => setSheet(null)}/>
       <div className="sheet glass" role="dialog" aria-label="Todas las secciones">
-        {groups.filter(g => sheet === 'all' || g.id === sheet).map(g => <div key={g.id} role="menu" aria-label={g.label}><h4>{g.label}</h4>{g.items.map(i => <Item key={i[0]} item={i} active={active} onPick={pick}/>)}</div>)}
+        {(sheet === 'all' ? navEtapas(role).map(s => ({...s, items: s.items.map(([id, l, ic]) => [id, l, ICONS[ic] || LayoutDashboard])})) : groups.filter(g => g.id === sheet)).map(g => <div key={g.id} role="menu" aria-label={g.label}><h4>{g.label}</h4>{g.items.map(i => <Item key={i[0]} item={i} active={active} onPick={pick}/>)}</div>)}
       </div>
     </>}
   </>;

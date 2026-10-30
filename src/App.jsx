@@ -18,6 +18,7 @@ import MarketingAssistant from './MarketingAssistant';
 import {GretaHoy, GretaTendencias, GretaPublicar, GretaKpis, GretaConfig, GretaAssistant, GretaFormularios} from './Greta'; // R42 · módulo Marketing con G.R.E.T.A
 import PowerDashboard from './PowerDashboard';
 import GroupedNav from './GroupedNav';
+import SideNav from './SideNav'; // R51 · menú lateral por etapas
 import LeadExportMenu from './LeadExportMenu';
 import SocialChatPanel from './SocialChatPanel';
 import ChannelIcon from './ChannelIcon';
@@ -798,7 +799,8 @@ function DesktopView({ data }) {
   const lostLeads=normalizedLeads.filter(lead=>CLOSED_LOST_STAGES.includes(lead.status)).sort((a,b)=>String(b.lost_at||'').localeCompare(String(a.lost_at||'')));
 
   return (
-    <div style={{ maxWidth: '100%', margin: '0 auto', transition: 'all 0.3s ease', boxSizing: 'border-box', position: 'relative' }}>
+    <div className="has-sidenav" style={{ maxWidth: '100%', margin: '0 auto', transition: 'all 0.3s ease', boxSizing: 'border-box', position: 'relative' }}>
+      <SideNav role={currentUser.role} active={activeTab} onChange={handleTabChange} onSearch={()=>setSearchOpen(true)}/>
       
       {/* MODALS */}
       {quoteModal.open && (
