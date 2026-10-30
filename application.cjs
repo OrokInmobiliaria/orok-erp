@@ -484,6 +484,8 @@ function application({store,auth,cache,authCache,config,syncer,historialIA=null,
    if(name==='openWhatsAppRecovery')return {value:await whatsapp.recovery.open(args[0],args[1]||{},user.name)};
    if(name==='getWhatsAppConversation'){let data;if(cache.readKind){const [leads,settings]=await Promise.all([cache.readKind('leads'),cache.readKind('settings')]);data={leads,settings};}else data=await cache.read();return {value:await whatsapp.conversation(args[0],args[1]||{},data)};}
    if(name==='getWhatsAppSetup'){if(user.role!=='Gerente')throw Error('Requiere Gerencia.');return {value:whatsapp.setup()};}
+   if(name==='testWhatsAppConnection'){if(user.role!=='Gerente')throw Error('Requiere Gerencia.');return {value:await whatsapp.gateway.diagnose()};}
+   if(name==='subscribeWhatsAppApp'){if(user.role!=='Gerente')throw Error('Requiere Gerencia.');return {value:await whatsapp.gateway.subscribeApp()};}
    if(name==='saveWhatsAppSetup'){if(user.role!=='Gerente')throw Error('Requiere Gerencia.');return {value:whatsapp.setup(args[0],user.name)};}
    if(name==='setWhatsAppMode')return {value:await whatsapp.mode(args[0],args[1]||{},user.name)};
    if(name==='sendWhatsAppMessage')return {value:await whatsapp.send(args[0],args[1]||{},user.name)};
