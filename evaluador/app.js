@@ -312,8 +312,8 @@ function breakEven(s){let lo=0,hi=s.p.precioM2*3;for(let k=0;k<40;k++){const m=(
 //MODEL-END
 
 /* ---------- estado ---------- */
-const CRM=/^\/evaluador(\/|$)/.test(location.pathname);const KEY=CRM?'orok-evaluador-crm-v1':'lola-evaluador-v1';
-let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
+const CRM=/^\/evaluador(\/|$)/.test(location.pathname);const OROK_PROY=(()=>{try{return (document.querySelector('meta[name="orok-proyecto"]')||{}).content||''}catch(e){return ''}})();const KEY=CRM?'orok-evaluador-crm-v1'+(OROK_PROY&&OROK_PROY!=='principal'?'::'+OROK_PROY:''):'lola-evaluador-v1'; // R55 · un borrador por proyecto
+let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}const SIN_BORRADOR=!S;
 if(!S||!S.p)S=JSON.parse(JSON.stringify(DEF));
 for(const k in DEF)if(S[k]===undefined)S[k]=JSON.parse(JSON.stringify(DEF[k]));
 for(const k in DEF.p)if(S.p[k]===undefined)S.p[k]=DEF.p[k];
@@ -1864,5 +1864,5 @@ function crmBoot(){
   document.head.append(st);
   crmBar();crmAi=true;aiState='on';aiLogEl().innerHTML='';aiSync();
   const t=document.getElementById('saved');if(t)t.title='Borrador en este equipo. Usa «Guardar en el CRM» para compartirlo con Gerencia.';
-  crmRefresh();mSunat();
+  crmRefresh().then(()=>{if(!SIN_BORRADOR||!OROK_PROY||OROK_PROY==='principal')return;const ult=crmList.slice().sort((a,b)=>String(b.updated_at||'').localeCompare(String(a.updated_at||'')))[0];if(ult)return crmLoad(ult.id);delete S._crm;S.p.nombre=(document.querySelector('meta[name="orok-proyecto-nombre"]')||{}).content||'';S.p.direccion='';S.ventas=[];if(S.mercado)S.mercado.comps=[];save();render();crmFill();crmMsg('Proyecto sin evaluación todavía: completa sus datos (el modelo de referencia es solo una plantilla).');});mSunat(); // R55 · al abrir un proyecto sin borrador se trae su última evaluación
 }

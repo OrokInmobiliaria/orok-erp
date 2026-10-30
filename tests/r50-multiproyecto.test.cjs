@@ -112,3 +112,17 @@ test('R53 · carpetas de Drive: el trabajador de n8n crea la carpeta del proyect
   assert.equal((await hook({action:'project_drive_claim'})).job,null);
  }finally{await s.close();}
 });
+
+test('R55 · Evaluador y Contabilidad saben qué proyecto está abierto (borrador local separado por proyecto)',async()=>{
+ const s=await arrancar();
+ try{
+  const base='http://127.0.0.1:'+s.server.address().port,cookie=()=>Object.entries(s.jar).map(([k,v])=>k+'='+v).join('; '),get=async u=>(await fetch(base+u,{headers:{Cookie:cookie()}})).text();
+  let h=await get('/evaluador/');assert.match(h,/<meta name="orok-proyecto" content="principal">/);assert.match(h,/ia-rellenar\.js/);
+  const c=await s.call('db.proyectoCrear',[{nombre:'Ventura',empresa:'BMG',etapa:'evaluacion'}]);
+  h=await get('/evaluador/');assert.ok(h.includes('<meta name="orok-proyecto" content="'+c.proyecto.id+'"><meta name="orok-proyecto-nombre" content="Ventura">'));
+  h=await get('/contabilidad/');assert.ok(h.includes('content="'+c.proyecto.id+'"'));
+  const ev=fs.readFileSync(path.join(__dirname,'..','evaluador','app.js'),'utf8'),ct=fs.readFileSync(path.join(__dirname,'..','contabilidad','app.js'),'utf8');
+  assert.match(ev,/const KEY=CRM\?'orok-evaluador-crm-v1'\+\(OROK_PROY&&OROK_PROY!=='principal'\?'::'\+OROK_PROY:''\)/);assert.match(ev,/const SIN_BORRADOR=!S;/);assert.match(ev,/if\(ult\)return crmLoad\(ult\.id\)/);
+  assert.match(ct,/LKEY=CRM\?'orok-contab-crm-v1'\+\(OROK_PROY&&OROK_PROY!=='principal'\?'::'\+OROK_PROY:''\)/);
+ }finally{await s.close();}
+});
