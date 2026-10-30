@@ -47,6 +47,7 @@ export function navGroups(role, module = 'crm') {
   ];
   return [
     {id: 'home', label: 'Inicio', icon: 'Home', items: [
+      ['proyectos', 'Mis proyectos', 'LayoutGrid', 'Todos los proyectos, sus etapas y crear uno nuevo'],
       ['dashboard', 'Panel de control', 'LayoutDashboard', 'Indicadores y filtros interactivos'],
       ['weekly', 'Análisis semanal', 'LineChart', 'Detalle por semana'],
     ]},
