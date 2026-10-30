@@ -344,7 +344,7 @@ function DesktopView({ data }) {
   const [showDuplicateRegistry,setShowDuplicateRegistry]=useState(false);
   const [duplicateKeepByLead,setDuplicateKeepByLead]=useState({});
   const [duplicateDeleteBusy,setDuplicateDeleteBusy]=useState('');
-  const [kanbanStickyOffsets,setKanbanStickyOffsets]=useState({header:0,toolbar:0});
+  const [kanbanStickyOffsets,setKanbanStickyOffsets]=useState({header:0,toolbar:0,board:0});
   const appHeaderRef=useRef(null);
   const kanbanToolbarRef=useRef(null);
   const kanbanBoardRef=useRef(null);
@@ -758,13 +758,18 @@ function DesktopView({ data }) {
   const isKanban = activeTab === 'kanban';
   useEffect(()=>{
     if(!isKanban){
-      setKanbanStickyOffsets({header:0,toolbar:0});
+      setKanbanStickyOffsets({header:0,toolbar:0,board:0});
       return;
     }
-    const update=()=>setKanbanStickyOffsets({
-      header:appHeaderRef.current?.getBoundingClientRect().height||0,
-      toolbar:kanbanToolbarRef.current?.getBoundingClientRect().height||0
-    });
+    // R67 · En pantallas de escritorio el encabezado, la barra del Kanban y los títulos de las etapas quedan fijos:
+    // la página no se desplaza y solo el tablero de fichas tiene su propio desplazamiento.
+    const update=()=>{const b=kanbanBoardRef.current,top=b?b.getBoundingClientRect().top+window.scrollY:0,wide=window.innerWidth>=900;
+      setKanbanStickyOffsets({
+        header:appHeaderRef.current?.getBoundingClientRect().height||0,
+        toolbar:kanbanToolbarRef.current?.getBoundingClientRect().height||0,
+        board:wide&&b?Math.max(320,Math.round(window.innerHeight-top-12)):0
+      });};
+    window.scrollTo(0,0);
     update();
     const observer=typeof ResizeObserver==='undefined'?null:new ResizeObserver(update);
     if(appHeaderRef.current)observer?.observe(appHeaderRef.current);
@@ -1010,7 +1015,7 @@ function DesktopView({ data }) {
       {appModule==='marketing'&&<GretaAssistant user={currentUser} tab={activeTab} onGo={handleTabChange}/>}{/* R42 · G.R.E.T.A actúa como las otras IA asistenciales */}
 
       {/* CONTENT AREA */}
-      <div className="app-content" style={{ '--kanban-toolbar-top': `${kanbanStickyOffsets.header}px`, '--kanban-stage-top': `${kanbanStickyOffsets.header}px`, padding: isKanban ? '10px 40px 40px 40px' : '20px 16px 40px', maxWidth: (isKanban || ['evaluador','contabilidad','ordenesErp'].includes(activeTab)) ? '100%' : '1600px', margin: '0 auto', transition: 'all 0.3s ease' }}>
+      <div className="app-content" style={{ '--kanban-toolbar-top': `${kanbanStickyOffsets.header}px`, '--kanban-stage-top': `${kanbanStickyOffsets.header}px`, padding: isKanban ? (kanbanStickyOffsets.board?'10px 40px 0 40px':'10px 40px 40px 40px') : '20px 16px 40px', maxWidth: (isKanban || ['evaluador','contabilidad','ordenesErp'].includes(activeTab)) ? '100%' : '1600px', margin: '0 auto', transition: 'all 0.3s ease' }}>
         {searchOpen&&<LeadSearchPalette leads={leads} onClose={()=>setSearchOpen(false)} onOpenLead={id=>{setSearchOpen(false);openLifecycle(id,'full');}} quotes={quotes} onOpenQuotes={lead=>{setSearchOpen(false);setQuoteFilter(lead.lead_number||lead.name||'');setQuotesOpen(true);handleTabChange('quotes');}} onShowInKanban={q=>{setSearchOpen(false);setKanbanSearch(q);handleTabChange('kanban');}} openChat={args=>{setSearchOpen(false);openChat({...args,origin:'busqueda'});}}/>}
         {/* RESTORED_V37_TABS_START */}
       {activeTab === 'kanban' && (<><div ref={kanbanToolbarRef} className="kanban-toolbar no-print" style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
@@ -1034,7 +1039,7 @@ function DesktopView({ data }) {
             return <div key={column.key} className="kanban-stage-header"><strong style={{color:'#292524', fontSize:'15px'}}>{column.label}</strong><span style={{background:'white', borderRadius:'12px', padding:'2px 8px', fontSize:'12px', fontWeight:'bold'}}>{stageLeads.length}</span></div>;
           })}
         </div>
-        <div ref={kanbanBoardRef} className="kanban-board" onScroll={e=>syncKanbanScroll(e.currentTarget,kanbanStageStripRef.current)} style={{ display: 'flex', overflowX: 'auto', gap: '20px', paddingBottom:'20px' }}>
+        <div ref={kanbanBoardRef} className="kanban-board" onScroll={e=>syncKanbanScroll(e.currentTarget,kanbanStageStripRef.current)} style={{ display: 'flex', overflowX: 'auto', gap: '20px', paddingBottom:'20px', ...(kanbanStickyOffsets.board?{height:kanbanStickyOffsets.board,overflowY:'auto',alignItems:'flex-start',overscrollBehavior:'contain'}:{}) }}>
           {kanbanColumns.map(column => {
             const stage=column.status;
             const stageLeads = kanbanLeads.filter(l => l.status===stage&&(!column.substatus?!(column.key==='followup-active'&&['No contesta','Seguimiento futuro'].includes(l.substatus)):l.substatus===column.substatus));
