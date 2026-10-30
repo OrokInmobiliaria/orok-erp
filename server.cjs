@@ -105,6 +105,8 @@ function createServer({config,store,auth,cache,authCache,supportMail,whatsappOpt
     // Authenticated, zero-write probe for n8n. It deliberately returns before
     // opening the CRM store so a connection test cannot create, move or annotate
     // a lead and cannot be delayed by a Firestore transaction.
+    // R53 · Trabajos de carpetas de Drive de todos los proyectos (no solo del principal).
+    if(/^project_drive_/.test(String(payload?.action||'')))return json(200,{value:await proyectos.drive(payload)});
     if(payload?.action==='connection_check')return json(200,{value:{ok:true,connection:true,version:require('./package.json').version,writes:0}});
     return json(200,{value:await (payload?.project?(await proyectos.porNombre(payload.project)).app:app).ingestLola(payload)});
    }
