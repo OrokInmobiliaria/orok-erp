@@ -1,4 +1,4 @@
-import {LeadScoreBadge} from './LeadScoreBadge';
+import {LeadScoreBadge} from './LeadScoreBadge';import {respuestas as formAnswers} from './formAnswers.mjs';
 import CrmLolaPanel from './CrmLolaPanel';
 import LeadComments from './LeadComments';
 import MarketingExpenses from './MarketingExpenses';
@@ -1077,6 +1077,7 @@ function DesktopView({ data }) {
                           <div>Correo: <span className="kanban-copyable" draggable={false}>{l.email||'Sin correo'}</span></div>
                           {l.substatus&&<div><strong>{l.status==='Cita'?'Cita showroom':'Seguimiento'}:</strong> {l.substatus}</div>}
                           <div><strong>Próxima acción:</strong> {l.next_action||'Sin definir'}{l.next_action_at?' · '+formatLeadReceivedAt(l.next_action_at):''}</div>
+                          {formAnswers(l).length>0&&<div className="kanban-form-answers" title={formAnswers(l).map(r=>r.pregunta+' → '+r.valor).join('\n')} style={{marginTop:6,padding:'6px 8px',borderRadius:10,background:'rgba(133,68,42,.07)',border:'1px solid rgba(133,68,42,.18)'}}><div style={{fontSize:10.5,fontWeight:800,letterSpacing:.4,textTransform:'uppercase',color:'#85442A',marginBottom:2}}>Formulario</div>{(cardExpanded?formAnswers(l):formAnswers(l).slice(0,3)).map((r,i)=><div key={i}><strong>{r.etiqueta}:</strong> {r.valor}</div>)}{!cardExpanded&&formAnswers(l).length>3&&<div style={{color:'#85442A'}}>+{formAnswers(l).length-3} respuesta(s) más</div>}</div>}
                           {channelsForLead(l,chatIndex).length>0&&<div className="ch-row no-print" style={{marginTop:8}} aria-label={'Chats de '+l.name}>{channelsForLead(l,chatIndex).map(c=><button key={c.channel+c.thread_id} className="ch-btn no-print" style={{'--ch':CHANNELS[c.channel].color}} aria-label={'Abrir chat de '+CHANNELS[c.channel].label+' · '+l.name} title={'Abrir chat de '+CHANNELS[c.channel].label+(c.has_messages?'':' (sin mensajes aún)')} onClick={()=>openChat({channel:c.channel,leadId:l.id,threadId:c.thread_id,origin:'kanban'})}><ChannelIcon channel={c.channel} size={15}/>{c.has_messages&&<span className="dot" aria-hidden="true"/>}</button>)}</div>}
                         </div>
                       </div>

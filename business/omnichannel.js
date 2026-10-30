@@ -42,6 +42,8 @@ function metaFieldKey(value){return String(value||'').normalize('NFD').replace(/
 // R43 · respuestas propias de un formulario (sin los datos de contacto) para dejarlas como comentario del lead.
 const CONTACT_KEYS=new Set(['full_name','name','nombre_y_apellidos','nombres_y_apellidos','nombre_completo','first_name','nombre','last_name','apellidos','email','e_mail','correo_electronico','phone_number','phone','mobile_phone','numero_de_telefono','telefono','celular']);
 function metaFormAnswers(fieldData){return (fieldData||[]).map(i=>({k:metaFieldKey(i?.name),v:String((i?.values||[]).join(', ')||'').trim().slice(0,300)})).filter(x=>x.k&&x.v&&!CONTACT_KEYS.has(x.k)).slice(0,12).map(x=>x.k.replace(/_/g,' ').replace(/^./,c=>c.toUpperCase())+': '+x.v);}
+// R65 · Respuestas del formulario de Meta en estructura (pregunta → respuesta) para el Kanban.
+function metaFormPairs(fieldData){return (fieldData||[]).map(i=>({key:metaFieldKey(i?.name),k:String(i?.name||'').replace(/_/g,' ').trim().slice(0,140),v:String((i?.values||[]).join(', ')||'').trim().slice(0,200)})).filter(x=>x.key&&x.v&&!CONTACT_KEYS.has(x.key)).slice(0,15).map(({k,v})=>({k:k.replace(/^./,c=>c.toUpperCase()),v}));}
 function metaLeadProfile(fieldData){
  const fields={};for(const item of fieldData||[]){const key=metaFieldKey(item?.name),value=String(item?.values?.[0]||'').trim();if(key&&value&&!fields[key])fields[key]=value;}
  const first=(...keys)=>keys.map(metaFieldKey).map(key=>fields[key]).find(Boolean)||'';
@@ -126,7 +128,7 @@ class Omnichannel{
    const out=await this.form({action:'lola_form',channel:'meta',account_id:settings.accountId,event_id:'leadgen:'+id,contact_id:id,received_at:r.data.created_time,source:'Meta · formulario',profile:metaLeadProfile(r.data.field_data)});
    // R43 · deja en el lead de qué formulario vino (KPIs por formulario en G.R.E.T.A) y sus respuestas como comentario. No cambia etapa ni orden del Kanban.
    const answers=metaFormAnswers(r.data.field_data),formId=/^\d{3,40}$/.test(String(change.value.form_id||''))?String(change.value.form_id):'';
-   if(out.lead_id&&(formId||answers.length))await this.store.run(({read,write})=>{const data=read(),lead=data.leads.find(l=>l.id===out.lead_id);if(!lead)return;let changed=false;if(formId&&!lead.form_meta){lead.form_meta={form_id:formId,leadgen_id:id,at:r.data.created_time||new Date().toISOString()};changed=true;}if(answers.length&&!(lead.comment_history||[]).some(c=>c.request_id==='meta-form-'+id)){appendComment(lead,{text:'Respuestas del formulario de Meta:\n'+answers.map(a=>'- '+a).join('\n'),requestId:'meta-form-'+id},'Formulario Meta');changed=true;}if(changed)write(data);});
+   if(out.lead_id&&(formId||answers.length))await this.store.run(({read,write})=>{const data=read(),lead=data.leads.find(l=>l.id===out.lead_id);if(!lead)return;let changed=false;if(formId&&!lead.form_meta){lead.form_meta={form_id:formId,leadgen_id:id,at:r.data.created_time||new Date().toISOString()};changed=true;}if(answers.length&&!lead.form_answers?.length){lead.form_answers=metaFormPairs(r.data.field_data);changed=true;}if(answers.length&&!(lead.comment_history||[]).some(c=>c.request_id==='meta-form-'+id)){appendComment(lead,{text:'Respuestas del formulario de Meta:\n'+answers.map(a=>'- '+a).join('\n'),requestId:'meta-form-'+id},'Formulario Meta');changed=true;}if(changed)write(data);});
    results.push(out);
   }return results;
  }

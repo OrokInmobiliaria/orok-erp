@@ -109,9 +109,15 @@ function parseLeadCSV(csv) {
   }
   if (!best) throw new Error('No se encontraron columnas de Teléfono o Email. Usa encabezados como NOMBRE, TELÉFONO, EMAIL y STATUS.');
   const { rows, header } = best;
+  // R65 · Las preguntas del formulario que no son campos del CRM (inicial, presupuesto, tipología, banco…) se conservan
+  // como «respuestas del formulario» para ver la condición real de cada cliente en el Kanban.
+  const usados = new Set(Object.values(header.map).filter(i => i >= 0)), titulos = rows[header.index] || [];
   return rows.slice(header.index + 1).map(row => {
     const item = {};
     Object.entries(header.map).forEach(([field, index]) => { if (index >= 0) item[field] = row[index] || ''; });
+    const respuestas = titulos.map((t, i) => ({ k: String(t || '').replace(/\s+/g, ' ').trim().slice(0, 140), v: String(row[i] || '').replace(/\s+/g, ' ').trim().slice(0, 200) }))
+      .filter((x, i) => !usados.has(i) && x.k && x.v && !/^\d{6,}$/.test(x.v) && !/^(?:id|lead id|ad id|adset id|campaign id|form id|is organic)$/i.test(normalize(x.k))).slice(0, 15);
+    if (respuestas.length) item.form_answers = respuestas;
     if (item.surname) item.name = [item.name, item.surname].filter(Boolean).join(' ');
     delete item.surname;
     return item;
@@ -149,6 +155,7 @@ function syncLeads(existing, items, isStrict, sourceId, assignment, archived=[])
     if (email) fields.email = email;
     if (item.source) fields.source = source(item.source);
     if (item.budget !== undefined && item.budget !== '' && Number.isFinite(Number(item.budget))) fields.budget = Number(item.budget);
+    if (Array.isArray(item.form_answers) && item.form_answers.length) fields.form_answers = item.form_answers.slice(0, 15).map(x => ({ k: String(x.k || '').slice(0, 140), v: String(x.v || '').slice(0, 200) })).filter(x => x.k && x.v);
     let lead = match;
     if (lead) {
       const before = JSON.stringify(lead);

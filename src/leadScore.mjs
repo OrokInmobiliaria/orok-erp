@@ -7,6 +7,8 @@
 // Nunca se usan datos personales ni sensibles (nombre, DNI, estado civil,
 // distrito, edad, género, ingresos). Hay una prueba automática que lo verifica.
 
+import { senales as senalesFormulario } from './formAnswers.mjs';
+
 export const STAGE_POINTS = [
   ['Lead Inicial', 5], ['Contactado', 10], ['Información enviada', 15], ['MQL', 25],
   ['Cita', 38], ['Cita Asistida', 52], ['Calificado', 60], ['Evaluación GNB', 66],
@@ -55,6 +57,9 @@ export function interestScore(lead, now = Date.now()) {
   if (Number(lead.budget) > 0) add(5, 'Presupuesto registrado');
   if (String(lead.purchase_horizon || '').trim()) add(4, 'Horizonte de compra definido');
   if (String(lead.unit_interest || '').trim()) add(3, 'Tipo de departamento de interés');
+
+  // R65 · Lo que el cliente declaró en el formulario (inicial, presupuesto, tipología, financiamiento).
+  for (const [points, text] of senalesFormulario(lead)) add(points, text);
 
   // Citas.
   const appointments = lead.appointments || [];
