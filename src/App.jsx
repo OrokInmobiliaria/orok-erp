@@ -36,6 +36,7 @@ import EstrategiaPrecios from './EstrategiaPrecios'; // R48 · Ventas › Estrat
 import PrecioEspecial from './PrecioEspecial'; // R48 · precio especial con aprobación de Gerencia
 import {modulesFor, moduleOf, MODULES, canonicalTab} from './navModel.mjs';
 import AccessValidation from './AccessValidation';
+import CarpetasDrive from './CarpetasDrive';
 import {LoginScreen,PasswordChange,UserManagement} from './Access';
 const isSold=u=>!!u.sold_lead_id||['SOLD','VENDIDO','VENDIDA','VENTA'].includes(String(u.status||'').toUpperCase());
 import { LayoutDashboard, KanbanSquare, Building2, Wrench, Settings, MessageCircle, Phone, Calendar, Gift, Clock, FileText, FileSpreadsheet, FolderOpen, Save, Cloud, DownloadCloud, UploadCloud, Users, Image as ImageIcon, Sparkles, Bot, LogOut, Lock, PieChart, Activity, DollarSign, UserPlus, Upload, Trash2, Printer, Wallet, TrendingDown, Megaphone, Target, BarChart2, Search, ChevronsDown, ChevronsUp, BookOpen } from 'lucide-react';
@@ -1184,6 +1185,7 @@ function DesktopView({ data }) {
 
       {activeTab === 'integrations' && api.isNative && (
         <div data-responsive-grid="true" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+          {currentUser?.role === 'Gerente' && <CarpetasDrive/>}
           
           <div className="orok-card" style={{gridColumn:'1 / -1'}}>
             <h2 style={{marginTop:0,color:'var(--orok-brand)'}}>Enlaces compartidos</h2>

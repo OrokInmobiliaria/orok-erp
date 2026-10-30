@@ -385,6 +385,8 @@ function application({store,auth,cache,authCache,config,syncer,historialIA=null,
    if(LOLA_ASSIST_METHODS.includes(name))return {value:await lolaAssistant.rpc(name,args,user,()=>cache.read())};
    if(INSTALL_METHODS.includes(name))return {value:await enrollment.rpc(name,args,user)};
    if(name==='getProjectDrive'){return {value:await projectDrive.publicProject(args[0],user)};}
+   if(name==='getProjectDriveConfig')return {value:projectDrive.publicConfig(user)};
+   if(name==='saveProjectDriveConfig')return {value:projectDrive.saveConfig(args[0]||{},user)};
    if(name==='getProjectDriveSources'){return {value:await projectDrive.context(args[0],args[1],user)};}
    if(name==='listProjectDriveSources')return {value:await projectDrive.listSources(args[0],user)};
    if(name==='approveProjectDriveSource')return {value:await projectDrive.approveSource(args[0],args[1],args[2],user)};

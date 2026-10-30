@@ -88,6 +88,8 @@ async function crmSales(){
     save();render();crmMsg(S.ventas.length+' ventas reales cargadas del CRM. Revisa Seguimiento.');
   }catch(e){crmMsg(e.message,true)}
 }
+// R59 · «Crear carpetas en Drive»: guarda la evaluación en el CRM, que encarga la estructura (nombre del proyecto + 14 carpetas).
+document.addEventListener('click',e=>{if(!e.target.closest('[data-act="project-drive-crear"]'))return;const b=document.getElementById('crmSave');if(b)b.click();});
 document.addEventListener('click',async e=>{if(!e.target.closest('[data-act="project-drive-status"]'))return;if(!S._crm||!S._crm.id){crmMsg('Primero guarda el proyecto en el CRM.',true);return}try{S._crm.drive=await crmRpc('getProjectDrive',S.p.nombre);S._driveSources=await crmRpc('listProjectDriveSources',S.p.nombre);save();render();crmMsg(S._crm.drive&&S._crm.drive.state==='ready'?'Carpetas vinculadas.':'Las carpetas siguen en preparación.');}catch(err){crmMsg(err.message,true)}});
 document.addEventListener('click',async e=>{if(!e.target.closest('[data-act="project-drive-scan"]'))return;try{const out=await crmRpc('scanProjectDrive',S.p.nombre);S._driveSources=await crmRpc('listProjectDriveSources',S.p.nombre);save();render();crmMsg('Lectura solicitada: '+out.queued+' carpetas. Consulta el estado al finalizar.');}catch(err){crmMsg(err.message,true)}});
 document.addEventListener('change',async e=>{const id=e.target.dataset.sourceApprove;if(!id)return;try{await crmRpc('approveProjectDriveSource',S.p.nombre,id,e.target.checked);crmMsg('Permiso comercial actualizado.');}catch(err){e.target.checked=!e.target.checked;crmMsg(err.message,true)}});
