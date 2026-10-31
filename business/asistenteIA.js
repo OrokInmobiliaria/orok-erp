@@ -21,6 +21,26 @@ function limpiarCampos(c, lead) {
     if (String(lead?.[k] ?? '') === String(v)) continue; out[k] = v; }
   return out;
 }
+// R78 · Validación común de acciones propuestas (barra, L.O.L.A y G.R.E.T.A): solo tipos permitidos, leads del alcance y pantallas reales.
+function validarAcciones(lista, { leads = [], tabs = {}, d = {} } = {}) {
+    const ids = new Map(leads.map(l => [l.id, l])), out = [];
+    for (const a of (Array.isArray(lista) ? lista : []).slice(0, 8)) {
+      const t = a?.tipo, l = ids.get(String(a?.lead_id || '')), nombre = l ? [l.n, l.nombre].filter(Boolean).join(' · ') : '';
+      if (t === 'navegar' && tabs[a.tab]) out.push({ tipo: t, tab: a.tab, etiqueta: 'Ir a ' + tabs[a.tab] });
+      else if (t === 'abrir_lead' && l) out.push({ tipo: t, lead_id: l.id, nombre, etiqueta: 'Abrir ' + nombre });
+      else if (t === 'comentario' && l && text(a.texto, 4000)) out.push({ tipo: t, lead_id: l.id, nombre, texto: text(a.texto, 4000), etiqueta: 'Comentar en ' + nombre });
+      else if (t === 'proxima_accion' && l && text(a.texto, 300)) { const at = fechaHora(a.fecha, a.hora); if (at) out.push({ tipo: t, lead_id: l.id, nombre, texto: text(a.texto, 300), at, etiqueta: 'Agendar en ' + nombre }); }
+      else if (t === 'completar_ficha' && l) { const lead = (d.leads || []).find(x => x.id === l.id), campos = limpiarCampos(a.campos, lead); if (Object.keys(campos).length) out.push({ tipo: t, lead_id: l.id, nombre, campos, etiquetas: CAMPOS, etiqueta: 'Completar ficha de ' + nombre }); }
+    }
+  return out;
+}
+// Vendedores y brokers: sin nombres ni teléfonos de clientes hacia el proveedor de IA (se identifican por número de lead).
+const leadsCompactos = (d, user, mine) => { const g = user.role === 'Gerente'; return (d.leads || []).filter(l => l && !l.archived_at && mine(l, user)).slice(-400).map(l => ({ id: l.id, n: l.lead_number, ...(g ? { nombre: text(l.name, 60), tel: String(l.phone || '').slice(-4) } : {}), etapa: l.status, prox: text(l.next_action, 80), prox_at: l.next_action_at || null })); };
+// Texto de instrucciones para que una IA del ERP proponga acciones al final de su respuesta.
+function instruccionAcciones(tabs, conLeads = true) {
+  return '\n\nACCIONES: si el pedido se resuelve haciendo algo en el ERP, al FINAL de tu respuesta agrega una línea que empiece exactamente con «ACCIONES:» seguida de un arreglo JSON. Tipos permitidos: {"tipo":"navegar","tab":"id de PANTALLAS"}' + (conLeads ? ', {"tipo":"abrir_lead","lead_id":"…"}, {"tipo":"comentario","lead_id":"…","texto":"…"}, {"tipo":"proxima_accion","lead_id":"…","texto":"…","fecha":"YYYY-MM-DD","hora":"HH:MM"}, {"tipo":"completar_ficha","lead_id":"…","campos":{' + Object.keys(CAMPOS).map(k => '"' + k + '":"…"').join(',') + '}}. Usa solo lead_id de LEADS_PARA_ACCIONES; si hay varios posibles, pregunta cuál y no propongas acciones sobre ellos' : '') + '. La persona aplica cada acción con un clic; no digas que ya lo hiciste. Si no hace falta ninguna acción, no agregues la línea. Hoy es ' + hoyLima() + ' (Lima).\nPANTALLAS (id: nombre): ' + JSON.stringify(tabs);
+}
+function separarAcciones(t) { const s = String(t || ''), i = s.lastIndexOf('ACCIONES:'); if (i < 0) return { texto: s.trim(), acciones: [] }; let a = []; try { const raw = s.slice(i + 9).trim(), k = raw.indexOf('['), e = raw.lastIndexOf(']'); a = JSON.parse(raw.slice(k, e + 1)); } catch { a = []; } return { texto: s.slice(0, i).trim(), acciones: Array.isArray(a) ? a : [] }; }
 class AsistenteIA {
   constructor({ lola, conversation }) { this.lola = lola; this.conv = conversation; }
   mine(l, user) { return user.role === 'Gerente' || [l.sales_owner, l.assigned_to, l.broker_name].map(x => String(x || '').trim()).some(x => x && (x === user.name || (user.brokerName && x === user.brokerName))); }
@@ -46,21 +66,14 @@ class AsistenteIA {
   }
   async pedir(input, user, d, tabs) {
     const q = text(input?.texto, 1500); if (q.length < 3) throw Error('Escribe o dicta lo que necesitas.');
-    const leads = (d.leads || []).filter(l => l && !l.archived_at && this.mine(l, user)).slice(-400).map(l => ({ id: l.id, n: l.lead_number, nombre: text(l.name, 60), tel: String(l.phone || '').slice(-4), etapa: l.status, prox: text(l.next_action, 80), prox_at: l.next_action_at || null }));
-    const system = 'Eres L.O.L.A, la barra «Pídele a la IA» del ERP de ÖRÖK. Interpretas el pedido de ' + text(user.name, 60) + ' (' + user.role + ') y devuelves una respuesta breve y, si corresponde, ACCIONES que la persona aplicará con un clic. Hoy es ' + hoyLima() + ' (Lima). Solo puedes proponer estas acciones: {"tipo":"navegar","tab":"id de pantalla de PANTALLAS"}, {"tipo":"abrir_lead","lead_id":"…"}, {"tipo":"comentario","lead_id":"…","texto":"…"}, {"tipo":"proxima_accion","lead_id":"…","texto":"…","fecha":"YYYY-MM-DD","hora":"HH:MM"}, {"tipo":"completar_ficha","lead_id":"…","campos":{' + Object.keys(CAMPOS).map(k => '"' + k + '":"…"').join(',') + '}}. Usa solo lead_id de LEADS (busca por nombre, número o últimos 4 dígitos). Si hay varios posibles, pregunta cuál en la respuesta y no propongas acciones sobre ellos. No inventes datos. Para preguntas de uso del ERP responde y propone navegar a la pantalla. Devuelve SOLO JSON: {"respuesta":"máximo 80 palabras","acciones":[…]}';
+    const leads = leadsCompactos(d, user, (l, u) => this.mine(l, u));
+    const system = 'Eres L.O.L.A, la barra «Pídele a la IA» del ERP de ÖRÖK. Interpretas el pedido de ' + text(user.name, 60) + ' (' + user.role + ') y devuelves una respuesta breve y, si corresponde, ACCIONES que la persona aplicará con un clic. Hoy es ' + hoyLima() + ' (Lima). Solo puedes proponer estas acciones: {"tipo":"navegar","tab":"id de pantalla de PANTALLAS"}, {"tipo":"abrir_lead","lead_id":"…"}, {"tipo":"comentario","lead_id":"…","texto":"…"}, {"tipo":"proxima_accion","lead_id":"…","texto":"…","fecha":"YYYY-MM-DD","hora":"HH:MM"}, {"tipo":"completar_ficha","lead_id":"…","campos":{' + Object.keys(CAMPOS).map(k => '"' + k + '":"…"').join(',') + '}}. Usa solo lead_id de LEADS (busca por número de lead y, si están, por nombre o últimos 4 dígitos). Si hay varios posibles, pregunta cuál en la respuesta y no propongas acciones sobre ellos. No inventes datos. Para preguntas de uso del ERP responde y propone navegar a la pantalla. Devuelve SOLO JSON: {"respuesta":"máximo 80 palabras","acciones":[…]}';
     const prompt = 'PEDIDO: ' + q + '\nPANTALLA ACTUAL: ' + text(input?.tab, 40) + '\nPANTALLAS (id: nombre): ' + JSON.stringify(tabs) + '\nLEADS (datos): ' + JSON.stringify(leads);
     const j = await this.ia(user, d, system, prompt, 1500);
-    const ids = new Map(leads.map(l => [l.id, l])), out = [];
-    for (const a of (Array.isArray(j.acciones) ? j.acciones : []).slice(0, 8)) {
-      const t = a?.tipo, l = ids.get(String(a?.lead_id || '')), nombre = l ? (l.n ? l.n + ' · ' : '') + l.nombre : '';
-      if (t === 'navegar' && tabs[a.tab]) out.push({ tipo: t, tab: a.tab, etiqueta: 'Ir a ' + tabs[a.tab] });
-      else if (t === 'abrir_lead' && l) out.push({ tipo: t, lead_id: l.id, nombre, etiqueta: 'Abrir ' + nombre });
-      else if (t === 'comentario' && l && text(a.texto, 4000)) out.push({ tipo: t, lead_id: l.id, nombre, texto: text(a.texto, 4000), etiqueta: 'Comentar en ' + nombre });
-      else if (t === 'proxima_accion' && l && text(a.texto, 300)) { const at = fechaHora(a.fecha, a.hora); if (at) out.push({ tipo: t, lead_id: l.id, nombre, texto: text(a.texto, 300), at, etiqueta: 'Agendar en ' + nombre }); }
-      else if (t === 'completar_ficha' && l) { const lead = (d.leads || []).find(x => x.id === l.id), campos = limpiarCampos(a.campos, lead); if (Object.keys(campos).length) out.push({ tipo: t, lead_id: l.id, nombre, campos, etiquetas: CAMPOS, etiqueta: 'Completar ficha de ' + nombre }); }
-    }
+    const out = validarAcciones(j.acciones, { leads, tabs, d });
     return { respuesta: text(j.respuesta, 800) || (out.length ? 'Esto propongo:' : 'No entendí el pedido. ¿Puedes decirlo de otra forma?'), acciones: out };
   }
 }
 const IA_ASISTENTE_METHODS = ['iaSugerirLead', 'iaPedir'];
-module.exports = { AsistenteIA, IA_ASISTENTE_METHODS, limpiarCampos, fechaHora, CAMPOS };
+const mineDe = (l, user) => user.role === 'Gerente' || [l.sales_owner, l.assigned_to, l.broker_name].map(x => String(x || '').trim()).some(x => x && (x === user.name || (user.brokerName && x === user.brokerName)));
+module.exports = { AsistenteIA, IA_ASISTENTE_METHODS, limpiarCampos, fechaHora, CAMPOS, validarAcciones, leadsCompactos, instruccionAcciones, separarAcciones, mineDe };

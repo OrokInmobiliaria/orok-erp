@@ -2,6 +2,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {Sparkles, Mic, Square, Volume2, VolumeX, Send, X, Settings, RotateCcw} from 'lucide-react';
 import {api} from './dataService';
 import './greta.css';
+import {Accion} from './PideIA'; // R78 · acciones con un clic dentro de G.R.E.T.A
 // R42 · Módulo Marketing con G.R.E.T.A (Gestión de Redes, Estrategia, Tendencias y Anuncios).
 // Pantallas: Hoy, Tendencias, Publicar, Pauta y KPIs, y la configuración de imágenes. Todo usa el servidor (G.R.E.T.A),
 // que reutiliza Campañas IA (Estudio), la cola de publicación y la atribución de anuncios del CRM.
@@ -231,6 +232,7 @@ const plano = t => String(t || '').replace(/\*\*|__|`|#+\s/g, '').replace(/^\s*[
 const vozPref = () => { try { return localStorage.getItem('greta-asistente-voz') === '1'; } catch { return false; } };
 export function GretaAssistant({user, tab, onGo}) {
   const [open, setOpen] = useState(false), [status, setStatus] = useState(null), [msgs, setMsgs] = useState([]), [input, setInput] = useState('');
+  useEffect(() => { const k = e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'j') { e.preventDefault(); setOpen(o => !o); } }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, []); // R78 · Ctrl/⌘+J
   const [busy, setBusy] = useState(false), [listening, setListening] = useState(false), [speak, setSpeak] = useState(vozPref);
   const rec = useRef(null), log = useRef(null);
   useEffect(() => { if (open && !status) api.getLolaAssistant().then(setStatus).catch(() => setStatus({enabled: false})); }, [open]);
@@ -243,7 +245,7 @@ export function GretaAssistant({user, tab, onGo}) {
     const q = String(text || '').trim(); if (!q || busy) return;
     const next = [...msgs.filter(m => m.role !== 'error'), {role: 'user', text: q}];
     setMsgs(next); setInput(''); setBusy(true);
-    try { const r = await db.gretaAsk({mensajes: next.slice(-10).map(({role, text}) => ({role, text})), contexto: 'Pantalla abierta: ' + (PANTALLA[tab] || tab)}); setMsgs(m => [...m, {role: 'assistant', text: r.respuesta, provider: r.proveedor, drive:r.drive}]); say(r.respuesta); }
+    try { const r = await db.gretaAsk({mensajes: next.slice(-10).map(({role, text}) => ({role, text})), contexto: 'Pantalla abierta: ' + (PANTALLA[tab] || tab)}); setMsgs(m => [...m, {role: 'assistant', text: r.respuesta, provider: r.proveedor, drive:r.drive, acciones: r.acciones || []}]); say(r.respuesta); }
     catch (e) { setMsgs(m => [...m, {role: 'error', text: e.message}]); }
     finally { setBusy(false); }
   }
@@ -276,7 +278,7 @@ export function GretaAssistant({user, tab, onGo}) {
               <div className="lola-chips">{SUGERIR.map(q => <button key={q} onClick={() => send(q)} disabled={!enabled}>{q}</button>)}</div></>}
         </div>}
         {msgs.map((m, i) => m.role === 'user' ? <div key={i} className="lola-msg lola-user">{m.text}</div> : m.role === 'error' ? <div key={i} className="lola-msg lola-error" role="alert">{m.text}</div>
-          : <div key={i} className="lola-msg lola-bot">{String(m.text).split('\n').map((l, j) => <p key={j}>{l.replace(/\*\*(.+?)\*\*/g, '$1')}</p>)}{m.provider && <small>{m.provider}</small>}{m.drive && <small role="status">{m.drive.state==='complete'?'Archivado en Drive':m.drive.state==='queued'?'Archivo pendiente de confirmación en Drive':m.drive.state==='error'?'No archivado: '+m.drive.reason:'Archivo de Drive sin configurar'}</small>}</div>)}
+          : <div key={i} className="lola-msg lola-bot">{String(m.text).split('\n').map((l, j) => <p key={j}>{l.replace(/\*\*(.+?)\*\*/g, '$1')}</p>)}{m.acciones?.length > 0 && <div style={{display: 'grid', gap: 6, marginTop: 6}}>{m.acciones.map((a, k) => <Accion key={k} a={a} ctx={{onGo: t => { setOpen(false); onGo(t); }}}/>)}</div>}{m.provider && <small>{m.provider}</small>}{m.drive && <small role="status">{m.drive.state==='complete'?'Archivado en Drive':m.drive.state==='queued'?'Archivo pendiente de confirmación en Drive':m.drive.state==='error'?'No archivado: '+m.drive.reason:'Archivo de Drive sin configurar'}</small>}</div>)}
         {busy && <div className="lola-msg lola-bot lola-typing">G.R.E.T.A está pensando…</div>}
       </div>
       <form className="lola-input" onSubmit={e => { e.preventDefault(); send(input); }}>
