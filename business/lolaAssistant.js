@@ -156,9 +156,15 @@ ${JSON.stringify(ctx)}`;
     await this.count(user, c);
     const ctx=await this.context(user,d);if(this.projectDrive){const drive=await this.projectDrive.context('lola',d.settings?.projectName||'Infinity224',user);if(drive?.fuentes?.length||drive?.historial_otros_proyectos)ctx.drive=drive;}
     let extra = ''; if (this.lecciones) { try { extra = await this.lecciones.instrucciones('lola'); } catch {} } // R75 · lecciones aprobadas
-    const reply = await this.call(c, k.key, this.system(ctx, input?.voice === true) + extra, msgs);
-    if (!reply) throw Error('El asistente no devolvió respuesta. Intenta de nuevo.');
-    return { reply: reply.slice(0, 4000), provider: PROVIDERS[c.provider].label };
+    // R78 · Un solo asistente por módulo: L.O.L.A responde, dicta, llena la pantalla y además PROPONE acciones (antes «Pídele a la IA»).
+    const A = require('./asistenteIA'), { navEtapas } = await import('../src/navModel.mjs');
+    const tabs = Object.fromEntries(navEtapas(user.role).flatMap(g => g.items).map(i => [i[0], i[1]])), leads = A.leadsCompactos(d, user, A.mineDe);
+    extra += A.instruccionAcciones(tabs) + '\nLEADS_PARA_ACCIONES (datos): ' + JSON.stringify(leads);
+    const base = this.system(ctx, input?.voice === true).replace('2. No ejecutas acciones: explica los pasos', '2. No ejecutas acciones por tu cuenta: explica los pasos y, si ayuda, propón ACCIONES que la persona aplica con un clic'), cut = base.lastIndexOf('CONTEXTO (JSON):');
+    const raw = await this.call(c, k.key, cut > 0 ? base.slice(0, cut) + extra.trim() + '\n' + base.slice(cut) : base + extra, msgs, { max: 1600 });
+    if (!raw) throw Error('El asistente no devolvió respuesta. Intenta de nuevo.');
+    const sep = A.separarAcciones(raw), acciones = A.validarAcciones(sep.acciones, { leads, tabs, d });
+    return { reply: (sep.texto || (acciones.length ? 'Esto propongo:' : '')).slice(0, 4000), provider: PROVIDERS[c.provider].label, acciones };
   }
   // Dictado de respaldo cuando el navegador no tiene reconocimiento de voz (Gemini u OpenAI).
   async transcribe(input, user, d) {

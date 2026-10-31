@@ -1,6 +1,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {Sparkles, Mic, Square, Volume2, VolumeX, Send, X, Settings, RotateCcw} from 'lucide-react';
 import {api} from './dataService';
+import {Accion} from './PideIA'; // R78 · acciones con un clic dentro del mismo asistente
 
 // R33c · Asistente L.O.L.A para el equipo: botón flotante, consultas por voz o por escrito.
 // El servidor arma el contexto según el rol de la sesión y llama al proveedor elegido por Gerencia.
@@ -13,10 +14,10 @@ const SR = typeof window !== 'undefined' ? (window.SpeechRecognition || window.w
 const plain = t => String(t || '').replace(/\*\*|__|`|#+\s/g, '').replace(/^\s*[-•]\s+/gm, '').replace(/\s+/g, ' ').trim();
 const readPref = () => { try { return localStorage.getItem('lola-asistente-voz') === '1'; } catch { return false; } };
 
-function Bubble({m}) {
+function Bubble({m, ctx}) {
   if (m.role === 'user') return <div className="lola-msg lola-user">{m.text}</div>;
   if (m.role === 'error') return <div className="lola-msg lola-error" role="alert">{m.text}</div>;
-  return <div className="lola-msg lola-bot">{String(m.text).split('\n').map((l, i) => <p key={i}>{l.replace(/\*\*(.+?)\*\*/g, '$1')}</p>)}{m.provider && <small>{m.provider}</small>}</div>;
+  return <div className="lola-msg lola-bot">{String(m.text).split('\n').map((l, i) => <p key={i}>{l.replace(/\*\*(.+?)\*\*/g, '$1')}</p>)}{m.acciones?.length > 0 && <div style={{display: 'grid', gap: 6, marginTop: 6}}>{m.acciones.map((a, i) => <Accion key={i} a={a} ctx={ctx}/>)}</div>}{m.provider && <small>{m.provider}</small>}</div>;
 }
 
 function Config({onClose, onSaved}) {
@@ -42,7 +43,7 @@ function Config({onClose, onSaved}) {
   </div>;
 }
 
-export default function LolaAssistant({user}) {
+export default function LolaAssistant({user, onGo, onOpenLead}) {
   const [open, setOpen] = useState(false), [status, setStatus] = useState(null), [msgs, setMsgs] = useState([]), [input, setInput] = useState('');
   const [busy, setBusy] = useState(false), [listening, setListening] = useState(false), [speak, setSpeak] = useState(readPref), [config, setConfig] = useState(false);
   const rec = useRef(null), media = useRef(null), log = useRef(null), viaVoice = useRef(false);
@@ -53,6 +54,9 @@ export default function LolaAssistant({user}) {
   useEffect(() => { try { localStorage.setItem('lola-asistente-voz', speak ? '1' : '0'); } catch {} if (!speak) window.speechSynthesis?.cancel(); }, [speak]);
   useEffect(() => () => { rec.current?.abort?.(); window.speechSynthesis?.cancel(); }, []);
   const enabled = status && (status.enabled && (g ? status.key_configured : true));
+  // R78 · Ctrl/⌘ + J abre o cierra L.O.L.A (antes abría la barra separada «Pídele a la IA»).
+  useEffect(() => { const k = e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'j') { e.preventDefault(); setOpen(o => !o); } }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, []);
+  const ctx = {onGo: t => { setOpen(false); onGo?.(t); }, onOpenLead: id => { setOpen(false); onOpenLead?.(id); }};
 
   function say(t) {
     if (!speak || !window.speechSynthesis) return;
@@ -66,7 +70,7 @@ export default function LolaAssistant({user}) {
     setMsgs(next); setInput(''); setBusy(true);
     try {
       const r = await api.askLolaAssistant({messages: next.slice(-10).map(({role, text}) => ({role, text})), voice});
-      setMsgs(m => [...m, {role: 'assistant', text: r.reply, provider: r.provider}]); say(r.reply);
+      setMsgs(m => [...m, {role: 'assistant', text: r.reply, provider: r.provider, acciones: r.acciones || []}]); say(r.reply);
     } catch (e) { setMsgs(m => [...m, {role: 'error', text: e.message}]); }
     finally { setBusy(false); }
   }
@@ -118,15 +122,15 @@ export default function LolaAssistant({user}) {
         <div className="lola-log" ref={log} aria-live="polite">
           {!msgs.length && <div className="lola-empty">
             {status && !enabled ? <p>{g ? 'El asistente está apagado. Usa el engranaje para elegir proveedor (Claude, ChatGPT o Gemini), registrar la clave y activarlo.' : 'El asistente aún no está activado. Pídeselo a Gerencia.'}</p>
-              : <><p>Hola, {String(user.name || '').split(' ')[0]}. Pregúntame por escrito o con el micrófono sobre el CRM, el proceso comercial o el inventario.</p>
+              : <><p>Hola, {String(user.name || '').split(' ')[0]}. Pídeme lo que necesites, por escrito o con el micrófono: dudas del CRM o del inventario, o tareas como «agenda llamar a Juan el martes a las 4» o «anota en LD-0262 que pidió el 502». Con 📎 lleno esta pantalla con lo que dictes o adjuntes.</p>
                 <div className="lola-chips">{(SUGGEST[user.role] || SUGGEST.Vendedor).map(q => <button key={q} onClick={() => send(q)} disabled={!enabled}>{q}</button>)}</div></>}
           </div>}
-          {msgs.map((m, i) => <Bubble key={i} m={m}/>)}
+          {msgs.map((m, i) => <Bubble key={i} m={m} ctx={ctx}/>)}
           {busy && <div className="lola-msg lola-bot lola-typing">L.O.L.A está pensando…</div>}
         </div>
         <form className="lola-input" onSubmit={e => { e.preventDefault(); send(input); }}>
           <button type="button" className={'lola-mic' + (listening ? ' on' : '')} onClick={dictate} disabled={!enabled || busy} aria-pressed={listening} title={listening ? 'Detener' : 'Hablar'}>{listening ? <Square size={16}/> : <Mic size={18}/>}</button>
-          <textarea rows={1} value={input} placeholder={listening ? 'Escuchando…' : 'Escribe tu duda'} disabled={!enabled} onChange={e => setInput(e.target.value)}
+          <textarea rows={1} value={input} placeholder={listening ? 'Escuchando…' : 'Pregunta o pide una tarea'} disabled={!enabled} onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input); } }}/>
           <button type="submit" className="lola-send" disabled={!enabled || busy || !input.trim()} aria-label="Enviar"><Send size={17}/></button>
         </form>

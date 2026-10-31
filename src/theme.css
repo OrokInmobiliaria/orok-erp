@@ -192,10 +192,4 @@ label:has(> input.switch){display:inline-flex;align-items:center;min-height:36px
 }
 @media (prefers-reduced-motion:reduce){.side-nav,.side-nav *{transition:none!important}}
 
-/* R76 · Barra «Pídele a la IA» */
-.pide-ia-btn{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));z-index:1200;display:flex;align-items:center;gap:6px;padding:10px 16px;border-radius:999px;border:1px solid rgba(133,68,42,.25);background:linear-gradient(135deg,#85442A,#5E2817);color:#FCFAF8;font:600 13px Outfit,system-ui,sans-serif;box-shadow:0 10px 30px -10px rgba(94,40,23,.6);cursor:pointer}
-.pide-ia-btn:hover{filter:brightness(1.08)}
-.pide-ia-overlay{position:fixed;inset:0;z-index:2100;background:rgba(30,25,20,.3);display:grid;align-items:start;justify-items:center;padding:10vh 16px 16px}
-.pide-ia-panel{width:min(640px,100%);max-height:80dvh;overflow:auto;padding:16px;display:grid;gap:10px;border-radius:18px}
-@media (max-width:899px){.pide-ia-btn{bottom:calc(84px + env(safe-area-inset-bottom));padding:9px 12px}.pide-ia-btn span{display:none}}
-@media print{.pide-ia-btn{display:none}}
+/* R78 · La barra «Pídele a la IA» se fusionó dentro del asistente de cada módulo (L.O.L.A, G.R.E.T.A, M.O.R.A, D.I.A.V.A). */

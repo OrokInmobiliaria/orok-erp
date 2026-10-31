@@ -17,7 +17,7 @@ import CampaignStudio from './CampaignStudio';
 import MarketingAssistant from './MarketingAssistant';
 import EstudioMercado from './EstudioMercado';
 import Lecciones from './Lecciones'; // R75 · lecciones de la IA
-import PideIA from './PideIA'; // R76 · barra «Pídele a la IA» // R74 · estudio de mercado por distrito
+// R74 · estudio de mercado por distrito · R78: la barra «Pídele a la IA» se fusionó dentro de L.O.L.A
 import {GretaPlanSemanal, GretaHoy, GretaTendencias, GretaPublicar, GretaKpis, GretaConfig, GretaAssistant, GretaFormularios} from './Greta'; // R42 · módulo Marketing con G.R.E.T.A
 import PowerDashboard from './PowerDashboard';
 import GroupedNav from './GroupedNav';
@@ -1014,12 +1014,11 @@ function DesktopView({ data }) {
 
         <div className="erp-navigation"><GroupedNav role={currentUser.role} module={appModule} active={activeTab} onChange={handleTabChange} onSearch={()=>setSearchOpen(true)}/><AppearanceMenu/></div>
       </div>
-      {appModule==='crm'&&<LolaAssistant user={currentUser}/>}
+      {appModule==='crm'&&<LolaAssistant user={currentUser} onGo={t=>handleTabChange(t)} onOpenLead={id=>openLifecycle(id,'full')}/>}{/* R78 · un solo asistente por módulo, con acciones */}
       {appModule==='marketing'&&<GretaAssistant user={currentUser} tab={activeTab} onGo={handleTabChange}/>}{/* R42 · G.R.E.T.A actúa como las otras IA asistenciales */}
 
       {/* CONTENT AREA */}
       <div className="app-content" style={{ '--kanban-toolbar-top': `${kanbanStickyOffsets.header}px`, '--kanban-stage-top': `${kanbanStickyOffsets.header}px`, padding: isKanban ? (kanbanStickyOffsets.board?'10px 40px 0 40px':'10px 40px 40px 40px') : '20px 16px 40px', maxWidth: (isKanban || ['evaluador','contabilidad','ordenesErp'].includes(activeTab)) ? '100%' : '1600px', margin: '0 auto', transition: 'all 0.3s ease' }}>
-        <PideIA tab={activeTab} onGo={t=>handleTabChange(t)} onOpenLead={id=>openLifecycle(id,'full')}/>
         {searchOpen&&<LeadSearchPalette leads={leads} onClose={()=>setSearchOpen(false)} onOpenLead={id=>{setSearchOpen(false);openLifecycle(id,'full');}} quotes={quotes} onOpenQuotes={lead=>{setSearchOpen(false);setQuoteFilter(lead.lead_number||lead.name||'');setQuotesOpen(true);handleTabChange('quotes');}} onShowInKanban={q=>{setSearchOpen(false);setKanbanSearch(q);handleTabChange('kanban');}} openChat={args=>{setSearchOpen(false);openChat({...args,origin:'busqueda'});}}/>}
         {/* RESTORED_V37_TABS_START */}
       {activeTab === 'kanban' && (<><div ref={kanbanToolbarRef} className="kanban-toolbar no-print" style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>

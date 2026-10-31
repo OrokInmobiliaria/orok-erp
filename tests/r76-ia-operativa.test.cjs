@@ -29,5 +29,16 @@ test('R76: barra Pídele a la IA solo deja acciones válidas',async()=>{
 test('R76: conexión en servidor y pantallas',()=>{
  const r=f=>fs.readFileSync(path.join(__dirname,'..',f),'utf8');
  assert.match(r('application.cjs'),/IA_ASISTENTE_METHODS/);assert.match(r('src/cloudBridge.js'),/iaPedir/);assert.match(r('src/dataService.js'),/iaSugerirLead/);
- assert.match(r('src/App.jsx'),/<PideIA /);assert.match(r('src/LeadComments.jsx'),/Sugerencia/);assert.match(r('src/theme.css'),/pide-ia-btn/);
+ assert.doesNotMatch(r('src/App.jsx'),/<PideIA /);assert.match(r('src/App.jsx'),/<LolaAssistant user=\{currentUser\} onGo=/);assert.match(r('src/LeadComments.jsx'),/Sugerencia/);assert.doesNotMatch(r('src/theme.css'),/\.pide-ia-btn\{/);
+});
+test('R78: un solo asistente por módulo propone acciones',async()=>{
+ const A=require('../business/asistenteIA');
+ const s=A.separarAcciones('Listo, te propongo agendar.\nACCIONES: [{"tipo":"navegar","tab":"quotes"},{"tipo":"proxima_accion","lead_id":"l1","texto":"Llamar","fecha":"2026-11-04","hora":"16:00"}]');
+ assert.equal(s.texto,'Listo, te propongo agendar.');assert.equal(s.acciones.length,2);
+ assert.deepEqual(A.separarAcciones('Solo texto').acciones,[]);assert.deepEqual(A.separarAcciones('x ACCIONES: no-json').acciones,[]);
+ const v=A.validarAcciones(s.acciones,{leads:[{id:'l1',n:'LD-1',nombre:'Juan'}],tabs:{quotes:'Cotizaciones'},d:{leads:[]}});assert.deepEqual(v.map(x=>x.tipo),['navegar','proxima_accion']);
+ assert.match(A.instruccionAcciones({quotes:'Cotizaciones'},false),/navegar/);assert.doesNotMatch(A.instruccionAcciones({},false),/comentario/);
+ const {LolaAssistant}=require('../business/lolaAssistant');const fs=require('fs'),path=require('path');
+ assert.match(fs.readFileSync(path.join(__dirname,'..','business/lolaAssistant.js'),'utf8'),/separarAcciones/);assert.match(fs.readFileSync(path.join(__dirname,'..','business/greta.js'),'utf8'),/TABS_MK/);
+ assert.match(fs.readFileSync(path.join(__dirname,'..','src/LolaAssistant.jsx'),'utf8'),/<Accion /);assert.match(fs.readFileSync(path.join(__dirname,'..','src/Greta.jsx'),'utf8'),/<Accion /);
 });
