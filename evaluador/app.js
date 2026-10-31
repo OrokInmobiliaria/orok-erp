@@ -327,6 +327,14 @@ for(const k in DEF.p)if(S.p[k]===undefined)S.p[k]=DEF.p[k];
 for(const k in DEF.mercado)if(S.mercado[k]===undefined)S.mercado[k]=JSON.parse(JSON.stringify(DEF.mercado[k]));
 (S.ventas||[]).forEach(v=>{if(!ETAPAS.includes(v.estado))v.estado=ETAPA_MAP[String(v.estado||'').toLowerCase()]||'Separación'});if(!S.estr.estado)S.estr.estado='propuesta';
 if(!S.base){S.base={nombre:'Evaluación inicial · Rev9 oct-2026',fecha:'2026-10-26',snap:JSON.parse(JSON.stringify(Object.fromEntries(SNAPKEYS.map(k=>[k,DEF[k]]))))}}
+/* R80 · Deshacer general: antes de cada cambio del usuario se guarda una copia (hasta 60). Botón «↶ Deshacer» y Ctrl/⌘+Z
+   fuera de un campo de texto. Cada paso vuelve al estado anterior completo, de cualquier cuadro. */
+const hist=[];let histLast=0;
+function snap(){const now=Date.now(),j=JSON.stringify(S);if(hist.length&&hist[hist.length-1]===j)return;if(now-histLast<400&&hist.length)return;histLast=now;hist.push(j);if(hist.length>60)hist.shift();undoBtn()}
+function deshacer(){const j=hist.pop();if(!j)return;S=JSON.parse(j);save();render();undoBtn();const t=document.getElementById('undoToast');if(t){t.textContent='Cambio deshecho';t.hidden=false;clearTimeout(t._t);t._t=setTimeout(()=>t.hidden=true,1800)}}
+function undoBtn(){let b=document.getElementById('undoGen');if(!b){b=document.createElement('button');b.id='undoGen';b.type='button';b.className='btn no-print';b.setAttribute('style','position:fixed;left:16px;bottom:16px;z-index:50;box-shadow:0 8px 24px -10px rgba(60,35,20,.45)');b.onclick=deshacer;document.body.appendChild(b);const t=document.createElement('div');t.id='undoToast';t.hidden=true;t.setAttribute('style','position:fixed;left:16px;bottom:62px;z-index:50;font-size:12px;padding:6px 10px;border-radius:10px;background:#292524;color:#FCFAF8');document.body.appendChild(t)}
+  b.hidden=!hist.length;b.textContent='↶ Deshacer'+(hist.length>1?' ('+hist.length+')':'');b.title='Volver al estado anterior (Ctrl+Z)'}
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key.toLowerCase()==='z'){const t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable))return;e.preventDefault();deshacer()}});
 const save=()=>{let ok=true;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){ok=false}const el=document.getElementById('saved');if(el){const d=new Date();el.textContent=ok?`Guardado ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`:'Sin guardado local'}};
 let M=compute(S);
 let fcMode='S/';
@@ -338,7 +346,7 @@ const pc=(n,d=1)=>(n==null||!isFinite(n))?'—':nf(n*100,d)+'%';
 const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const ml=k=>{const [y,m]=String(S.p.inicio||'2025-06').split('-').map(Number);const t=(m-1)+k;return MES[((t%12)+12)%12]+'-'+String(y+Math.floor(t/12)).slice(2)};
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const inp=(k,v,cls='',type='number')=>`<input type="${type}" ${type==='number'?'step="any"':''} ${k==='p.tc'||k==='mercado.tc'?'readonly aria-readonly="true"':''} class="${cls}" id="i-${k.replace(/\./g,'-')}" data-k="${k}" value="${esc(v)}">`;
+const inp=(k,v,cls='',type='number')=>`<input type="${type}" ${type==='number'?'step="any"':''} ${k==='p.tc'||k==='mercado.tc'||cabFijo(k)?'readonly aria-readonly="true" title="Fijado por el cuadro de áreas oficial"':''} class="${cls}" id="i-${k.replace(/\./g,'-')}" data-k="${k}" value="${esc(v)}">`;
 const fld=(k,label,src)=>`<div class="f${src?' src':''}"><label for="i-${k.replace(/\./g,'-')}">${label}</label>${inp(k,getP(k),'',typeof getP(k)==='number'?'number':'text')}</div>`;
 function getP(k){return k.split('.').reduce((o,x)=>o==null?o:o[x],S)}
 function setP(k,v){const ks=k.split('.');let o=S;for(let i=0;i<ks.length-1;i++)o=o[ks[i]];o[ks[ks.length-1]]=v}
@@ -431,9 +439,10 @@ V.cabida=()=>{
   ${fld('p.comunTechada','Área común techada incl. sótano (m²)',1)}${fld('p.factorLibre','Factor de precio área libre (0–1)')}${fld('p.nEstac','Estacionamientos (und)',1)}${fld('p.precioEstac','Precio por estacionamiento (S/)',1)}</div>
   <h4 style="margin:12px 0 4px">Comercio y oficinas <span class="mut" style="font-weight:400;font-size:12px">· 0 = igual que vivienda</span></h4><div class="fields">${[['precioM2Comercial','Precio de venta comercial (S/ por m², con IGV)'],['costoM2Comercial','Costo construcción comercial (S/ por m², sin IGV)'],['precioM2Oficina','Precio de venta oficinas (S/ por m², con IGV)'],['costoM2Oficina','Costo construcción oficinas (S/ por m², sin IGV)']].map(([k,l])=>`<div class="f"><label for="i-p-${k}">${l}</label>${inp('p.'+k,+S.p[k]||0,'','number')}</div>`).join('')}</div>
   <p class="note">Los campos resaltados son los insumos de cabida y costo/m². El costo/m² incluye costo directo, gastos generales y utilidad del contratista; el IGV se suma aparte.</p></details>
+  ${cabOficial()}
   ${cabTablero()}
   ${cabCuadre()}
-  <div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">Cuadro de áreas vendibles</h3><button class="btn" data-act="add-unit">+ Agregar unidad</button></div>
+  <div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">Cuadro de áreas vendibles${S.cab&&S.cab.oficial&&S.cab.oficial.activo?' <span class="chip ok" style="font-size:11px">fijado por el cuadro oficial</span>':''}</h3>${S.cab&&S.cab.oficial&&S.cab.oficial.activo?'':'<button class="btn" data-act="add-unit">+ Agregar unidad</button>'}</div>
   <div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;padding:10px 12px;border:1px dashed var(--line,#d8cfc7);border-radius:12px">
     <b style="font-size:13px">Repetir distribución</b>
     <label style="font-size:12px;display:flex;flex-direction:column;gap:2px">Piso modelo<input type="number" min="1" step="1" id="rep-src" class="xs" style="width:80px;display:block" value="${esc(S._ui&&S._ui.repSrc||'')}"></label>
@@ -457,7 +466,7 @@ V.cabida=()=>{
 };
 /* R58 · Puente entre el cálculo por piso y el cuadro de áreas vendibles (unidad por unidad, techada y libre). */
 function cabCuadre(){
-  if(!S.cab||!Array.isArray(S.cab.pisos))return '';
+  if(!S.cab||!Array.isArray(S.cab.pisos)||(S.cab.oficial&&S.cab.oficial.activo))return ''; // R80 · con áreas fijas no hay cálculo por porcentajes
   const {rows}=cabCalc(S),fs=rows.map((r,i)=>Object.assign({},r,{i})).filter(r=>r.piso!=null);if(!fs.length)return '';
   const ch=(d)=>Math.abs(d)<1?'<span class="chip ok">cuadra</span>':`<span class="chip w">${d>0?'el cálculo permite '+nf(d,2)+' m² más':'las unidades superan al cálculo en '+nf(-d,2)+' m²'}</span>`;
   const hayDif=fs.some(r=>r.uN&&Math.abs(r.vend-r.uTech)>=1);
@@ -487,7 +496,49 @@ function cabLlevar(s){
     for(let k=1;k<=n;k++)nuevos.push({id:String(r.piso*100+k),tipo:r.uso==='comercial'?'Local comercial':'Por definir',uso:r.uso==='comercial'?'comercial':'vivienda',piso:r.piso,tech:r2(r.vend/n),libre:r2((+r.libreV||0)/n),aj:0})}
   return nuevos;
 }
+/* R80 · Proyecto avanzado: cuadro de áreas OFICIAL (el de los planos). Con «áreas fijas» activo el modelo usa exactamente
+   esas áreas (vendible techada y libre por unidad, área común techada) y no se recalculan desde porcentajes. */
+const OF_COLS=[['comunT','Común techada'],['comunL','Común libre'],['nvT','No vendible techada'],['nvL','No vendible libre'],['vendT','Vendible techada'],['vendL','Vendible libre']];
+function cabFijo(k){return !!(S&&S.cab&&S.cab.oficial&&S.cab.oficial.activo)&&(/^units\.\d+\.(tech|libre|piso|id)$/.test(k)||k==='p.comunTechada')}
+function ofNum(v){const t=String(v==null?'':v).trim().replace(/\s/g,'');if(!t||t==='-'||t==='—')return 0;let x=t;if(/,\d{1,2}$/.test(x)&&!/\.\d{1,2}$/.test(x))x=x.replace(/\./g,'').replace(',','.');else x=x.replace(/,/g,'');const n=parseFloat(x);return isFinite(n)?Math.round(n*100)/100:0}
+function cabOficialParse(txt){
+  const filas=[];String(txt||'').split(/\r?\n/).forEach(l=>{if(!l.trim())return;const c=l.split(/\t|;/);let lab=String(c[0]||'').trim();
+    const nums=c.slice(1,7);if(!nums.some(x=>/\d/.test(x)))return;if(/^(nivel|piso|concepto|total)/i.test(lab))return;if(!lab)lab='Azotea';
+    const f={nivel:lab};OF_COLS.forEach(([k],i)=>f[k]=ofNum(nums[i]));filas.push(f)});
+  if(!filas.length)throw Error('No se encontraron filas. Pega una fila por nivel o unidad: Nivel; Común techada; Común libre; No vendible techada; No vendible libre; Vendible techada; Vendible libre.');
+  return filas;
+}
+function ofPiso(n){const t=String(n).trim();if(/^\d{3,4}$/.test(t))return Math.floor(+t/100);if(/^\d{1,2}$/.test(t))return +t;if(/s[oó]t/i.test(t))return -1;return 0}
+function cabOficialTot(f){const t={};OF_COLS.forEach(([k])=>t[k]=Math.round((f||[]).reduce((a,r)=>a+(+r[k]||0),0)*100)/100);t.tech=Math.round((t.comunT+t.nvT+t.vendT)*100)/100;return t}
+function cabOficialAplicar(s){
+  const o=s.cab.oficial,prev=new Map((s.units||[]).map(u=>[String(u.id),u])),r2=v=>Math.round(v*100)/100;
+  s.units=o.filas.filter(f=>(+f.vendT||0)>0||(+f.vendL||0)>0).map(f=>{const u=prev.get(String(f.nivel))||{};return Object.assign({tipo:'Por definir',aj:0},u,{id:String(f.nivel),piso:ofPiso(f.nivel),tech:r2(+f.vendT||0),libre:r2(+f.vendL||0)})});
+  const t=cabOficialTot(o.filas);s.p.comunTechada=r2(t.comunT+t.nvT);o.aplicado=new Date().toISOString().slice(0,10);
+}
+function cabOficial(){
+  const o=S.cab&&S.cab.oficial;
+  if(!o||!o.activo)return `<details class="panel" id="cabOficial"><summary style="cursor:pointer"><h3 style="display:inline">¿Proyecto avanzado? Usar el cuadro de áreas oficial</h3> <span class="mut" style="font-size:12px">· las áreas quedan fijas y no se recalculan</span></summary>
+    <p class="note">Pega el cuadro de áreas de los planos (desde Excel), <b>una fila por unidad o nivel</b>, con estas columnas en este orden: <b>Nivel · Común techada · Común libre · No vendible techada · No vendible libre · Vendible techada · Vendible libre</b>. Las celdas vacías cuentan como 0. El modelo usará exactamente esas áreas: vendible por unidad y área común techada.</p>
+    <textarea id="ofIn" rows="8" style="width:100%;font-family:var(--f-mono);font-size:12px" placeholder="Azotea	20.42	27.00				
+802	15.00	0.00	0.00		78.14	20.43">${esc(S._ui&&S._ui.ofIn||'')}</textarea>
+    <div class="row" style="gap:6px;margin-top:8px"><button class="btn" data-act="cab-oficial-importar">Importar y fijar áreas</button></div></details>`;
+  const t=cabOficialTot(o.filas),ok=(a,b)=>Math.abs(a-b)<0.005?'<span class="chip ok">cuadra exacto</span>':`<span class="chip b">difiere ${nf(a-b,2)} m²</span>`;
+  const filas=o.filas.map((f,i)=>`<tr><td>${inp(`cab.oficial.filas.${i}.nivel`,f.nivel,'xs','text')}</td>${OF_COLS.map(([k])=>`<td>${inp(`cab.oficial.filas.${i}.${k}`,f[k],'s')}</td>`).join('')}<td class="n">${nf((+f.comunT||0)+(+f.nvT||0)+(+f.vendT||0),2)}</td></tr>`).join('');
+  return `<div class="panel" id="cabOficial" style="border:2px solid var(--accent,#85442A)"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><h3 style="margin:0">Cuadro de áreas oficial · áreas fijas</h3>
+    <div class="row" style="gap:6px"><button class="btn" data-act="cab-oficial-reimportar">Volver a pegar el cuadro</button><button class="btn x" data-act="cab-oficial-off">Quitar áreas fijas</button></div></div>
+    <p class="note" style="margin-top:4px">Proyecto avanzado: el modelo usa <b>exactamente</b> estas áreas (fijadas el ${esc(o.aplicado||'')}). El cálculo por porcentajes está apagado y las áreas de las unidades no se pueden recalcular ni editar fuera de este cuadro. Si corriges una celda aquí, el modelo se actualiza con el valor exacto.</p>
+    <div class="tw"><table><thead><tr><th>Nivel / unidad</th>${OF_COLS.map(([,l])=>`<th>${l}</th>`).join('')}<th class="n">Total techada</th></tr></thead><tbody>${filas}
+    <tr class="tot"><td>Total</td>${OF_COLS.map(([k])=>`<td class="n">${nf(t[k],2)}</td>`).join('')}<td class="n">${nf(t.tech,2)}</td></tr></tbody></table></div>
+    <div class="tw" style="margin-top:10px"><table><tbody>
+      <tr><td>Vendible techada en el modelo</td><td class="n">${nf(M.techV,2)} m²</td><td>${ok(M.techV,t.vendT)}</td></tr>
+      <tr><td>Libre vendible en el modelo</td><td class="n">${nf(M.libreV,2)} m²</td><td>${ok(M.libreV,t.vendL)}</td></tr>
+      <tr><td>Área común techada en el modelo (común + no vendible)</td><td class="n">${nf(+S.p.comunTechada||0,2)} m²</td><td>${ok(+S.p.comunTechada||0,t.comunT+t.nvT)}</td></tr>
+      <tr><td>Área techada total en el modelo</td><td class="n">${nf(M.areaTech,2)} m²</td><td>${ok(M.areaTech,t.tech)}</td></tr>
+      <tr><td>Unidades vendibles</td><td class="n">${M.nU}</td><td class="mut">${o.filas.filter(f=>!(+f.vendT>0)&&!(+f.vendL>0)&&/^\d{3,4}$/.test(String(f.nivel))).map(f=>esc(f.nivel)).join(', ')?'sin área vendible (no cuentan): '+o.filas.filter(f=>!(+f.vendT>0)&&!(+f.vendL>0)&&/^\d{3,4}$/.test(String(f.nivel))).map(f=>esc(f.nivel)).join(', '):''}</td></tr>
+      <tr><td>Área común libre (informativa)</td><td class="n">${nf(t.comunL+t.nvL,2)} m²</td><td class="mut">no entra al precio</td></tr></tbody></table></div></div>`;
+}
 function cabTablero(){
+  if(S.cab&&S.cab.oficial&&S.cab.oficial.activo)return ''; // R80 · con áreas fijas no hay cálculo por porcentajes
   if(!S.cab||!Array.isArray(S.cab.pisos))S.cab=cabDefault(S);
   const {rows,t}=cabCalc(S),P=S.cab.param,T=+S.p.areaTerreno||0;
   const pct2=(i,k)=>`<div class="row" style="gap:4px;flex-wrap:nowrap">${inp(`cab.pisos.${i}.${k}`,S.cab.pisos[i][k],'xs')}<span class="mut">%</span>${inp(`cab.pisos.${i}.${k}M2`,Math.round(rows[i][k+'M2']*100)/100,'s')}<span class="mut">m²</span></div>`;
@@ -1837,7 +1888,17 @@ document.addEventListener('click',e=>{
   if(b.dataset.tab){cur=b.dataset.tab;try{history.replaceState(null,'','#'+cur)}catch(_){location.hash=cur}render();window.scrollTo(0,0);return}
   if(b.dataset.fc){fcMode=b.dataset.fc;render();return}
   const a=b.dataset.act;if(!a)return;
-  if(a==='del'){getP(b.dataset.g).splice(+b.dataset.i,1)}
+  if(!/^(base-ask|base-cancel|project-drive-status|project-drive-scan)$/.test(a))snap();
+  // R80 · Con áreas fijas no se recalculan ni se agregan/eliminan unidades fuera del cuadro oficial.
+  if(S.cab&&S.cab.oficial&&S.cab.oficial.activo&&(['add-unit','units-repetir','cab-ajustar','cab-ajustar-todo','cab-llevar','cab-usar','cab-regenerar'].includes(a)||(a==='del'&&b.dataset.g==='units'))){alert('Este proyecto tiene las áreas fijas del cuadro oficial. Corrige el cuadro oficial o quita las áreas fijas.');return}
+  if(a==='cab-oficial-importar'||a==='cab-oficial-reimportar'){
+    if(a==='cab-oficial-reimportar'){S.cab.oficial.activo=false;save();render();const d=document.getElementById('cabOficial');if(d)d.open=true;return}
+    const txt=(document.getElementById('ofIn')||{}).value||'';S._ui=S._ui||{};S._ui.ofIn=txt;
+    try{const filas=cabOficialParse(txt),t=cabOficialTot(filas);
+      if(!confirm('Se fijarán las áreas del cuadro oficial: vendible techada '+nf(t.vendT,2)+' m², libre vendible '+nf(t.vendL,2)+' m², área común techada '+nf(t.comunT+t.nvT,2)+' m², total techada '+nf(t.tech,2)+' m². Las unidades del cuadro de áreas vendibles se reemplazan por las del cuadro oficial (se conservan tipología y ajuste de las que coinciden). ¿Continuar?'))return;
+      S.cab.oficial={activo:true,filas};cabOficialAplicar(S)}catch(err){alert(err.message);return}}
+  else if(a==='cab-oficial-off'){if(!confirm('¿Quitar las áreas fijas? Las unidades y el área común se quedan como están, pero podrán recalcularse y editarse de nuevo.'))return;S.cab.oficial.activo=false}
+  else if(a==='del'){getP(b.dataset.g).splice(+b.dataset.i,1)}
   else if(a==='add-venta'){const sold=new Set(S.ventas.map(v=>String(v.u)));const u=S.units.find(x=>!sold.has(String(x.id)))||S.units[0];const mu=M.units.find(x=>x.id===u.id);S.ventas.push({u:String(u.id),f:S.estr.corte,precio:Math.round(mu?mu.lista*(1-S.estr.desc/100):0),estado:'separada',canal:''})}
   else if(a==='present'){const on=!document.body.classList.contains('present');document.body.classList.toggle('present',on);try{if(on&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});else if(!on&&document.fullscreenElement)document.exitFullscreen().catch(()=>{})}catch(_){}render();return}
   else if(a==='inv-narr'){invNarrate();return}
@@ -1899,9 +1960,11 @@ document.addEventListener('input',e=>{const el=e.target;if(!el.dataset.calendar|
 
 document.addEventListener('change',e=>{
   const el=e.target;
+  if(el.dataset.calendar||el.dataset.partCost!==undefined)snap();
   if(el.dataset.calendar){const key=el.dataset.calendar,type=el.type;let message;try{if(!el.value)throw Error('Selecciona una fecha o un número.');const n=type==='month'?monthOffset(S.p.inicio,el.value):Number(el.value);editSchedule(S,key,n);save();message='Calendario y cálculos vinculados actualizados.'}catch(err){message='No se cambió el calendario: '+err.message}render();const msg=document.getElementById('scheduleMsg');if(msg)msg.textContent=message;const next=Array.from(document.querySelectorAll('input[data-calendar]')).find(x=>x.dataset.calendar===key&&x.type===type);if(next)next.focus({preventScroll:true});return}
   if(el.dataset.partCost!==undefined){try{editPartCost(S,Number(el.dataset.partCost),'cost',el.value);save();render()}catch(err){el.setCustomValidity(err.message);el.reportValidity();el.addEventListener('input',()=>el.setCustomValidity(''),{once:true})}return}
   const k=el.dataset&&el.dataset.k;if(!k)return;
+  if(k!=='p.tc'&&k!=='mercado.tc'&&!cabFijo(k))snap();
   if(/^part\.\d+\.pct$/.test(k)){try{editPartCost(S,Number(k.split('.')[1]),'pct',el.value);save();render()}catch(err){el.setCustomValidity(err.message);el.reportValidity();el.addEventListener('input',()=>el.setCustomValidity(''),{once:true})}return}
   if(k==='p.tc'||k==='mercado.tc')return;
   if(['p.velocidad','p.velocidadOptimista','p.velocidadPesimista','p.costoM2'].includes(k)&&(!Number.isFinite(Number(el.value))||Number(el.value)<.05)){el.setCustomValidity('Ingresa un valor mayor o igual a 0.05.');el.reportValidity();el.addEventListener('input',()=>el.setCustomValidity(''),{once:true});return}
@@ -1910,7 +1973,8 @@ document.addEventListener('change',e=>{
   let v=el.type==='checkbox'?el.checked:el.value;
   if(el.type==='number'){v=parseFloat(v);if(isNaN(v))v=0}
   if(/^mercado\.comps\.\d+\.distCuadras$/.test(k)){const c=S.mercado.comps[Number(k.split('.')[2])];if(c){mDistManual(c,el.value);save();const id=el.id;render();const n=document.getElementById(id);if(n)n.focus({preventScroll:true})}return}
-  setP(k,v);if(/^mercado\.comps\.\d+\.incl$/.test(k)){const i=Number(k.split('.')[2]);if(S.mercado.comps[i])S.mercado.comps[i].scopeOverride=true}if(k.startsWith('estr.')&&k!=='estr.estado')S.estr.estado='propuesta';save();
+  if(cabFijo(k))return;
+  setP(k,v);if(/^cab\.oficial\.filas\./.test(k)&&S.cab.oficial&&S.cab.oficial.activo){if(k.endsWith('.nivel'))S.cab.oficial.filas[+k.split('.')[3]].nivel=String(v).trim();else S.cab.oficial.filas[+k.split('.')[3]][k.split('.')[4]]=ofNum(v);cabOficialAplicar(S)}if(/^mercado\.comps\.\d+\.incl$/.test(k)){const i=Number(k.split('.')[2]);if(S.mercado.comps[i])S.mercado.comps[i].scopeOverride=true}if(k.startsWith('estr.')&&k!=='estr.estado')S.estr.estado='propuesta';save();
   const id=el.id;render();const n=document.getElementById(id);if(n&&n.type!=='checkbox')n.focus({preventScroll:true});
 });
 document.addEventListener('toggle',e=>{if(e.target&&e.target.id==='cabDatos'){S._ui=S._ui||{};S._ui.cabDatos=e.target.open;save()}},true); // R57 · recuerda si «Datos generales» está abierto
