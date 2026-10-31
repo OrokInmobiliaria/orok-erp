@@ -26,7 +26,7 @@
 const DEF = {
   mercado:{distrito:'San Miguel',tc:3.4,descNeg:3,inclUsados:false,margenMeta:15,alcance:'radio',cuadras:7,alturaFiltro:'todas',origen:null,objetivo:{pisos:8,amen:{ascensor:true}},comps:[],fuentes:[]},
   p:{ nombre:'Infinity 224', direccion:'Calle La Apacheta 224, San Miguel, Lima', uso:'Vivienda multifamiliar · 8 pisos + azotea + sótano', inicio:'2025-06',
-      areaTerreno:160, precioTerrenoM2:4350, uit:5500, predAnioBase:2026, predArancel:0, predConstrExist:0, predMesDemolicion:'', predCrecArancel:0, predCrecUIT:0, tc:3.40, autovaluo:771892.61,
+      areaTerreno:160, precioTerrenoM2:4350, uit:5500, predAnioBase:2026, predArancel:0, predConstrExist:0, predMesDemolicion:'', predCrecArancel:0, predCrecUIT:0, predEmision:0, arbAnual:0, arbUnidad:0, tc:3.40, autovaluo:771892.61,
       costoM2:2288.36, supervisionM2:65, comunTechada:269.79, nEstac:4, precioEstac:56000,
       precioM2:6590.34, factorLibre:1, descProm:0,
       igv:18, baseGravada:50, prorrata:100, ir:29.5, detraccion:4, detracOn:true, alcabala:3,
@@ -155,9 +155,10 @@ function predialPlan(p,s,o){
     if(j<demol){av=terr+(+p.predConstrExist||0);etapa='Terreno + casa existente'}
     else if(j<indDone){av=terr;etapa='Solo terreno (obra en curso)'}
     else{frac=Math.max(0,1-(o.soldCum[Math.min(o.H,k)]||0));if(frac<=1e-6)break;av=frac*(terr+o.obraOficial);etapa='Unidades sin vender ('+Math.round(frac*100)+'%)'}
-    const c=calcPredial(av,uit),anual=av>0?Math.max(c.total,0.006*uit):0,cuotas=j<0?[2,5,8,11].filter(q=>q>=m0).length:4,imp=anual*cuotas/4;if(cuotas)anios.push({anio:Y,mes:j,pagoMes:j<0?Math.max(0,[2,5,8,11].find(q=>q>=m0)-m0):j+1,etapa:etapa+(cuotas<4?' · '+cuotas+' de 4 cuotas trimestrales (el proyecto empieza en el mes '+m0+')':''),av,uit,imp,anual,frac,minimo:av>0&&c.total<0.006*uit})}
-  const total=anios.reduce((a,x)=>a+x.imp,0);
-  return {anios,total,pago:anios.filter(x=>x.imp>0).map(x=>Math.max(0,Math.min(o.H,x.pagoMes))+':'+(x.imp/(total||1)*100).toFixed(4)).join(',')};
+    const c=calcPredial(av,uit),anual=av>0?Math.max(c.total,0.006*uit)+(+p.predEmision||0):0,cuotas=j<0?[2,5,8,11].filter(q=>q>=m0).length:4,imp=anual*cuotas/4;
+    const meses=j<0?13-m0:12,nUnsold=Math.round(frac*(s.units||[]).length),arbAnual=etapa.startsWith('Unidades')?((+p.arbUnidad||0)>0?nUnsold*(+p.arbUnidad):frac*(+p.arbAnual||0)):(+p.arbAnual||0),arb=arbAnual*meses/12;if(cuotas)anios.push({arb,anio:Y,mes:j,pagoMes:j<0?Math.max(0,[2,5,8,11].find(q=>q>=m0)-m0):j+1,etapa:etapa+(cuotas<4?' · '+cuotas+' de 4 cuotas trimestrales (el proyecto empieza en el mes '+m0+')':''),av,uit,imp,anual,frac,minimo:av>0&&c.total<0.006*uit})}
+  const total=anios.reduce((a,x)=>a+x.imp,0),arbTotal=anios.reduce((a,x)=>a+x.arb,0);
+  return {anios,total,arbTotal,arbPago:anios.filter(x=>x.arb>0).map(x=>Math.max(0,Math.min(o.H,x.pagoMes))+':'+(x.arb/(arbTotal||1)*100).toFixed(4)).join(','),pago:anios.filter(x=>x.imp>0).map(x=>Math.max(0,Math.min(o.H,x.pagoMes))+':'+(x.imp/(total||1)*100).toFixed(4)).join(',')};
 }
 function obraCurve(parts,N){
   const tw=sum(parts.map(x=>x.pct))||1;const out=new Array(N).fill(0);
@@ -284,6 +285,7 @@ function compute(s,ov){
   const predOn=+p.predArancel>0,predPlanR=predOn?predialPlan(p,s,{io,ind,indStart,H,soldCum,obraOficial:vuObraTotal(s,s.units,areaTech,techV)}):null; // R84
   const qty=(it)=>({m2terreno:p.areaTerreno,m2techada:areaTech,unidades:nU,mesesObra:dur,mesesProyecto:ent+ind,global:1,anios,pctVentas:ventas,pctConstr:constrSub,predial:predOn?Math.max(1,predPlanR.anios.length):anios,manual:+it.q||0})[it.d]??1;
   for(const g of ['inm','leg','fin','com'])s[g].forEach((it,i)=>{const q=qty(it);const pct=String(it.d).startsWith('pct');const pu=it.d==='predial'?(predOn?predPlanR.total/Math.max(1,predPlanR.anios.length):pred.total):+it.pu||0;
+    if(predOn&&+p.arbAnual>0&&/arbitrio/i.test(it.n)&&it.d==='anios'){const n=Math.max(1,predPlanR.anios.length),t=predPlanR.arbTotal;add(it.cat||GCAT[g],it.n,t,!!it.igv,String(it.pago||'proyecto')==='proyecto'&&predPlanR.arbPago?predPlanR.arbPago:it.pago,{q:n,u:'años',pu:t/n,pct:false,g,i,auto:'arbitrios'});return} // R85 · arbitrios año por año
     add(it.cat||GCAT[g],it.n,pct?q*pu/100:q*pu,!!it.igv,it.d==='predial'&&predOn&&String(it.pago||'proyecto')==='proyecto'&&predPlanR.pago?predPlanR.pago:it.pago,{q,u:DRV[it.d],pu,pct,g,i})});
   const E=new Array(H+1).fill(0),Efin=new Array(H+1).fill(0),igvC=new Array(H+1).fill(0),constrM=new Array(H+1).fill(0);
   const byCat={};CATS.forEach(k=>byCat[k]=new Array(H+1).fill(0));
@@ -630,7 +632,7 @@ function scheduleControls(){
  <button class="btn" data-act="add-hito">Agregar hito</button><p role="status" id="scheduleMsg"></p></div>`;
 }
 V.supuestos=()=>`<div class="sect-h"><h2>Supuestos del modelo</h2><p>Parámetros tributarios, comerciales, de obra y financieros. Valores referenciales para Lima; verifica UIT y tasas vigentes.</p></div>
-  <div class="panel"><h3>Tributarios (Perú)</h3><div class="fields">${fld('p.uit','UIT vigente (S/)')}${fld('p.predAnioBase','Predial · año de la HR/PU')}${fld('p.predArancel','Predial · arancel del terreno (S/ por m², HR/PU · 0 = método antiguo)')}${fld('p.predConstrExist','Predial · valor de la construcción existente (S/, HR/PU)')}${fld('p.predMesDemolicion','Predial · mes de demolición (n.º de mes del proyecto · vacío = inicio de obra)')}${fld('p.predCrecArancel','Predial · alza anual del arancel (%)')}${fld('p.predCrecUIT','Predial · alza anual de la UIT (%)')}${fld('p.igv','IGV (%)')}${fld('p.baseGravada','Base gravada de la venta (%) · deducción terreno 50%')}${fld('p.prorrata','Crédito fiscal utilizable (%)')}${fld('p.ir','Impuesto a la renta (%)')}${fld('p.alcabala','Alcabala (%) sobre exceso de 10 UIT')}${fld('p.detraccion','Detracción venta de inmuebles (%)')}${fld('p.autovaluo','Autovalúo del predio (S/)')}</div>
+  <div class="panel"><h3>Tributarios (Perú)</h3><div class="fields">${fld('p.uit','UIT vigente (S/)')}${fld('p.predAnioBase','Predial · año de la HR/PU')}${fld('p.predArancel','Predial · arancel del terreno (S/ por m², HR/PU · 0 = método antiguo)')}${fld('p.predConstrExist','Predial · valor de la construcción existente (S/, HR/PU)')}${fld('p.predMesDemolicion','Predial · mes de demolición (n.º de mes del proyecto · vacío = inicio de obra)')}${fld('p.predEmision','Predial · derecho de emisión (S/ por año)')}${fld('p.arbAnual','Arbitrios · monto anual del predio actual (S/ · 0 = línea fija)')}${fld('p.arbUnidad','Arbitrios · por departamento al año tras la independización (S/ · 0 = proporcional)')}${fld('p.predCrecArancel','Predial · alza anual del arancel (%)')}${fld('p.predCrecUIT','Predial · alza anual de la UIT (%)')}${fld('p.igv','IGV (%)')}${fld('p.baseGravada','Base gravada de la venta (%) · deducción terreno 50%')}${fld('p.prorrata','Crédito fiscal utilizable (%)')}${fld('p.ir','Impuesto a la renta (%)')}${fld('p.alcabala','Alcabala (%) sobre exceso de 10 UIT')}${fld('p.detraccion','Detracción venta de inmuebles (%)')}${fld('p.autovaluo','Autovalúo del predio (S/)')}</div>
   <div class="row" style="margin-top:10px"><label class="row"><input type="checkbox" data-k="p.detracOn" id="i-p-detracOn" ${S.p.detracOn?'checked':''}> Aplicar detracciones a las cobranzas</label></div></div>
   <div class="panel"><h3>Comerciales</h3><div class="fields">${fld('p.velocidad','Velocidad de venta (und/mes)')}${fld('p.inicial','Cuota inicial (%)')}${fld('p.descProm','Descuento promedio (%)')}${fld('p.tc','Tipo de cambio SUNAT · venta (automático)')}</div><p class="note" data-rate-status>${rateError||mRateNote()}</p></div>
   ${salesControls()}
@@ -703,7 +705,7 @@ function costTable(g,title){
     return `<tr><td>${g==='com'?`<div class="cat-concepto"><select data-k="${g}.${i}.cat" id="i-${g}-${i}-cat" aria-label="Categoría">${['Marketing','Ventas','Posventa'].map(c=>`<option ${c===it.cat?'selected':''}>${c}</option>`).join('')}</select>${inp(`${g}.${i}.n`,it.n,'w','text')}</div>`:inp(`${g}.${i}.n`,it.n,'w','text')}</td>
     <td><select data-k="${g}.${i}.d" id="i-${g}-${i}-d">${Object.entries(DRV).map(([k,l])=>`<option value="${k}" ${k===it.d?'selected':''}>${l}</option>`).join('')}</select></td>
     <td>${it.d==='manual'?inp(`${g}.${i}.q`,it.q,'xs'):`<span class="n mut" style="font-family:var(--f-mono)">${pct?S_(o.q):nf(o.q,2)}</span>`}</td>
-    <td>${it.d==='predial'?`<span class="mut">${S_(M.pred.total,2)}/año</span>`:inp(`${g}.${i}.pu`,it.pu,'s')}</td>
+    <td>${it.d==='predial'?`<span class="mut">${M.predPlan?'año por año · prom. '+S_(o.pu||0,2):S_(M.pred.total,2)+'/año'}</span>`:o.auto==='arbitrios'?`<span class="mut">año por año · prom. ${S_(o.pu||0,2)}</span>`:inp(`${g}.${i}.pu`,it.pu,'s')}</td>
     <td style="text-align:center"><input type="checkbox" data-k="${g}.${i}.igv" id="i-${g}-${i}-igv" ${it.igv?'checked':''} aria-label="Afecto a IGV"></td>
     <td>${inp(`${g}.${i}.pago`,it.pago,'s','text')}</td><td class="n">${S_(o.sub)}</td><td class="n">${S_(o.igv)}</td><td class="n">${S_(o.tot)}</td><td class="n">${pc(o.tot/eg,2)}</td>
     <td><button class="btn x" data-act="del" data-g="${g}" data-i="${i}" aria-label="Eliminar">✕</button></td></tr>`}).join('');
@@ -716,9 +718,9 @@ V.inmobiliarios=()=>{
   const pr=M.pred;
   return `<div class="sect-h"><h2>Costos inmobiliarios, legales, financieros y comerciales</h2><p>Cada concepto se calcula desde su base (m² de terreno, m² techados, unidades, meses o % de ventas) y se programa en el flujo según su forma de pago.</p></div>
   ${costTable('inm','Costos inmobiliarios')}${costTable('leg','Gastos legales')}${costTable('fin','Gastos financieros fijos')}${costTable('com','Marketing, ventas y posventa')}
-  ${M.predPlan?`<div class="panel"><h3>Impuesto predial año por año</h3><p class="note" style="margin-top:0">Según la situación al 1 de enero: casa existente → solo terreno durante la obra → unidades aún no vendidas tras la independización (lo vendido lo paga el comprador). Tramos sobre la suma de predios; mínimo 0.6% de la UIT. Se paga en febrero de cada año (o según la forma de pago que elijas).</p>
-  <div class="tw"><table><thead><tr><th>Año</th><th>Situación al 1 de enero</th><th class="n">Autovalúo</th><th class="n">UIT</th><th class="n">Impuesto</th></tr></thead><tbody>${M.predPlan.anios.map(x=>`<tr><td>${x.anio}</td><td>${esc(x.etapa)}</td><td class="n">${S_(x.av,2)}</td><td class="n">${S_(x.uit,0)}</td><td class="n">${S_(x.imp,2)}${x.minimo?' <span class="chip w">mínimo</span>':''}</td></tr>`).join('')}
-  <tr class="tot"><td colspan="4">Total predial del proyecto</td><td class="n">${S_(M.predPlan.total,2)}</td></tr></tbody></table></div></div>`:''}
+  ${M.predPlan?`<div class="panel"><h3>Impuesto predial año por año</h3><p class="note" style="margin-top:0">Según la situación al 1 de enero: casa existente → solo terreno durante la obra → unidades aún no vendidas tras la independización (lo vendido lo paga el comprador). Tramos sobre la suma de predios; mínimo 0.6% de la UIT; incluye el derecho de emisión. Arbitrios: monto anual del recibo mientras haya casa o terreno; luego solo por las unidades no vendidas. Se paga en febrero de cada año (o según la forma de pago que elijas).</p>
+  <div class="tw"><table><thead><tr><th>Año</th><th>Situación al 1 de enero</th><th class="n">Autovalúo</th><th class="n">UIT</th><th class="n">Predial</th><th class="n">Arbitrios</th></tr></thead><tbody>${M.predPlan.anios.map(x=>`<tr><td>${x.anio}</td><td>${esc(x.etapa)}</td><td class="n">${S_(x.av,2)}</td><td class="n">${S_(x.uit,0)}</td><td class="n">${S_(x.imp,2)}${x.minimo?' <span class="chip w">mínimo</span>':''}</td><td class="n">${S_(x.arb,2)}</td></tr>`).join('')}
+  <tr class="tot"><td colspan="4">Total del proyecto</td><td class="n">${S_(M.predPlan.total,2)}</td><td class="n">${+S.p.arbAnual>0?S_(M.predPlan.arbTotal,2):'<span class="mut">línea fija</span>'}</td></tr></tbody></table></div></div>`:''}
   <div class="grid2"><div class="panel"><h3>Impuesto predial anual${M.predPlan?' (referencia: autovalúo actual)':''}</h3><div class="tw"><table><thead><tr><th>Tramo de autovalúo</th><th class="n">Base</th><th class="n">Alícuota</th><th class="n">Impuesto</th></tr></thead><tbody>
   ${pr.rows.map((r,i)=>`<tr><td>${['Hasta 15 UIT','Más de 15 hasta 60 UIT','Más de 60 UIT'][i]}</td><td class="n">${S_(r.base,2)}</td><td class="n">${nf(r.r*100,1)}%</td><td class="n">${S_(r.imp,2)}</td></tr>`).join('')}
   <tr class="tot"><td colspan="3">${M.predPlan?'Predial del año con el autovalúo actual':'Predial anual × '+M.anios+' años'}</td><td class="n">${S_(M.predPlan?pr.total:pr.total*M.anios,2)}</td></tr></tbody></table></div></div>
@@ -1904,6 +1906,8 @@ async function exportXLSX(tabs,etiqueta){
 function render(){
   // R84 · HR/PU 2026 de San Miguel (Calle La Apacheta 224): terreno 160 m² × S/ 396 = S/ 63,360; construcción existente S/ 135,478.68; autovalúo S/ 198,838.68; predial 2026 S/ 863.03.
   if(/infinity/i.test(S.p.nombre||'')&&!(+S.p.predArancel>0)&&!S.p._predHR2026){S.p.predAnioBase=2026;S.p.predArancel=396;S.p.predConstrExist=135478.68;S.p.autovaluo=198838.68;S.p._predHR2026=true;try{save()}catch(_){}}
+  // R85 · Recibo 2025 de San Miguel: arbitrios 2025 S/ 813.12 (12 meses); predial 2025 S/ 846.31 + emisión S/ 4.79.
+  if(/infinity/i.test(S.p.nombre||'')&&!S.p._arb2025){S.p.arbAnual=813.12;S.p.predEmision=4.79;S.p._arb2025=true;try{save()}catch(_){}}
   const calendarWasOpen=cur===render.last&&!!document.getElementById('calendarAdjust')?.open;
   M=compute(S);renderNav();renderTop();
   const prevTab=render.last;render.last=cur;
