@@ -15,7 +15,7 @@ import SocialInbox from './SocialInbox';
 import AdsDashboard from './AdsDashboard';
 import CampaignStudio from './CampaignStudio';
 import MarketingAssistant from './MarketingAssistant';
-import {GretaHoy, GretaTendencias, GretaPublicar, GretaKpis, GretaConfig, GretaAssistant, GretaFormularios} from './Greta'; // R42 · módulo Marketing con G.R.E.T.A
+import {GretaPlanSemanal, GretaHoy, GretaTendencias, GretaPublicar, GretaKpis, GretaConfig, GretaAssistant, GretaFormularios} from './Greta'; // R42 · módulo Marketing con G.R.E.T.A
 import PowerDashboard from './PowerDashboard';
 import GroupedNav from './GroupedNav';
 import SideNav from './SideNav'; // R51 · menú lateral por etapas
@@ -1331,6 +1331,7 @@ function DesktopView({ data }) {
         {activeTab==='campaigns'&&currentUser.role==='Gerente'&&<CampaignStudio key={studioCampaign} initialCampaign={studioCampaign}/>}
         {currentUser.role==='Gerente'&&<>{/* R42 · Marketing con G.R.E.T.A */}
           {activeTab==='mkHome'&&<GretaHoy onGo={handleTabChange}/>}
+          {activeTab==='mkPlan'&&<GretaPlanSemanal/>}{/* R73 · plan semanal */}
           {activeTab==='mkForms'&&<GretaFormularios/>}{/* R43 · formularios instantáneos */}
           {activeTab==='mkTrends'&&<GretaTendencias onOpenCampaign={id=>{setStudioCampaign(id);handleTabChange('campaigns');}}/>}
           {activeTab==='mkPublish'&&<><GretaPublicar onGo={handleTabChange}/><MarketingAssistant section="mkConnections"/></>}
