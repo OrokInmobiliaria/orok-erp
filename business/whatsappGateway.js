@@ -52,7 +52,7 @@ class WhatsAppGateway{
  async api(s,endpoint,options={}){
   const r=await this.request('https://graph.facebook.com/'+s.apiVersion+'/'+endpoint,{...options,headers:{Authorization:'Bearer '+s.accessToken,...options.headers}});
   let data;try{data=r.json();}catch{data={};}
-  if(!r.ok){const e=Error('Meta rechazó la operación (HTTP '+r.status+(data.error?.code?', código '+Number(data.error.code):'')+'). Revisa permisos, destinatario y ventana de atención.');e.definitive=r.status>=400&&r.status<500;throw e;}
+  if(!r.ok){const er=data.error||{},det=String(er.error_user_msg||er.error_data?.details||er.message||'').replace(/[\u0000-\u001f]/g,' ').replace(/(access_token|Bearer)\S*/gi,'').slice(0,220);const e=Error('Meta rechazó la operación (HTTP '+r.status+(er.code?', código '+Number(er.code):'')+(er.error_subcode?'/'+Number(er.error_subcode):'')+')'+(det?': '+det:'')+'. Revisa permisos, destinatario y ventana de atención.');e.definitive=r.status>=400&&r.status<500;throw e;}
   return data;
  }
  async send(account,phone,content,{automatic=false}={}){
