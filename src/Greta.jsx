@@ -3,6 +3,7 @@ import {Sparkles, Mic, Square, Volume2, VolumeX, Send, X, Settings, RotateCcw} f
 import {api} from './dataService';
 import './greta.css';
 import {Accion} from './PideIA'; // R78 · acciones con un clic dentro de G.R.E.T.A
+import {registrarDeshacer} from './deshacer'; // R81
 // R42 · Módulo Marketing con G.R.E.T.A (Gestión de Redes, Estrategia, Tendencias y Anuncios).
 // Pantallas: Hoy, Tendencias, Publicar, Pauta y KPIs, y la configuración de imágenes. Todo usa el servidor (G.R.E.T.A),
 // que reutiliza Campañas IA (Estudio), la cola de publicación y la atribución de anuncios del CRM.
@@ -507,7 +508,9 @@ function PiezaPlan({p, onChange, onClose}) {
   const [red, setRed] = useState('instagram'), [vers, setVers] = useState(() => Object.fromEntries(Object.entries(p.versiones || {}).map(([k, v]) => [k, {copy: v.copy, hora: v.hora, cta: v.cta, hashtags: (v.hashtags || []).join(' ')}])));
   const multi = !!p.versiones, setV = (k, val) => setVers(o => ({...o, [red]: {...o[red], [k]: val}}));
   const cambios = () => multi ? {versiones: Object.fromEntries(Object.entries(vers).map(([k, v]) => [k, {...v, hashtags: v.hashtags.split(/\s+/)}]))} : {copy, hashtags: tags.split(/\s+/), hora};
-  const act = async body => {setBusy(true); setErr(''); try {onChange(await db.gretaPlanPieza({id: p.id, ...body}));} catch (e) {setErr(e.message);} finally {setBusy(false);}};
+  const act = async body => {setBusy(true); setErr(''); try {const antes = p; onChange(await db.gretaPlanPieza({id: p.id, ...body}));
+    registrarDeshacer('pieza «' + (p.titulo || '') + '»', async () => { const r = await db.gretaPlanPieza({id: antes.id, estado: ['borrador', 'aprobada', 'rechazada'].includes(antes.estado) ? antes.estado : 'borrador', cambios: {copy: antes.copy, hora: antes.hora, hashtags: antes.hashtags || [], ...(antes.versiones ? {versiones: Object.fromEntries(Object.entries(antes.versiones).map(([k, v]) => [k, {copy: v.copy, cta: v.cta, hora: v.hora, hashtags: v.hashtags || []}]))} : {})}}); onChange(r); });
+  } catch (e) {setErr(e.message);} finally {setBusy(false);}};
   const [et, col] = ESTADO_PLAN[p.estado] || ESTADO_PLAN.borrador;
   const versTxt = multi ? REDES_PLAN.map(([k, l]) => { const v = p.versiones[k] || {}, e = vers[k] || {}; return `\n— ${l.toUpperCase()} · ${v.formato} · ${v.medidas}${v.duracion_seg ? ' · ' + v.duracion_seg + ' s' : ''} · ${e.hora}\nCOPY: ${e.copy}\nCTA: ${e.cta}\n${e.hashtags}${v.audio ? '\nAUDIO: ' + v.audio : ''}${v.notas ? '\nADAPTACIÓN: ' + v.notas : ''}`; }).join('\n') : '';
   const todo = ['GANCHO (0-2 s): ' + p.gancho?.texto_pantalla + ' / ' + p.gancho?.primera_frase, 'VISUAL: ' + p.gancho?.visual, ...(p.guion || []).map(e => `[${e.seg}] ${e.visual} | Texto: ${e.texto_pantalla} | Motion: ${e.motion} | Voz: ${e.voz}`), 'MOTION: ' + p.motion_graphics, 'VOZ EN OFF (' + (p.voz_en_off?.estilo || '') + '): ' + p.voz_en_off?.texto, 'MÚSICA: ' + [p.musica?.estilo, p.musica?.bpm && p.musica.bpm + ' BPM', p.musica?.sugerencia, p.musica?.nota].filter(Boolean).join(' · '), ...(multi ? [versTxt] : ['COPY: ' + copy, 'CTA: ' + p.cta, tags])].join('\n');

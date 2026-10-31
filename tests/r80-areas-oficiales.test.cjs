@@ -10,5 +10,16 @@ test('R80: cuadro de áreas oficial fija las áreas del modelo',()=>{
  assert.equal(filas.length,5);const t=X.cabOficialTot(filas);assert.equal(t.vendT,118.43);assert.equal(t.comunT,154.89);assert.equal(t.tech,273.32);
  st.cab.oficial={activo:true,filas};X.cabOficialAplicar(st);
  assert.deepEqual(st.units.map(u=>[u.id,u.piso,u.tech,u.libre,u.tipo]),[['802',8,78.14,20.43,'Flat 3D'],['101',1,40.29,18.91,'Por definir']]);assert.equal(st.p.comunTechada,154.89);
- assert.ok(X.cabFijo('units.0.tech'));assert.ok(X.cabFijo('p.comunTechada'));assert.ok(!X.cabFijo('units.0.tipo'));
+ assert.ok(!X.cabFijo('units.0.tech'));assert.ok(!X.cabFijo('p.comunTechada')); // R81 · nada se bloquea
+});
+test('R81: dúplex, factor libre por unidad, costo de área libre y deshacer en cada módulo',()=>{
+ const r=f=>fs.readFileSync(path.join(__dirname,'..',f),'utf8'),s=r('evaluador-src/evaluador.html');
+ assert.match(s,/function fLib\(u,p\)/);assert.match(s,/units\.\$\{i\}\.niveles/);assert.match(s,/costoLibreM2/);assert.match(s,/id="undoGen" data-act="undo-gen"/);assert.match(s,/CRITERIOS DE CABIDA Y MIX/);
+ const fLib=new Function('return '+s.slice(s.indexOf('function fLib'),s.indexOf('}',s.indexOf('function fLib'))+1))();assert.equal(fLib({fl:''},{factorLibre:1}),1);assert.equal(fLib({fl:0.5},{factorLibre:1}),0.5);assert.equal(fLib({},{factorLibre:0.8}),0.8);
+ const c=r('contabilidad-src/clara-contabilidad.html');assert.match(c,/id="undoGen"/);assert.match(c,/function undoRec/);
+ assert.match(r('src/App.jsx'),/<BotonDeshacer\/>/);assert.match(r('src/dataService.js'),/registrarDeshacer/);assert.match(r('src/Greta.jsx'),/registrarDeshacer/);
+});
+test('R81: pila de deshacer del ERP',async()=>{
+ const m=await import('../src/deshacer.js');let n=0,v=0;const off=m.suscribirDeshacer(c=>{n=c});
+ m.registrarDeshacer('a',async()=>{v=1});m.registrarDeshacer('b',async()=>{v=2});assert.equal(n,2);assert.equal(await m.deshacer(),'b');assert.equal(v,2);assert.equal(await m.deshacer(),'a');assert.equal(v,1);assert.equal(await m.deshacer(),null);off();
 });

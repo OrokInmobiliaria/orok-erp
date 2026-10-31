@@ -193,3 +193,9 @@ label:has(> input.switch){display:inline-flex;align-items:center;min-height:36px
 @media (prefers-reduced-motion:reduce){.side-nav,.side-nav *{transition:none!important}}
 
 /* R78 · La barra «Pídele a la IA» se fusionó dentro del asistente de cada módulo (L.O.L.A, G.R.E.T.A, M.O.R.A, D.I.A.V.A). */
+
+/* R81 · Deshacer general del ERP: arriba a la derecha */
+.deshacer-erp{position:fixed;top:calc(10px + env(safe-area-inset-top));right:16px;z-index:1300;display:flex;align-items:center;gap:8px}
+.deshacer-erp .orok-btn{box-shadow:0 8px 24px -12px rgba(60,35,20,.45);font-size:13px;padding:7px 12px}
+.deshacer-erp small{background:#292524;color:#FCFAF8;padding:5px 9px;border-radius:9px;font-size:12px}
+@media print{.deshacer-erp{display:none}}

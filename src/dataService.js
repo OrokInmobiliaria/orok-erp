@@ -201,7 +201,15 @@ export const api = {
   async updateLeadStatus(id, status) { return change('updateLeadStatus','crm-leads',id, status); },
   async updateLeadAppt(id, appt) { return change('updateLeadAppt','crm-leads',id, appt); },
   async updateLeadPrize(id, prize) { return change('updateLeadPrize','crm-leads',id, prize); },
-  async updateLeadAdvanced(id, advanced) { return change('updateLeadAdvanced','crm-leads',id, advanced); },
+  async updateLeadAdvanced(id, advanced) {
+    // R81 · Deshacer: guarda los valores anteriores de los campos que cambian (solo datos de ficha y próxima acción).
+    const SEGUROS=['name','dni','email','address','budget','unit_interest','purchase_horizon','project','next_action','next_action_at','source','phone','district','notes_internal'];
+    const lead=(window.__orokLeads||[]).find(l=>l.id===id),claves=Object.keys(advanced||{});
+    const r=await change('updateLeadAdvanced','crm-leads',id, advanced);
+    if(lead&&claves.length&&claves.every(k=>SEGUROS.includes(k))){const antes=Object.fromEntries(claves.map(k=>[k,lead[k]??null]));
+      try{const {registrarDeshacer}=await import('./deshacer');registrarDeshacer('ficha de '+(lead.lead_number||lead.name||'lead'),()=>change('updateLeadAdvanced','crm-leads',id,antes));}catch(_){}}
+    return r;
+  },
   async deleteDuplicateLead(id,keepId) { const result=await change('deleteDuplicateLead','crm-leads',id,keepId);window.dispatchEvent(new Event('crm-duplicate-log'));return result; },
   async incrementQuoteSequence() { return window.crmDB ? await window.crmDB.incrementQuoteSequence() : 1473; },
   async addQuote(q) { return change('addQuote','crm-quotes',q); },

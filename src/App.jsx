@@ -29,6 +29,7 @@ import {indexByLead,channelsForLead,CHANNELS} from './chatChannels.mjs';
 import {searchLeads,socialHandles} from './leadSearch.mjs';
 import LeadSearchPalette from './LeadSearchPalette';
 import AppearanceMenu from './AppearanceMenu';
+import BotonDeshacer from './BotonDeshacer'; // R81 · deshacer general
 import HelpCenter from './HelpCenter';
 import MoraPanel from './MoraPanel';
 import LolaAssistant from './LolaAssistant';
@@ -321,6 +322,7 @@ function DesktopView({ data }) {
   const [quoteBusy,setQuoteBusy]=useState(false);
   const quoteRequest=useRef(null);
   const { leads, units, quotes, separations, duplicateDeletionLog, marketingExpenses, settings, currentUser, handleLogout, sessionMinutes, handleLeadStageChange, requestSemaphore, openLifecycle, openWhatsApp, openChat, changePassword } = data;
+  useEffect(()=>{window.__orokLeads=leads;},[leads]); // R81 · para «Deshacer» en la ficha
   const [activeTab, setActiveTab] = useState(()=>{const m=(()=>{try{return new URLSearchParams(location.search).get('modulo')}catch(_){return null}})()||currentUser?.startModule;return currentUser?.role==='Gerente'&&['evaluador','contabilidad'].includes(m)?m:currentUser?.role==='Gerente'&&m==='marketing'?'mkHome':'dashboard';}); // R36 · accesos directos de la app instalada
   // R50 · Cambio de proyecto (selector o Mis proyectos): ir al panel con los datos del proyecto elegido; «orok-ir» abre una pestaña.
   useEffect(()=>{const ir=t=>{try{handleTabChange(t);}catch(_){setActiveTab(t);}};const p=()=>ir('dashboard'),g=e=>ir(e.detail||'proyectos');window.addEventListener('orok-proyecto',p);window.addEventListener('orok-ir',g);return()=>{window.removeEventListener('orok-proyecto',p);window.removeEventListener('orok-ir',g);};});
@@ -1019,6 +1021,7 @@ function DesktopView({ data }) {
 
       {/* CONTENT AREA */}
       <div className="app-content" style={{ '--kanban-toolbar-top': `${kanbanStickyOffsets.header}px`, '--kanban-stage-top': `${kanbanStickyOffsets.header}px`, padding: isKanban ? (kanbanStickyOffsets.board?'10px 40px 0 40px':'10px 40px 40px 40px') : '20px 16px 40px', maxWidth: (isKanban || ['evaluador','contabilidad','ordenesErp'].includes(activeTab)) ? '100%' : '1600px', margin: '0 auto', transition: 'all 0.3s ease' }}>
+        <BotonDeshacer/>
         {searchOpen&&<LeadSearchPalette leads={leads} onClose={()=>setSearchOpen(false)} onOpenLead={id=>{setSearchOpen(false);openLifecycle(id,'full');}} quotes={quotes} onOpenQuotes={lead=>{setSearchOpen(false);setQuoteFilter(lead.lead_number||lead.name||'');setQuotesOpen(true);handleTabChange('quotes');}} onShowInKanban={q=>{setSearchOpen(false);setKanbanSearch(q);handleTabChange('kanban');}} openChat={args=>{setSearchOpen(false);openChat({...args,origin:'busqueda'});}}/>}
         {/* RESTORED_V37_TABS_START */}
       {activeTab === 'kanban' && (<><div ref={kanbanToolbarRef} className="kanban-toolbar no-print" style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>

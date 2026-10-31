@@ -164,16 +164,23 @@ const wq=new Map();
 function writeDoc(col,obj){const k=col+'/'+obj.id;const prev=wq.get(k)||Promise.resolve();const p=prev.catch(()=>{}).then(()=>db.collection(col).doc(obj.id).set(cp(obj)));wq.set(k,p);p.finally(()=>{if(wq.get(k)===p)wq.delete(k)});return p}
 function saveLocal(){try{localStorage.setItem(LKEY,JSON.stringify(D))}catch(e){toast('No se pudo guardar en este equipo: espacio lleno. Exporta un respaldo.')}}
 function loadLocal(){try{const o=JSON.parse(localStorage.getItem(LKEY)||'null');if(o)COLS.forEach(c=>D[c]=o[c]||{})}catch(_){}}
+// R81 · Deshacer general: cada guardado o eliminación del usuario guarda la versión anterior del registro (hasta 60 pasos).
+let undoing=false,undoLastKey='',undoLastAt=0;
+function undoBtnSync(){const b=document.getElementById('undoGen');if(b){b.hidden=!undoStack.length;b.textContent='↶ Deshacer'+(undoStack.length>1?' ('+undoStack.length+')':'')}}
+function undoRec(col,id){if(undoing)return;const k=col+'/'+id,now=Date.now();if(k===undoLastKey&&now-undoLastAt<1500){undoLastAt=now;return}undoLastKey=k;undoLastAt=now;pushUndo([[col,id]]);if(undoStack.length>60)undoStack.shift();undoBtnSync()}
 async function put(col,obj,{silent}={}){
+  if(!silent)undoRec(col,obj.id);
   obj.upd=new Date().toISOString();D[col]={...D[col],[obj.id]:obj};
   if(mode==='db'){try{await writeDoc(col,obj)}catch(e){writeErr(e)}}else if(mode==='crm'){try{const r=await crmRpc('claraPut',col,obj);if(r&&r.upd)obj.upd=r.upd}catch(e){toast(e.message||'No se pudo guardar en el CRM.')}}else saveLocal();
   if(!silent)schedule(true);
 }
-async function del(col,id){const n={...D[col]};delete n[id];D[col]=n;if(mode==='db'){try{await db.collection(col).doc(id).delete()}catch(e){writeErr(e)}}else if(mode==='crm'){try{await crmRpc('claraDelete',col,id)}catch(e){toast(e.message)}}else saveLocal();schedule(true)}
+async function del(col,id){undoRec(col,id);const n={...D[col]};delete n[id];D[col]=n;if(mode==='db'){try{await db.collection(col).doc(id).delete()}catch(e){writeErr(e)}}else if(mode==='crm'){try{await crmRpc('claraDelete',col,id)}catch(e){toast(e.message)}}else saveLocal();schedule(true)}
 function writeErr(e){const c=e&&e.code;if(c==='invalid_argument'&&canWrite!==false){canWrite=false;toast('Tu acceso a esta app es de solo lectura: pide a Gerencia acceso como Colaborador o Editor.');schedule(true)}else if(c==='quota_exceeded')toast('La base de datos está llena. Exporta un respaldo y archiva periodos antiguos.');else toast('No se pudo guardar el cambio. Revisa la conexión y vuelve a intentarlo.')}
 let undoStack=[];
 function pushUndo(list){undoStack.push(list.map(([col,id])=>[col,id,D[col][id]?cp(D[col][id]):null]))}
-async function popUndo(){const u=undoStack.pop();if(!u)return;for(const [col,id,before] of u){if(before)await put(col,before,{silent:true});else await del(col,id)}schedule(true)}
+async function popUndo(){const u=undoStack.pop();if(!u)return;undoing=true;undoLastKey='';try{for(const [col,id,before] of u){if(before)await put(col,before,{silent:true});else await del(col,id)}}finally{undoing=false}undoBtnSync();schedule(true)}
+document.addEventListener('click',e=>{if(e.target&&e.target.closest&&e.target.closest('#undoGen')){popUndo();toast('Cambio deshecho')}});
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key.toLowerCase()==='z'){const t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable))return;e.preventDefault();popUndo()}});
 
 let pend=false,raf=0;
 function editing(){const a=document.activeElement;return a&&a.closest&&a.closest('#view,#modal')&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&a.type!=='button'&&a.type!=='checkbox'&&a.type!=='file'}

@@ -378,7 +378,7 @@ aside{border-radius:17px 0 0 17px;background:var(--bar-grad);color:var(--ink);bo
   <main>
     <div class="top">
       <div class="titlebar"><div><h1 id="pname">—</h1><div class="meta" id="pmeta"></div></div>
-        <div class="acts"><button class="btn" data-act="xls-cur" title="Descarga en Excel la sección que estás viendo">Excel</button><span class="saved" id="saved">Guardado en este equipo</span></div></div>
+        <div class="acts"><button class="btn" id="undoGen" data-act="undo-gen" hidden title="Volver al estado anterior (Ctrl+Z)">↶ Deshacer</button><button class="btn" data-act="xls-cur" title="Descarga en Excel la sección que estás viendo">Excel</button><span class="saved" id="saved">Guardado en este equipo</span></div></div>
       <div class="kpis" id="kpis"></div>
     </div>
     <div class="content" id="view"></div>
@@ -607,6 +607,7 @@ const UNIT_USOS=[['vivienda','Vivienda'],['comercial','Comercial'],['oficina','O
 function unitUso(u){return u&&(u.uso==='comercial'||u.uso==='oficina')?u.uso:'vivienda'}
 const USO_SUF={comercial:'Comercial',oficina:'Oficina'};
 function usoPrecioM2(p,u){const k=USO_SUF[unitUso(u)],v=k?+p['precioM2'+k]:0;return v>0?v:+p.precioM2}
+function fLib(u,p){const v=u&&u.fl;return v!==undefined&&v!==null&&v!==''&&isFinite(+v)?+v:+p.factorLibre} // R81 · factor de área libre por unidad (balcón, terraza, jardín); vacío = general
 function usoCostoM2(p,u){const k=USO_SUF[unitUso(u)],v=k?+p['costoM2'+k]:0;return v>0?v:+p.costoM2}
 function compute(s,ov){
   const p=Object.assign({},s.p,ov||{});if(!ov||ov.velocidad===undefined)p.velocidad=saleSpeed(p);
@@ -614,7 +615,7 @@ function compute(s,ov){
   const techV=sum(s.units.map(u=>u.tech)), libreV=sum(s.units.map(u=>u.libre));
   const areaTech=techV+(+p.comunTechada||0);
   const igvEf=p.igv/100*p.baseGravada/100;
-  const units=s.units.map(u=>{const lista=((+u.tech||0)+(+u.libre||0)*p.factorLibre)*usoPrecioM2(p,u)*(1+(+u.aj||0)/100);return {...u,lista,neto:lista*(1-p.descProm/100)}});
+  const units=s.units.map(u=>{const lista=((+u.tech||0)+(+u.libre||0)*fLib(u,p))*usoPrecioM2(p,u)*(1+(+u.aj||0)/100);return {...u,lista,neto:lista*(1-p.descProm/100)}});
   const vDept=sum(units.map(u=>u.neto)), vEst=p.nEstac*p.precioEstac*(1-p.descProm/100);
   const plan=Array.isArray(p.plan)?p.plan.map(x=>({t:Math.max(0,Math.round(+x.t||0)),v:+x.v||0})):null;
   const vDeptR=plan?sum(plan.map(x=>x.v)):vDept;
@@ -628,7 +629,7 @@ function compute(s,ov){
   const H=Math.max(indStart+ind+3,finVentas+3,postStart+postDur,designEnd,lastMilestone);
   const anios=Math.ceil((ent+ind)/12);
   const pred=calcPredial(+p.autovaluo,+p.uit);
-  const constrSub=areaTech*p.costoM2+sum(s.units.map(u=>(+u.tech||0)*(usoCostoM2(p,u)-p.costoM2)));
+  const constrSub=areaTech*p.costoM2+sum(s.units.map(u=>(+u.tech||0)*(usoCostoM2(p,u)-p.costoM2)))+libreV*(+p.costoLibreM2||0); // R81 · costo del área libre construida (balcones, terrazas)
   const cd=constrSub/(1+p.ggPct/100+p.utilPct/100);
   const curve=obraCurve(s.part,dur);
   // ventas y cobranzas
@@ -738,9 +739,8 @@ if(!S.base){S.base={nombre:'Evaluación inicial · Rev9 oct-2026',fecha:'2026-10
    fuera de un campo de texto. Cada paso vuelve al estado anterior completo, de cualquier cuadro. */
 const hist=[];let histLast=0;
 function snap(){const now=Date.now(),j=JSON.stringify(S);if(hist.length&&hist[hist.length-1]===j)return;if(now-histLast<400&&hist.length)return;histLast=now;hist.push(j);if(hist.length>60)hist.shift();undoBtn()}
-function deshacer(){const j=hist.pop();if(!j)return;S=JSON.parse(j);save();render();undoBtn();const t=document.getElementById('undoToast');if(t){t.textContent='Cambio deshecho';t.hidden=false;clearTimeout(t._t);t._t=setTimeout(()=>t.hidden=true,1800)}}
-function undoBtn(){let b=document.getElementById('undoGen');if(!b){b=document.createElement('button');b.id='undoGen';b.type='button';b.className='btn no-print';b.setAttribute('style','position:fixed;left:16px;bottom:16px;z-index:50;box-shadow:0 8px 24px -10px rgba(60,35,20,.45)');b.onclick=deshacer;document.body.appendChild(b);const t=document.createElement('div');t.id='undoToast';t.hidden=true;t.setAttribute('style','position:fixed;left:16px;bottom:62px;z-index:50;font-size:12px;padding:6px 10px;border-radius:10px;background:#292524;color:#FCFAF8');document.body.appendChild(t)}
-  b.hidden=!hist.length;b.textContent='↶ Deshacer'+(hist.length>1?' ('+hist.length+')':'');b.title='Volver al estado anterior (Ctrl+Z)'}
+function deshacer(){const j=hist.pop();if(!j)return;S=JSON.parse(j);save();render();undoBtn();const sv=document.getElementById('saved');if(sv)sv.textContent='Cambio deshecho'}
+function undoBtn(){const b=document.getElementById('undoGen');if(!b)return;b.hidden=!hist.length;b.textContent='↶ Deshacer'+(hist.length>1?' ('+hist.length+')':'')} // R81 · arriba, junto a Excel
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key.toLowerCase()==='z'){const t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable))return;e.preventDefault();deshacer()}});
 const save=()=>{let ok=true;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){ok=false}const el=document.getElementById('saved');if(el){const d=new Date();el.textContent=ok?`Guardado ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`:'Sin guardado local'}};
 let M=compute(S);
@@ -830,26 +830,26 @@ function cabCalc(s){
   t.coef=T?t.techSobre/T:0;t.efic=t.tech?t.vend/t.tech:0;t.eficSobre=t.techSobre?t.vendSobre/t.techSobre:0;t.libreP1=p1?p1.libre:0;t.libreP1Pct=T&&p1?p1.libre/T:0;t.pisos=rows.filter(r=>r.uso==='primero'||r.uso==='tipico'||r.uso==='comercial').length;
   const P=c.param;t.areaMedidas=(+P.frente>0&&+P.fondo>0)?P.frente*P.fondo:0;t.pisosMax=cabPisosMax(P);t.altura=cabAltura(P,t.pisos);
   // R58 · Cuadre piso por piso con el cuadro de áreas vendibles (unidades): el tablero alimenta ese cuadro, no lo reemplaza.
-  const us=Array.isArray(s.units)?s.units:[];rows.forEach(r=>{const n=cabPisoNum(r);r.piso=n;const u=n==null?[]:us.filter(x=>+x.piso===n);r.uN=u.length;r.uTech=u.reduce((a,x)=>a+(+x.tech||0),0);r.uLibre=u.reduce((a,x)=>a+(+x.libre||0),0)});
+  const us=Array.isArray(s.units)?s.units:[],nv=x=>Math.max(1,Math.min(4,Math.round(+x.niveles||1)));rows.forEach(r=>{const n=cabPisoNum(r);r.piso=n;const u=n==null?[]:us.filter(x=>n>=+x.piso&&n<+x.piso+nv(x));r.uN=u.filter(x=>+x.piso===n).length;r.uTech=u.reduce((a,x)=>a+(+x.tech||0)/nv(x),0);r.uLibre=u.reduce((a,x)=>a+(+x.libre||0)/nv(x),0)}); // R81 · dúplex/tríplex: su área se reparte entre los pisos que ocupa
   return {rows,t};
 }
 V.cabida=()=>{
   const usoSel=(i,v)=>`<select data-k="units.${i}.uso" id="i-units-${i}-uso" aria-label="Uso de la unidad ${i+1}">${UNIT_USOS.map(([k,l])=>`<option value="${k}"${k===(v||'vivienda')?' selected':''}>${l}</option>`).join('')}</select>`;
   const rows=M.units.map((u,i)=>`<tr${unitUso(u)!=='vivienda'?' style="background:color-mix(in srgb,'+(unitUso(u)==='comercial'?'#E7EEF7':'#EEF3E6')+' 60%,transparent)"':''}><td>${inp(`units.${i}.id`,u.id,'xs','text')}</td><td>${usoSel(i,S.units[i]&&S.units[i].uso)}</td><td>${inp(`units.${i}.tipo`,u.tipo,'w','text')}</td><td>${inp(`units.${i}.piso`,u.piso,'xs')}</td>
-  <td>${inp(`units.${i}.tech`,u.tech,'s')}</td><td>${inp(`units.${i}.libre`,u.libre,'s')}</td><td class="n">${nf(u.tech+u.libre*S.p.factorLibre,2)}</td><td class="n">${pc(u.tech/M.techV)}</td><td><button class="btn x" data-act="del" data-g="units" data-i="${i}" aria-label="Eliminar unidad ${esc(u.id)}">✕</button></td></tr>`).join('');
+  <td>${inp(`units.${i}.tech`,u.tech,'s')}</td><td>${inp(`units.${i}.libre`,u.libre,'s')}</td><td>${inp(`units.${i}.fl`,S.units[i]&&S.units[i].fl!==undefined?S.units[i].fl:'','xs')}</td><td>${inp(`units.${i}.niveles`,S.units[i]&&S.units[i].niveles||1,'xs')}</td><td>${inp(`units.${i}.aj`,S.units[i]&&S.units[i].aj||0,'xs')}</td><td class="n">${nf(u.tech+u.libre*fLib(S.units[i]||u,S.p),2)}</td><td class="n">${pc(u.tech/M.techV)}</td><td><button class="btn x" data-act="del" data-g="units" data-i="${i}" aria-label="Eliminar unidad ${esc(u.id)}">✕</button></td></tr>`).join('');
   const nv=M.areaTech-M.techV;
   const tipos={},porUso={vivienda:{n:0,a:0,l:0},comercial:{n:0,a:0,l:0},oficina:{n:0,a:0,l:0}};M.units.forEach((u,i)=>{const us=unitUso(S.units[i]||u),t=(USO_SUF[us]?USO_SUF[us]+' · ':'')+u.tipo.replace(/ azotea/i,'');tipos[t]=tipos[t]||{n:0,a:0,uso:us};tipos[t].n++;tipos[t].a+=u.tech;porUso[us].n++;porUso[us].a+=u.tech;porUso[us].l+=+u.libre||0});
   const hayCom=porUso.comercial.n+porUso.oficina.n>0,USOS_N={vivienda:'Vivienda',comercial:'Comercial',oficina:'Oficinas'};
   return `<div class="sect-h"><h2>Cabida arquitectónica</h2><p>Fuente principal del modelo: áreas por unidad, área común y los valores por m². Todo lo demás se recalcula a partir de aquí.</p></div>
   <details class="panel" id="cabDatos"${S._ui&&S._ui.cabDatos?' open':''}><summary style="cursor:pointer"><h3 style="display:inline">Datos generales</h3> <span class="mut" style="font-size:12px">· ${esc(S.p.nombre||'')} · terreno ${nf(S.p.areaTerreno,2)} m² · costo S/ ${nf(S.p.costoM2,2)}/m² · venta S/ ${nf(S.p.precioM2,2)}/m² · tocar para ver o editar</span></summary><div class="fields" style="margin-top:10px">${fld('p.nombre','Proyecto')}${fld('p.direccion','Dirección')}${fld('p.uso','Uso / tipología')}${fld('p.inicio','Mes de inicio (AAAA-MM)')}
   ${fld('p.areaTerreno','Área de terreno (m²)',1)}${fld('p.precioTerrenoM2','Precio terreno (S/ por m²)',1)}${fld('p.costoM2','Costo construcción (S/ por m², sin IGV)',1)}${fld('p.precioM2','Precio de venta (S/ por m², con IGV)',1)}
-  ${fld('p.comunTechada','Área común techada incl. sótano (m²)',1)}${fld('p.factorLibre','Factor de precio área libre (0–1)')}${fld('p.nEstac','Estacionamientos (und)',1)}${fld('p.precioEstac','Precio por estacionamiento (S/)',1)}</div>
+  ${fld('p.comunTechada','Área común techada incl. sótano (m²)',1)}${fld('p.factorLibre','Factor de precio área libre general (0–1)')}${fld('p.costoLibreM2','Costo del área libre construida: balcones, terrazas (S/ por m², sin IGV · 0 = no se cuenta)',1)}${fld('p.nEstac','Estacionamientos (und)',1)}${fld('p.precioEstac','Precio por estacionamiento (S/)',1)}</div>
   <h4 style="margin:12px 0 4px">Comercio y oficinas <span class="mut" style="font-weight:400;font-size:12px">· 0 = igual que vivienda</span></h4><div class="fields">${[['precioM2Comercial','Precio de venta comercial (S/ por m², con IGV)'],['costoM2Comercial','Costo construcción comercial (S/ por m², sin IGV)'],['precioM2Oficina','Precio de venta oficinas (S/ por m², con IGV)'],['costoM2Oficina','Costo construcción oficinas (S/ por m², sin IGV)']].map(([k,l])=>`<div class="f"><label for="i-p-${k}">${l}</label>${inp('p.'+k,+S.p[k]||0,'','number')}</div>`).join('')}</div>
   <p class="note">Los campos resaltados son los insumos de cabida y costo/m². El costo/m² incluye costo directo, gastos generales y utilidad del contratista; el IGV se suma aparte.</p></details>
   ${cabOficial()}
   ${cabTablero()}
   ${cabCuadre()}
-  <div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">Cuadro de áreas vendibles${S.cab&&S.cab.oficial&&S.cab.oficial.activo?' <span class="chip ok" style="font-size:11px">fijado por el cuadro oficial</span>':''}</h3>${S.cab&&S.cab.oficial&&S.cab.oficial.activo?'':'<button class="btn" data-act="add-unit">+ Agregar unidad</button>'}</div>
+  <div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">Cuadro de áreas vendibles · el mix final</h3><button class="btn" data-act="add-unit">+ Agregar unidad</button></div>
   <div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;padding:10px 12px;border:1px dashed var(--line,#d8cfc7);border-radius:12px">
     <b style="font-size:13px">Repetir distribución</b>
     <label style="font-size:12px;display:flex;flex-direction:column;gap:2px">Piso modelo<input type="number" min="1" step="1" id="rep-src" class="xs" style="width:80px;display:block" value="${esc(S._ui&&S._ui.repSrc||'')}"></label>
@@ -857,8 +857,8 @@ V.cabida=()=>{
     <label style="font-size:12px;display:flex;flex-direction:column;gap:2px">al<input type="number" min="1" step="1" id="rep-hasta" class="xs" style="width:80px;display:block" value="${esc(S._ui&&S._ui.repHasta||'')}"></label>
     <button class="btn" data-act="units-repetir">Repetir</button>
     <span class="mut" style="font-size:12px;flex-basis:100%">Copia los departamentos del piso modelo (tipología, techada, libre y ajuste) en cada piso del rango y los numera solos (302 → 402, 502…). Si un piso del rango ya tiene unidades, se reemplazan después de confirmar. Indicadores y mix se actualizan solos.</span></div>
-  <div class="tw"><table><thead><tr><th>Unidad</th><th>Uso</th><th>Tipología</th><th>Piso</th><th class="n">Techada m²</th><th class="n">Libre m²</th><th class="n">Equivalente m²</th><th class="n">% vendible</th><th></th></tr></thead>
-  <tbody>${rows}<tr class="tot"><td colspan="4">Total vendible</td><td class="n">${nf(M.techV,2)}</td><td class="n">${nf(M.libreV,2)}</td><td class="n">${nf(M.techV+M.libreV*S.p.factorLibre,2)}</td><td class="n">100%</td><td></td></tr></tbody></table></div></div>
+  <div class="tw"><table><thead><tr><th>Unidad</th><th>Uso</th><th>Tipología</th><th title="Piso donde empieza la unidad">Piso</th><th class="n">Techada m²</th><th class="n">Libre m²</th><th title="Factor de precio del área libre de esta unidad (balcón, terraza, jardín). Vacío = el general">Factor libre</th><th title="Dúplex = 2, tríplex = 3">Niveles</th><th title="Ajuste de precio de la unidad (vista, piso, dúplex…)">Ajuste %</th><th class="n">Equivalente m²</th><th class="n">% vendible</th><th></th></tr></thead>
+  <tbody>${rows}<tr class="tot"><td colspan="4">Total vendible</td><td class="n">${nf(M.techV,2)}</td><td class="n">${nf(M.libreV,2)}</td><td></td><td></td><td></td><td class="n">${nf(M.techV+sum(S.units.map(u=>(+u.libre||0)*fLib(u,S.p))),2)}</td><td class="n">100%</td><td></td></tr></tbody></table></div></div>
   <div class="grid2"><div class="panel"><h3>Indicadores de cabida</h3><div class="tw"><table><tbody>
   <tr><td>Área techada total</td><td class="n">${nf(M.areaTech,2)} m²</td><td class="n">100%</td></tr>
   <tr><td>Área techada vendible</td><td class="n">${nf(M.techV,2)} m²</td><td class="n">${pc(M.techV/M.areaTech)}</td></tr>
@@ -873,7 +873,7 @@ V.cabida=()=>{
 };
 /* R58 · Puente entre el cálculo por piso y el cuadro de áreas vendibles (unidad por unidad, techada y libre). */
 function cabCuadre(){
-  if(!S.cab||!Array.isArray(S.cab.pisos)||(S.cab.oficial&&S.cab.oficial.activo))return ''; // R80 · con áreas fijas no hay cálculo por porcentajes
+  if(!S.cab||!Array.isArray(S.cab.pisos))return '';
   const {rows}=cabCalc(S),fs=rows.map((r,i)=>Object.assign({},r,{i})).filter(r=>r.piso!=null);if(!fs.length)return '';
   const ch=(d)=>Math.abs(d)<1?'<span class="chip ok">cuadra</span>':`<span class="chip w">${d>0?'el cálculo permite '+nf(d,2)+' m² más':'las unidades superan al cálculo en '+nf(-d,2)+' m²'}</span>`;
   const hayDif=fs.some(r=>r.uN&&Math.abs(r.vend-r.uTech)>=1);
@@ -906,7 +906,7 @@ function cabLlevar(s){
 /* R80 · Proyecto avanzado: cuadro de áreas OFICIAL (el de los planos). Con «áreas fijas» activo el modelo usa exactamente
    esas áreas (vendible techada y libre por unidad, área común techada) y no se recalculan desde porcentajes. */
 const OF_COLS=[['comunT','Común techada'],['comunL','Común libre'],['nvT','No vendible techada'],['nvL','No vendible libre'],['vendT','Vendible techada'],['vendL','Vendible libre']];
-function cabFijo(k){return !!(S&&S.cab&&S.cab.oficial&&S.cab.oficial.activo)&&(/^units\.\d+\.(tech|libre|piso|id)$/.test(k)||k==='p.comunTechada')}
+function cabFijo(k){return false} // R81 · nada se bloquea: el botón «Deshacer» revierte cualquier cambio
 function ofNum(v){const t=String(v==null?'':v).trim().replace(/\s/g,'');if(!t||t==='-'||t==='—')return 0;let x=t;if(/,\d{1,2}$/.test(x)&&!/\.\d{1,2}$/.test(x))x=x.replace(/\./g,'').replace(',','.');else x=x.replace(/,/g,'');const n=parseFloat(x);return isFinite(n)?Math.round(n*100)/100:0}
 function cabOficialParse(txt){
   const filas=[];String(txt||'').split(/\r?\n/).forEach(l=>{if(!l.trim())return;const c=l.split(/\t|;/);let lab=String(c[0]||'').trim();
@@ -924,16 +924,16 @@ function cabOficialAplicar(s){
 }
 function cabOficial(){
   const o=S.cab&&S.cab.oficial;
-  if(!o||!o.activo)return `<details class="panel" id="cabOficial"><summary style="cursor:pointer"><h3 style="display:inline">¿Proyecto avanzado? Usar el cuadro de áreas oficial</h3> <span class="mut" style="font-size:12px">· las áreas quedan fijas y no se recalculan</span></summary>
+  if(!o||!o.activo)return `<details class="panel" id="cabOficial"><summary style="cursor:pointer"><h3 style="display:inline">¿Proyecto avanzado? Usar el cuadro de áreas oficial</h3> <span class="mut" style="font-size:12px">· el modelo toma exactamente las áreas de los planos</span></summary>
     <p class="note">Pega el cuadro de áreas de los planos (desde Excel), <b>una fila por unidad o nivel</b>, con estas columnas en este orden: <b>Nivel · Común techada · Común libre · No vendible techada · No vendible libre · Vendible techada · Vendible libre</b>. Las celdas vacías cuentan como 0. El modelo usará exactamente esas áreas: vendible por unidad y área común techada.</p>
     <textarea id="ofIn" rows="8" style="width:100%;font-family:var(--f-mono);font-size:12px" placeholder="Azotea	20.42	27.00				
 802	15.00	0.00	0.00		78.14	20.43">${esc(S._ui&&S._ui.ofIn||'')}</textarea>
-    <div class="row" style="gap:6px;margin-top:8px"><button class="btn" data-act="cab-oficial-importar">Importar y fijar áreas</button></div></details>`;
+    <div class="row" style="gap:6px;margin-top:8px"><button class="btn" data-act="cab-oficial-importar">Importar y aplicar áreas</button></div></details>`;
   const t=cabOficialTot(o.filas),ok=(a,b)=>Math.abs(a-b)<0.005?'<span class="chip ok">cuadra exacto</span>':`<span class="chip b">difiere ${nf(a-b,2)} m²</span>`;
   const filas=o.filas.map((f,i)=>`<tr><td>${inp(`cab.oficial.filas.${i}.nivel`,f.nivel,'xs','text')}</td>${OF_COLS.map(([k])=>`<td>${inp(`cab.oficial.filas.${i}.${k}`,f[k],'s')}</td>`).join('')}<td class="n">${nf((+f.comunT||0)+(+f.nvT||0)+(+f.vendT||0),2)}</td></tr>`).join('');
-  return `<div class="panel" id="cabOficial" style="border:2px solid var(--accent,#85442A)"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><h3 style="margin:0">Cuadro de áreas oficial · áreas fijas</h3>
-    <div class="row" style="gap:6px"><button class="btn" data-act="cab-oficial-reimportar">Volver a pegar el cuadro</button><button class="btn x" data-act="cab-oficial-off">Quitar áreas fijas</button></div></div>
-    <p class="note" style="margin-top:4px">Proyecto avanzado: el modelo usa <b>exactamente</b> estas áreas (fijadas el ${esc(o.aplicado||'')}). El cálculo por porcentajes está apagado y las áreas de las unidades no se pueden recalcular ni editar fuera de este cuadro. Si corriges una celda aquí, el modelo se actualiza con el valor exacto.</p>
+  return `<div class="panel" id="cabOficial" style="border:2px solid var(--accent,#85442A)"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><h3 style="margin:0">Cuadro de áreas oficial (planos)</h3>
+    <div class="row" style="gap:6px"><button class="btn" data-act="cab-oficial-aplicar">Volver a aplicar a las unidades</button><button class="btn" data-act="cab-oficial-reimportar">Volver a pegar el cuadro</button><button class="btn x" data-act="cab-oficial-off">Quitar cuadro oficial</button></div></div>
+    <p class="note" style="margin-top:4px">Áreas de los planos aplicadas el ${esc(o.aplicado||'')}: el modelo usa <b>exactamente</b> estas áreas por unidad y el área común. El cálculo por piso de abajo sigue disponible como ayuda (por ejemplo, para ver el área máxima posible), pero el modelo usa siempre lo que indiques en el cuadro de unidades. Si corriges una celda aquí, la unidad toma el valor exacto; si cambias una unidad abajo, aquí verás si difiere.</p>
     <div class="tw"><table><thead><tr><th>Nivel / unidad</th>${OF_COLS.map(([,l])=>`<th>${l}</th>`).join('')}<th class="n">Total techada</th></tr></thead><tbody>${filas}
     <tr class="tot"><td>Total</td>${OF_COLS.map(([k])=>`<td class="n">${nf(t[k],2)}</td>`).join('')}<td class="n">${nf(t.tech,2)}</td></tr></tbody></table></div>
     <div class="tw" style="margin-top:10px"><table><tbody>
@@ -945,7 +945,6 @@ function cabOficial(){
       <tr><td>Área común libre (informativa)</td><td class="n">${nf(t.comunL+t.nvL,2)} m²</td><td class="mut">no entra al precio</td></tr></tbody></table></div></div>`;
 }
 function cabTablero(){
-  if(S.cab&&S.cab.oficial&&S.cab.oficial.activo)return ''; // R80 · con áreas fijas no hay cálculo por porcentajes
   if(!S.cab||!Array.isArray(S.cab.pisos))S.cab=cabDefault(S);
   const {rows,t}=cabCalc(S),P=S.cab.param,T=+S.p.areaTerreno||0;
   const pct2=(i,k)=>`<div class="row" style="gap:4px;flex-wrap:nowrap">${inp(`cab.pisos.${i}.${k}`,S.cab.pisos[i][k],'xs')}<span class="mut">%</span>${inp(`cab.pisos.${i}.${k}M2`,Math.round(rows[i][k+'M2']*100)/100,'s')}<span class="mut">m²</span></div>`;
@@ -1040,7 +1039,7 @@ V.valores=()=>{
 };
 
 V.venta=()=>{
-  const tc=S.p.tc;const rows=M.units.map((u,i)=>{const m2=u.tech+u.libre*S.p.factorLibre;return `<tr><td>${esc(u.id)}</td><td>${esc(u.tipo)}</td><td class="n">${u.piso}</td><td class="n">${nf(u.tech,2)}</td><td class="n">${nf(u.libre,2)}</td><td>${inp(`units.${i}.aj`,u.aj||0,'xs')}</td>
+  const tc=S.p.tc;const rows=M.units.map((u,i)=>{const m2=u.tech+u.libre*fLib(S.units[i]||u,S.p);return `<tr><td>${esc(u.id)}</td><td>${esc(u.tipo)}</td><td class="n">${u.piso}</td><td class="n">${nf(u.tech,2)}</td><td class="n">${nf(u.libre,2)}</td><td>${inp(`units.${i}.aj`,u.aj||0,'xs')}</td>
   <td class="n">${S_(u.lista)}</td><td class="n">US$ ${nf(u.lista/tc)}</td><td class="n">${S_(u.lista/(u.tech||1))}</td><td class="n">${S_(u.neto)}</td><td class="n">${S_(u.neto/(1+M.igvEf))}</td></tr>`}).join('');
   const pol=[['Crédito hipotecario, inicial 10%',1],['Crédito hipotecario, inicial fuerte',2],['Compra al contado (40% o más)',3],['Bróker / primeras 5 unidades',5]];
   return `<div class="sect-h"><h2>Valor de venta por departamento</h2><p>Precio de lista = (área techada + área libre × factor) × precio/m² × (1 + ajuste por unidad). Incluye IGV efectivo de ${pc(M.igvEf)}.</p></div>
@@ -1114,7 +1113,7 @@ V.perfil=()=>{
     return `<tr class="grp"><td>${c}</td><td class="n">${S_(g[c].sub)}</td><td class="n">${S_(g[c].igv)}</td><td class="n">${S_(g[c].tot)}</td><td class="n">${pc(g[c].tot/eg,2)}</td><td class="n">${pc(g[c].tot/M.ventas,2)}</td></tr>`+
     ls.concat(extra).map(o=>`<tr class="sub"><td style="padding-left:22px">${esc(o.n)}</td><td class="n">${S_(o.sub)}</td><td class="n">${S_(o.igv)}</td><td class="n">${S_(o.tot)}</td><td class="n">${pc(o.tot/eg,2)}</td><td class="n">${pc(o.tot/M.ventas,2)}</td></tr>`).join('')}).join('');
   const v=M.ventas,igvf=1+M.igvEf;
-  const ing=[['Vivienda techada',M.techV*S.p.precioM2*(1-S.p.descProm/100)],['Área libre vendible',M.libreV*S.p.factorLibre*S.p.precioM2*(1-S.p.descProm/100)],['Ajustes por unidad',M.vDept-(M.techV+M.libreV*S.p.factorLibre)*S.p.precioM2*(1-S.p.descProm/100)],['Estacionamientos',M.vEst]];
+  const ing=[['Vivienda techada',M.techV*S.p.precioM2*(1-S.p.descProm/100)],['Área libre vendible',sum(S.units.map(u=>(+u.libre||0)*fLib(u,S.p)))*S.p.precioM2*(1-S.p.descProm/100)],['Ajustes por unidad',M.vDept-(M.techV+sum(S.units.map(u=>(+u.libre||0)*fLib(u,S.p))))*S.p.precioM2*(1-S.p.descProm/100)],['Estacionamientos',M.vEst]];
   return `<div class="sect-h"><h2>Perfil económico</h2><p>Estado de resultados del proyecto completo, con IGV detallado e impuesto a la renta.</p></div>
   <div class="panel"><h3>Ingresos</h3><div class="tw"><table><thead><tr><th>Concepto</th><th class="n">Valor venta</th><th class="n">IGV</th><th class="n">Total</th><th class="n">%</th></tr></thead><tbody>
   ${ing.filter(x=>Math.abs(x[1])>0.5).map(([n,t])=>`<tr><td>${n}</td><td class="n">${S_(t/igvf)}</td><td class="n">${S_(t-t/igvf)}</td><td class="n">${S_(t)}</td><td class="n">${pc(t/v)}</td></tr>`).join('')}
@@ -1691,7 +1690,9 @@ const TABINFO={
   export:['Arquitecta de integración: contrato de datos entre la evaluación, el CRM y el ERP.',['¿Cómo usará el CRM este inventario y estas metas?','Explica el contrato de datos','¿Qué datos reales debe devolver el CRM a la evaluación?']]
 };
 const TABLABEL={};TABS.forEach(g=>g[1].forEach(t=>TABLABEL[t[0]]=t[1]));TABLABEL.export='Integración ERP';
-const RULES=`Eres M.O.R.A (Motor de Optimización, Riesgo y Análisis), la agente de IA del Evaluador Inmobiliario, módulo del ERP de una desarrolladora en Lima, Perú. Tu función es evaluar proyectos: optimizar la rentabilidad, medir el riesgo y analizar cada cifra antes de invertir. Este módulo alimenta luego al CRM inmobiliario, donde trabaja L.O.L.A, la agente comercial: le entrega inventario, precios, metas de venta y presupuesto de marketing. No eres L.O.L.A; si preguntan por gestión de clientes o ventas en curso, aclara que eso corresponde a L.O.L.A en el CRM. Combinas criterio de:
+const RULES=`CRITERIOS DE CABIDA Y MIX (R81, obligatorios): el cálculo por piso (porcentajes) es solo una ayuda para estimar el área máxima posible; el modelo usa SIEMPRE lo que el usuario define en el cuadro de unidades (y, en proyectos avanzados, el cuadro de áreas oficial de los planos, que nunca debes recalcular ni redondear). Un piso puede tener 1, 2, 3 o más departamentos; hay dúplex y tríplex (campo «niveles») que ocupan 2 o 3 pisos, por lo que el piso siguiente puede tener menos unidades. Las áreas libres (balcones, terrazas, jardines) varían de tamaño por unidad y pueden tener su propio factor de precio («factor libre» por unidad; vacío = general). Cada unidad puede tener precio diferenciado con «ajuste %» (vista, piso, dúplex, esquina) y el área libre construida puede tener costo propio por m² («costo del área libre»). No asumas pisos iguales ni un departamento por piso.
+
+Eres M.O.R.A (Motor de Optimización, Riesgo y Análisis), la agente de IA del Evaluador Inmobiliario, módulo del ERP de una desarrolladora en Lima, Perú. Tu función es evaluar proyectos: optimizar la rentabilidad, medir el riesgo y analizar cada cifra antes de invertir. Este módulo alimenta luego al CRM inmobiliario, donde trabaja L.O.L.A, la agente comercial: le entrega inventario, precios, metas de venta y presupuesto de marketing. No eres L.O.L.A; si preguntan por gestión de clientes o ventas en curso, aclara que eso corresponde a L.O.L.A en el CRM. Combinas criterio de:
 - Finanzas de proyecto: TIR, VAN, ROE, aporte de capital, crédito promotor con preventa mínima, apalancamiento y sensibilidad.
 - Contabilidad y tributación peruana: IGV en primera venta de inmuebles (base gravada 50% por terreno), crédito fiscal, detracciones, IR 29.5%, alcabala, predial y arbitrios.
 - Construcción: presupuestos por partidas, costo/m², gastos generales, curva S, plazos y riesgos de obra.
@@ -2295,16 +2296,17 @@ document.addEventListener('click',e=>{
   if(b.dataset.tab){cur=b.dataset.tab;try{history.replaceState(null,'','#'+cur)}catch(_){location.hash=cur}render();window.scrollTo(0,0);return}
   if(b.dataset.fc){fcMode=b.dataset.fc;render();return}
   const a=b.dataset.act;if(!a)return;
-  if(!/^(base-ask|base-cancel|project-drive-status|project-drive-scan)$/.test(a))snap();
+  if(a==='undo-gen'){deshacer();return}
+  if(!/^(base-ask|base-cancel|project-drive-status|project-drive-scan|xls-|undo)/.test(a))snap();
   // R80 · Con áreas fijas no se recalculan ni se agregan/eliminan unidades fuera del cuadro oficial.
-  if(S.cab&&S.cab.oficial&&S.cab.oficial.activo&&(['add-unit','units-repetir','cab-ajustar','cab-ajustar-todo','cab-llevar','cab-usar','cab-regenerar'].includes(a)||(a==='del'&&b.dataset.g==='units'))){alert('Este proyecto tiene las áreas fijas del cuadro oficial. Corrige el cuadro oficial o quita las áreas fijas.');return}
   if(a==='cab-oficial-importar'||a==='cab-oficial-reimportar'){
     if(a==='cab-oficial-reimportar'){S.cab.oficial.activo=false;save();render();const d=document.getElementById('cabOficial');if(d)d.open=true;return}
     const txt=(document.getElementById('ofIn')||{}).value||'';S._ui=S._ui||{};S._ui.ofIn=txt;
     try{const filas=cabOficialParse(txt),t=cabOficialTot(filas);
-      if(!confirm('Se fijarán las áreas del cuadro oficial: vendible techada '+nf(t.vendT,2)+' m², libre vendible '+nf(t.vendL,2)+' m², área común techada '+nf(t.comunT+t.nvT,2)+' m², total techada '+nf(t.tech,2)+' m². Las unidades del cuadro de áreas vendibles se reemplazan por las del cuadro oficial (se conservan tipología y ajuste de las que coinciden). ¿Continuar?'))return;
+      if(!confirm('Se aplicarán las áreas del cuadro oficial: vendible techada '+nf(t.vendT,2)+' m², libre vendible '+nf(t.vendL,2)+' m², área común techada '+nf(t.comunT+t.nvT,2)+' m², total techada '+nf(t.tech,2)+' m². Las unidades del cuadro de áreas vendibles se reemplazan por las del cuadro oficial (se conservan tipología y ajuste de las que coinciden). ¿Continuar?'))return;
       S.cab.oficial={activo:true,filas};cabOficialAplicar(S)}catch(err){alert(err.message);return}}
-  else if(a==='cab-oficial-off'){if(!confirm('¿Quitar las áreas fijas? Las unidades y el área común se quedan como están, pero podrán recalcularse y editarse de nuevo.'))return;S.cab.oficial.activo=false}
+  else if(a==='cab-oficial-off'){if(!confirm('¿Quitar el cuadro oficial? Las unidades y el área común se quedan como están.'))return;S.cab.oficial.activo=false}
+  else if(a==='cab-oficial-aplicar'){if(!confirm('Las unidades y el área común volverán a tomar exactamente las áreas del cuadro oficial. ¿Continuar?'))return;cabOficialAplicar(S)}
   else if(a==='del'){getP(b.dataset.g).splice(+b.dataset.i,1)}
   else if(a==='add-venta'){const sold=new Set(S.ventas.map(v=>String(v.u)));const u=S.units.find(x=>!sold.has(String(x.id)))||S.units[0];const mu=M.units.find(x=>x.id===u.id);S.ventas.push({u:String(u.id),f:S.estr.corte,precio:Math.round(mu?mu.lista*(1-S.estr.desc/100):0),estado:'separada',canal:''})}
   else if(a==='present'){const on=!document.body.classList.contains('present');document.body.classList.toggle('present',on);try{if(on&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});else if(!on&&document.fullscreenElement)document.exitFullscreen().catch(()=>{})}catch(_){}render();return}
@@ -2372,6 +2374,7 @@ document.addEventListener('change',e=>{
   if(el.dataset.partCost!==undefined){try{editPartCost(S,Number(el.dataset.partCost),'cost',el.value);save();render()}catch(err){el.setCustomValidity(err.message);el.reportValidity();el.addEventListener('input',()=>el.setCustomValidity(''),{once:true})}return}
   const k=el.dataset&&el.dataset.k;if(!k)return;
   if(k!=='p.tc'&&k!=='mercado.tc'&&!cabFijo(k))snap();
+  {const m=k.match(/^units\.(\d+)\.fl$/);if(m&&String(el.value).trim()===''&&S.units[+m[1]]){delete S.units[+m[1]].fl;save();render();return}} // R81 · vacío = factor general
   if(/^part\.\d+\.pct$/.test(k)){try{editPartCost(S,Number(k.split('.')[1]),'pct',el.value);save();render()}catch(err){el.setCustomValidity(err.message);el.reportValidity();el.addEventListener('input',()=>el.setCustomValidity(''),{once:true})}return}
   if(k==='p.tc'||k==='mercado.tc')return;
   if(['p.velocidad','p.velocidadOptimista','p.velocidadPesimista','p.costoM2'].includes(k)&&(!Number.isFinite(Number(el.value))||Number(el.value)<.05)){el.setCustomValidity('Ingresa un valor mayor o igual a 0.05.');el.reportValidity();el.addEventListener('input',()=>el.setCustomValidity(''),{once:true});return}
