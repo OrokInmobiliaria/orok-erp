@@ -3,9 +3,9 @@
 // 1) Marca para contenido: colores, tipografías, forma de hablar, perfiles y hashtags base (privado: greta-plan-marca.json).
 // 2) Análisis: perfiles de ÖRÖK (Instagram, Facebook, TikTok) + nicho de edificios boutique, con búsqueda web y, si están
 //    conectadas, las métricas propias de Publicar. Devuelve qué funciona, pilares, ganchos, horarios y hashtags por red.
-// 3) Semana (R74b, corrección de Martín): 7 piezas diarias POR RED y distintas entre redes (Instagram, Facebook, TikTok)
-//    = 21 por día y 147 por semana, cada una con las características propias de su red (medidas, duración, copy, hashtags).
-//    Se generan por día y red en dos llamadas paralelas (piezas 1-4 y 5-7) para no exceder tiempos. Cada pieza trae gancho de 0-2 s, guion por escenas, motion graphics, voz en off,
+// 3) Semana (R74c, definición final de Martín): 7 piezas diarias (videos e imágenes) = 49 por semana. Cada pieza se
+//    replica en Instagram, Facebook y TikTok con una VERSIÓN ADAPTADA a cada red (medidas, duración, hora, copy, CTA,
+//    hashtags, audio y notas de adaptación). Se generan por día en dos llamadas paralelas (piezas 1-4 y 5-7). Cada pieza trae gancho de 0-2 s, guion por escenas, motion graphics, voz en off,
 //    música, copy, CTA, hashtags y quién la produce (ERP o equipo).
 // 4) Nada se publica sin aprobación. Las piezas aprobadas quedan listas para programarse en Publicar.
 const fs = require('node:fs'), path = require('node:path'), { randomUUID } = require('node:crypto');
@@ -16,11 +16,7 @@ const FORMATOS = ['reel', 'carrusel', 'imagen', 'historia', 'video'];
 const ESTADOS = ['borrador', 'aprobada', 'rechazada', 'programada', 'publicada'];
 const POR_DIA = 7;
 // Mezcla diaria por red: videos e imágenes en horarios distintos (G.R.E.T.A puede ajustar el formato a lo que mejor funciona en cada red).
-const SLOTS = {
-  instagram: [{ hora: '08:00', formato: 'imagen' }, { hora: '10:00', formato: 'reel' }, { hora: '12:30', formato: 'carrusel' }, { hora: '14:00', formato: 'historia' }, { hora: '17:30', formato: 'reel' }, { hora: '19:30', formato: 'carrusel' }, { hora: '21:00', formato: 'reel' }],
-  facebook: [{ hora: '07:30', formato: 'imagen' }, { hora: '09:30', formato: 'video' }, { hora: '12:00', formato: 'carrusel' }, { hora: '13:30', formato: 'reel' }, { hora: '17:00', formato: 'imagen' }, { hora: '19:00', formato: 'video' }, { hora: '20:30', formato: 'reel' }],
-  tiktok: [{ hora: '07:00', formato: 'video' }, { hora: '11:00', formato: 'video' }, { hora: '13:00', formato: 'carrusel' }, { hora: '16:00', formato: 'video' }, { hora: '18:30', formato: 'video' }, { hora: '20:00', formato: 'carrusel' }, { hora: '22:00', formato: 'video' }],
-};
+const SLOTS = [{ hora: '08:00', formato: 'imagen' }, { hora: '10:00', formato: 'reel' }, { hora: '12:30', formato: 'carrusel' }, { hora: '14:00', formato: 'reel' }, { hora: '17:00', formato: 'imagen' }, { hora: '19:00', formato: 'reel' }, { hora: '21:00', formato: 'reel' }];
 // Características propias de cada red.
 const SPECS = {
   instagram: 'Reel 9:16 1080×1920, 15-60 s (ideal 20-35 s), zona segura libre arriba 14% y abajo 20%; feed 4:5 1080×1350; carrusel 4:5 de 5-10 láminas; historia 9:16 con sticker (encuesta/pregunta/enlace). Copy hasta 2200 caracteres con gancho en la primera línea. De 3 a 5 hashtags.',
@@ -28,6 +24,14 @@ const SPECS = {
   tiktok: 'Video 9:16 1080×1920, 15-45 s, ritmo rápido con cortes cada 2-3 s, texto en pantalla grande, tono más espontáneo y cercano (tendencias, detrás de cámaras, obra, preguntas frecuentes); zona segura libre abajo 15% y lateral derecho; modo foto (carrusel) 9:16 con audio. Caption corto (1-2 líneas) con pregunta. Audio en tendencia elegido al publicar. De 3 a 6 hashtags.',
 };
 const MAX_TAGS = { instagram: 5, facebook: 4, tiktok: 6 };
+const tipoDe = f => f === 'carrusel' ? 'carrusel' : ['imagen', 'historia'].includes(f) ? 'imagen' : 'video';
+function limpiarVersion(v, red, p) {
+  const tags = [...new Set((Array.isArray(v?.hashtags) && v.hashtags.length ? v.hashtags : p.hashtags).map(hashtag).filter(Boolean))].slice(0, MAX_TAGS[red]);
+  return { formato: text(v?.formato, 40) || (red === 'tiktok' && tipoDe(p.formato) !== 'video' ? 'modo foto' : p.formato), medidas: text(v?.medidas, 200) || SPECS[red].split(';')[0],
+    duracion_seg: tipoDe(p.formato) === 'video' ? Math.max(0, Math.min(180, Number(v?.duracion_seg) || p.duracion_seg || 0)) : 0,
+    hora: /^\d{2}:\d{2}$/.test(String(v?.hora || '')) ? v.hora : p.hora, copy: text(v?.copy, 2200) || p.copy, cta: text(v?.cta, 160) || p.cta,
+    hashtags: tags, audio: text(v?.audio, 200), notas: text(v?.notas, 400) };
+}
 const DEFAULT_MARCA = {
   nombre: 'ÖRÖK Inmobiliaria',
   colores: [{ nombre: 'Terracota ÖRÖK', hex: '#85442A' }, { nombre: 'Café profundo', hex: '#5E2817' }, { nombre: 'Rojo arcilla', hex: '#B3362B' }, { nombre: 'Marfil', hex: '#FCFAF8' }, { nombre: 'Grafito', hex: '#292524' }],
@@ -50,9 +54,9 @@ const DIAS = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', '
 function limpiarPieza(p, i, base) {
   const escenas = (Array.isArray(p?.guion) ? p.guion : []).slice(0, 12).map(e => ({ seg: text(e?.seg, 20), visual: text(e?.visual, 400), texto_pantalla: text(e?.texto_pantalla, 200), motion: text(e?.motion, 300), voz: text(e?.voz, 400) }));
   const g = p?.gancho || {};
-  return {
+  const out = {
     id: randomUUID(), semana_id: base.semana_id, fecha: base.fecha, red: base.red, orden: (base.desde || 0) + i + 1,
-    hora: /^\d{2}:\d{2}$/.test(String(p?.hora || '')) ? p.hora : SLOTS[base.red]?.[(base.desde || 0) + i]?.hora || '19:00', medidas: text(p?.medidas, 200),
+    hora: /^\d{2}:\d{2}$/.test(String(p?.hora || '')) ? p.hora : (base.red === 'todas' ? SLOTS : [])[(base.desde || 0) + i]?.hora || '19:00', medidas: text(p?.medidas, 200),
     formato: FORMATOS.includes(p?.formato) ? p.formato : 'reel', pilar: text(p?.pilar, 80), objetivo: text(p?.objetivo, 160), titulo: text(p?.titulo, 120),
     gancho: { texto_pantalla: text(g.texto_pantalla, 120), primera_frase: text(g.primera_frase, 200), visual: text(g.visual, 300) },
     guion: escenas, duracion_seg: Math.max(0, Math.min(180, Number(p?.duracion_seg) || 0)),
@@ -62,6 +66,8 @@ function limpiarPieza(p, i, base) {
     produccion: p?.produccion === 'equipo' ? 'equipo' : 'erp', recursos: text(p?.recursos, 400), marca: text(p?.marca, 300),
     estado: 'borrador', creado: now(), revision: 1,
   };
+  if (base.red === 'todas') out.versiones = Object.fromEntries(REDES.map(r => [r, limpiarVersion(p?.versiones?.[r], r, out)]));
+  return out;
 }
 class GretaPlan {
   async put(ref, v) { await this.g.store.db.runTransaction(async tx => { tx.set(ref, v); }); }
@@ -116,28 +122,31 @@ class GretaPlan {
   async semanasLista() { return { semanas: (await this.semanas.orderBy('inicio', 'desc').limit(12).get()).docs.map(d => d.data()), analisis: await this.ultimoAnalisis(), marca: this.marca() }; }
   async generar(input, user, data) {
     const s = (await this.semanas.doc(text(input?.semana_id, 60)).get()).data(); if (!s) throw Error('Crea primero la semana.');
-    const f = fecha(input?.fecha), red = REDES.includes(input?.red) ? input.red : null;
-    if (!f || f < s.inicio || f > s.fin || !red) throw Error('Indica un día de la semana y una red válidos.');
+    const f = fecha(input?.fecha);
+    if (!f || f < s.inicio || f > s.fin) throw Error('Indica un día válido de la semana.');
     const ya = (await this.piezas.where('semana_id', '==', s.id).limit(1000).get()).docs.map(d => d.data());
-    if (ya.some(p => p.fecha === f && p.red === red && p.estado !== 'rechazada') && !input?.rehacer) return { piezas: ya.filter(p => p.fecha === f && p.red === red), ya_existian: true };
+    const delDia = ya.filter(p => p.fecha === f && p.red === 'todas');
+    if (delDia.some(p => p.estado !== 'rechazada') && !input?.rehacer) return { piezas: delDia, ya_existian: true };
     const an = s.analisis_id ? (await this.analisis.doc(s.analisis_id).get()).data() : await this.ultimoAnalisis(), M = this.marca(), S = this.g.skill();
-    const otras = ya.filter(p => p.estado !== 'rechazada').slice(-80).map(p => p.red + '|' + p.fecha + '|' + p.titulo);
+    const otras = ya.filter(p => p.estado !== 'rechazada' && p.fecha !== f).slice(-60).map(p => p.fecha + '|' + p.titulo + '|' + (p.gancho?.texto_pantalla || ''));
     const dia = DIAS[(new Date(f + 'T12:00:00Z').getUTCDay() + 6) % 7];
     let hechos = ''; try { hechos = JSON.stringify(require('./creativeCampaigns').readBrands(this.g.dir).slice(0, 3)).slice(0, 2000); } catch {}
+    const ver = '{"formato":"…","medidas":"…","duracion_seg":20,"hora":"HH:MM","copy":"copy propio de esta red","cta":"…","hashtags":["#…"],"audio":"…","notas":"cómo adaptar: recorte, texto en pantalla, ritmo, duración"}';
     const system = 'Eres G.R.E.T.A, guionista y estratega de contenido de ' + M.nombre + '. Reglas (skill ' + S.version + '):\n\n' + S.texto +
-      '\n\nEscribe en el tono de la marca. Nunca inventes precios, descuentos, metrajes, fechas de entrega ni avance de obra: si una pieza necesita una cifra, escribe [DATO A CONFIRMAR]. Música: solo libre de derechos o "audio en tendencia elegido al publicar". Devuelve SOLO JSON: {"piezas":[{"hora":"HH:MM","formato":"reel|carrusel|imagen|historia|video","pilar":"…","objetivo":"…","titulo":"…","gancho":{"texto_pantalla":"…","primera_frase":"…","visual":"lo que se ve en el segundo 0-2"},"duracion_seg":20,"guion":[{"seg":"0-2","visual":"…","texto_pantalla":"…","motion":"animación/transición con colores y tipografía de marca","voz":"…"}],"motion_graphics":"estilo general de animación","voz_en_off":{"texto":"guion completo","estilo":"voz, ritmo, emoción"},"musica":{"estilo":"…","bpm":"…","sugerencia":"tipo de pista libre de derechos o audio en tendencia","nota":"…"},"copy":"texto de la publicación","cta":"…","hashtags":["#…"],"produccion":"erp|equipo","recursos":"fotos/tomas que se necesitan","marca":"cómo aplicar colores y tipografía","medidas":"formato y medidas exactas para esta red"}]}. Para imágenes y carruseles el "guion" describe cada lámina (seg = número de lámina) y no lleva voz en off. Las piezas de cada red son DISTINTAS a las de las otras redes (no adaptes la misma idea).';
-    const prompt = 'RED: ' + red + '. DÍA: ' + dia + ' ' + f + '.\nCARACTERÍSTICAS DE ' + red.toUpperCase() + ' (obligatorias): ' + SPECS[red] + '\nMARCA (datos): ' + JSON.stringify(M) + '\nANÁLISIS (datos): ' + JSON.stringify(an ? { resumen: an.resumen, perfiles: an.perfiles?.[red], pilares: an.pilares, ganchos: an.ganchos_modelo, formatos: an.formatos_por_red?.[red], horarios: an.horarios?.[red], hashtags: an.hashtags?.[red], nicho: an.nicho?.insights } : 'sin análisis aún').slice(0, 7000) +
+      '\n\nCada pieza es UNA sola idea y producción que se publica en Instagram, Facebook y TikTok, con una VERSIÓN ADAPTADA por red según sus características (obligatorias):\n' + REDES.map(r => '- ' + r + ': ' + SPECS[r]).join('\n') +
+      '\nEscribe en el tono de la marca. Nunca inventes precios, descuentos, metrajes, fechas de entrega ni avance de obra: si una pieza necesita una cifra, escribe [DATO A CONFIRMAR]. Música: solo libre de derechos o "audio en tendencia elegido al publicar". Devuelve SOLO JSON: {"piezas":[{"hora":"HH:MM","formato":"reel|carrusel|imagen|historia|video","pilar":"…","objetivo":"…","titulo":"…","gancho":{"texto_pantalla":"…","primera_frase":"…","visual":"lo que se ve en el segundo 0-2"},"duracion_seg":30,"guion":[{"seg":"0-2","visual":"…","texto_pantalla":"…","motion":"animación/transición con colores y tipografía de marca","voz":"…"}],"motion_graphics":"…","voz_en_off":{"texto":"…","estilo":"…"},"musica":{"estilo":"…","bpm":"…","sugerencia":"…","nota":"…"},"copy":"copy base","cta":"…","hashtags":["#…"],"produccion":"erp|equipo","recursos":"…","marca":"…","versiones":{"instagram":' + ver + ',"facebook":' + ver + ',"tiktok":' + ver + '}}]}. Para imágenes y carruseles el "guion" describe cada lámina (seg = número de lámina) y no lleva voz en off.';
+    const base = 'DÍA: ' + dia + ' ' + f + '.\nMARCA (datos): ' + JSON.stringify(M) + '\nANÁLISIS (datos): ' + JSON.stringify(an ? { resumen: an.resumen, perfiles: an.perfiles, pilares: an.pilares, ganchos: an.ganchos_modelo, formatos: an.formatos_por_red, horarios: an.horarios, hashtags: an.hashtags, nicho: an.nicho?.insights } : 'sin análisis aún').slice(0, 9000) +
       '\nHECHOS DEL PROYECTO (únicos datos que se pueden afirmar): ' + hechos + '\nYA PLANIFICADO ESTA SEMANA (no repetir temas ni ganchos): ' + JSON.stringify(otras) +
-      '\nREQUISITOS: gancho fuerte en los 2 primeros segundos; guion por escenas con segundos; motion graphics con los colores ' + M.colores.map(c => c.hex).join(', ') + ' y tipografía ' + M.tipografias.titulos + '; voz en off completa; música; copy con CTA; hashtags dentro del límite de la red (prioriza los base ' + M.hashtags_base.join(' ') + '). Marca "produccion":"erp" si se arma con fotos/renders y textos animados; "equipo" si requiere grabar tomas reales.';
-    const sl = SLOTS[red], parte = (d, h, nota) => prompt + '\nGENERA EXACTAMENTE ' + (h - d) + ' piezas para estos horarios y formatos sugeridos (en este orden): ' + sl.slice(d, h).map(x => x.hora + ' ' + x.formato).join('; ') + '. ' + nota;
+      '\nREQUISITOS: gancho fuerte en los 2 primeros segundos; guion por escenas con segundos; motion graphics con los colores ' + M.colores.map(c => c.hex).join(', ') + ' y tipografía ' + M.tipografias.titulos + '; voz en off completa en los videos; música; hashtags dentro del límite de cada red (prioriza los base ' + M.hashtags_base.join(' ') + '). Marca "produccion":"erp" si se arma con fotos/renders y textos animados; "equipo" si requiere grabar tomas reales.';
+    const parte = (d, h, nota) => base + '\nGENERA EXACTAMENTE ' + (h - d) + ' piezas para estos horarios y formatos sugeridos (en este orden): ' + SLOTS.slice(d, h).map(x => x.hora + ' ' + x.formato).join('; ') + '. ' + nota;
     const [ra, rb] = await Promise.all([
-      this.g.ai(user, data, system, parte(0, 4, 'Otra parte escribe las piezas de la tarde y noche: enfócate en temas propios de mañana y mediodía.'), { max: 8000 }),
-      this.g.ai(user, data, system, parte(4, POR_DIA, 'Otra parte escribe las piezas de la mañana y mediodía: enfócate en temas distintos, propios de la tarde y noche.'), { max: 7000 }),
+      this.g.ai(user, data, system, parte(0, 4, 'Otra parte escribe las piezas de la tarde y noche: enfócate en temas propios de mañana y mediodía.'), { max: 10000 }),
+      this.g.ai(user, data, system, parte(4, POR_DIA, 'Otra parte escribe las piezas de la mañana y mediodía: enfócate en temas distintos, propios de la tarde y noche.'), { max: 8000 }),
     ]);
     const { jsonDe } = require('./greta'), la = (jsonDe(ra.texto).piezas || []).slice(0, 4), lb = (jsonDe(rb.texto).piezas || []).slice(0, POR_DIA - 4);
     if (!la.length && !lb.length) throw Error('G.R.E.T.A no devolvió piezas legibles. Intenta de nuevo.');
-    if (input?.rehacer) for (const p of ya.filter(p => p.fecha === f && p.red === red && p.estado === 'borrador')) await this.del(this.piezas.doc(p.id));
-    const out = [...la.map((p, i) => limpiarPieza(p, i, { semana_id: s.id, fecha: f, red, desde: 0 })), ...lb.map((p, i) => limpiarPieza(p, i, { semana_id: s.id, fecha: f, red, desde: 4 }))];
+    if (input?.rehacer) for (const p of delDia.filter(p => p.estado === 'borrador')) await this.del(this.piezas.doc(p.id));
+    const out = [...la.map((p, i) => limpiarPieza(p, i, { semana_id: s.id, fecha: f, red: 'todas', desde: 0 })), ...lb.map((p, i) => limpiarPieza(p, i, { semana_id: s.id, fecha: f, red: 'todas', desde: 4 }))];
     for (const p of out) await this.put(this.piezas.doc(p.id), p);
     return { piezas: out, incompleto: out.length < POR_DIA };
   }
@@ -150,6 +159,9 @@ class GretaPlan {
     if (c.gancho) next.gancho = { texto_pantalla: text(c.gancho.texto_pantalla, 120), primera_frase: text(c.gancho.primera_frase, 200), visual: text(c.gancho.visual, 300) };
     if (c.voz_en_off !== undefined) next.voz_en_off = { ...p.voz_en_off, texto: text(c.voz_en_off, 1500) };
     if (c.hashtags !== undefined) next.hashtags = [...new Set(lista(c.hashtags, 30, 40).map(hashtag).filter(Boolean))];
+    if (c.versiones && p.versiones) { next.versiones = { ...p.versiones }; for (const r of REDES) { const v = c.versiones[r]; if (!v) continue; const cur = { ...p.versiones[r] };
+      if (v.copy !== undefined) cur.copy = text(v.copy, 2200); if (v.cta !== undefined) cur.cta = text(v.cta, 160); if (v.hora !== undefined && /^\d{2}:\d{2}$/.test(v.hora)) cur.hora = v.hora;
+      if (v.hashtags !== undefined) cur.hashtags = [...new Set(lista(v.hashtags, 30, 40).map(hashtag).filter(Boolean))].slice(0, MAX_TAGS[r]); next.versiones[r] = cur; } }
     next.revision = (p.revision || 1) + 1; next.editado = now(); next.editado_por = text(user.name, 120);
     await this.put(ref, next); return next;
   }
@@ -160,4 +172,4 @@ class GretaPlan {
   }
 }
 const PLAN_METHODS = ['gretaPlanMarca', 'gretaPlanMarcaGuardar', 'gretaPlanAnalizar', 'gretaPlanSemanas', 'gretaPlanSemanaCrear', 'gretaPlanSemana', 'gretaPlanGenerar', 'gretaPlanPieza', 'gretaPlanAprobar'];
-module.exports = { GretaPlan, PLAN_METHODS, DEFAULT_MARCA, lunesDe, limpiarPieza, REDES, SPECS, SLOTS, POR_DIA, MAX_TAGS };
+module.exports = { GretaPlan, PLAN_METHODS, DEFAULT_MARCA, lunesDe, limpiarPieza, REDES, SPECS, SLOTS, POR_DIA, MAX_TAGS, limpiarVersion };
