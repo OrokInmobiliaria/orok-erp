@@ -18,6 +18,7 @@ function PruebaMeta(){
   <p style={{margin:0,fontSize:13,color:'#57534e'}}>Comprueba con la llave guardada que el número responde y que el ERP está suscrito para recibir los mensajes. No muestra ni envía ninguna clave.</p>
   <div style={{display:'flex',gap:8,flexWrap:'wrap'}}><button type="button" className="orok-btn orok-btn-primary" disabled={!!busy} onClick={()=>run('test')}>{busy==='test'?'Consultando…':'Probar conexión con Meta'}</button>
   {r&&!r.app_suscrita&&<button type="button" className="orok-btn" disabled={!!busy} onClick={()=>run('sub')}>{busy==='sub'?'Suscribiendo…':'Suscribir el ERP a la cuenta de WhatsApp'}</button>}</div>
+  <a className="orok-btn" href="/conectar-whatsapp" target="_blank" rel="noopener" style={{justifySelf:'start'}}>Conectar WhatsApp Business (celular + ERP)</a>
   {err&&<p role="status" style={{margin:0,color:'#b42318'}}>{err}</p>}
   {r&&<div style={{fontSize:13,display:'grid',gap:4}}>
    <span>{ok(true)} La llave funciona.</span>
@@ -27,19 +28,20 @@ function PruebaMeta(){
    {Array.isArray(r.permisos)&&<span>{ok(r.puede_administrar)} Permiso para administrar la cuenta (whatsapp_business_management).</span>}
    <span>{ok(r.verificacion)} Clave secreta y token de verificación guardados.</span>
    <span>{ok(r.habilitada)} Conexión {r.habilitada?'habilitada':'sin habilitar (necesaria para recibir mensajes)'}.</span>
+   {r.coexistencia&&<span>{ok(true)} Celular + ERP conectado el {new Date(r.coexistencia.conectado).toLocaleString('es-PE')} · contactos {r.coexistencia.sincronizacion?.smb_app_state_sync?.ok?'✓':'pendiente'} · historial {r.coexistencia.sincronizacion?.history?.ok?'✓':'pendiente'}</span>}
    <span style={{color:'#57534e'}}>Dirección para Meta (webhook): <code>{r.webhook}</code></span>
   </div>}
  </div>;
 }
 export function Connection({onSaved}){
  const [form,setForm]=useState(null),[busy,setBusy]=useState(false),[error,setError]=useState('');
- useEffect(()=>{let live=true;api.getWhatsAppSetup().then(s=>{if(live)setForm({businessAccountId:s.business_account_id||'',calendarId:s.calendar_id||'ventas@orok.com.pe',testAdvisorPhone:s.test_advisor_phone||'',advisorPhones:(s.advisor_phones||[]).join(','),enabled:s.enabled,sendingEnabled:s.sending_enabled,automaticEnabled:s.automatic_enabled,agendaEnabled:s.agenda_enabled,newConversationMode:s.new_conversation_mode||'observer',environment:s.environment,apiVersion:s.api_version,phoneNumberIds:s.phone_number_ids.join(','),testRecipients:s.test_recipients.join(','),accessToken:'',appSecret:'',verifyToken:''});}).catch(e=>setError(e.message));return ()=>{live=false;};},[]);
+ useEffect(()=>{let live=true;api.getWhatsAppSetup().then(s=>{if(live)setForm({businessAccountId:s.business_account_id||'',signupConfigId:s.signup_config_id||'',calendarId:s.calendar_id||'ventas@orok.com.pe',testAdvisorPhone:s.test_advisor_phone||'',advisorPhones:(s.advisor_phones||[]).join(','),enabled:s.enabled,sendingEnabled:s.sending_enabled,automaticEnabled:s.automatic_enabled,agendaEnabled:s.agenda_enabled,newConversationMode:s.new_conversation_mode||'observer',environment:s.environment,apiVersion:s.api_version,phoneNumberIds:s.phone_number_ids.join(','),testRecipients:s.test_recipients.join(','),accessToken:'',appSecret:'',verifyToken:''});}).catch(e=>setError(e.message));return ()=>{live=false;};},[]);
  const field=(name,value)=>setForm(f=>({...f,[name]:value}));
  async function save(e){e.preventDefault();setBusy(true);try{await api.saveWhatsAppSetup({...form,phoneNumberIds:form.phoneNumberIds.split(',').map(v=>v.trim()).filter(Boolean),testRecipients:form.testRecipients.split(',').map(v=>v.trim()).filter(Boolean)});setForm(f=>({...f,accessToken:'',appSecret:'',verifyToken:''}));onSaved();setError('Configuración guardada.');}catch(e){setError(e.message);}finally{setBusy(false);}}
  return <div className="whatsapp-setup">{form?<form onSubmit={save}><h3>Conexión de WhatsApp · Gerencia</h3><p>Las claves se guardan en el servidor. Los campos vacíos conservan las anteriores.</p>
  <label>Atención de consultas nuevas<select value={form.newConversationMode} onChange={e=>field('newConversationMode',e.target.value)}><option value="observer">Solo registro</option><option value="auto">Lola automática</option></select></label><label>Entorno<select value={form.environment} onChange={e=>field('environment',e.target.value)}><option value="test">Pruebas · solo destinatarios autorizados</option><option value="production">Producción</option></select></label>
  <label>Versión de Graph API<input required value={form.apiVersion} placeholder="La versión indicada en Meta" onChange={e=>field('apiVersion',e.target.value)}/></label>
- <label>WABA ID · cuenta de WhatsApp Business<input value={form.businessAccountId} onChange={e=>field('businessAccountId',e.target.value)}/></label>
+ <label>ID de configuración del registro integrado (Meta)<input inputMode="numeric" value={form.signupConfigId||''} onChange={e=>field('signupConfigId',e.target.value.replace(/\D/g,''))}/></label><label>WABA ID · cuenta de WhatsApp Business<input value={form.businessAccountId} onChange={e=>field('businessAccountId',e.target.value)}/></label>
  <label>Calendario de citas<input required value={form.calendarId} onChange={e=>field('calendarId',e.target.value)}/></label><p>En el ensayo, utiliza un calendario exclusivo de pruebas para conservar la agenda comercial.</p>
  <label>Phone Number ID de Meta<input required value={form.phoneNumberIds} onChange={e=>field('phoneNumberIds',e.target.value)}/></label>
  <label>Números autorizados en pruebas<input value={form.testRecipients} placeholder="51 seguido del número; separados por coma" onChange={e=>field('testRecipients',e.target.value)}/></label>

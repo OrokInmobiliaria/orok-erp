@@ -50,6 +50,7 @@ function validateOutput(raw,job){
 class WhatsAppService extends WhatsAppInbox{
  constructor(store,config={},options={}){super(store,options);this.config=config;this.attachmentArchive=new AttachmentArchive(config.privateDir);this.drive=options.drive||new LolaDrive(config);this.gateway=options.gateway||new WhatsAppGateway(config.privateDir);this.jobs=store.ref.collection(this.namespace+'_jobs');this.outbox=store.ref.collection(this.namespace+'_outbox');this.agenda=new WhatsAppAgenda(this);this.recovery=new WhatsAppRecovery(this);this.memory=new ConversationMemory(this);this.followups=new AutomaticFollowup(this);this.alerts=new AdvisorAlerts(this);}
  async ingest(input){
+  if(input?.historical)return super.ingest(input);
   const probe=this.normalizer(input),routing=require('./advisorRouting'),setup=this.gateway.setup();
   const officialAdvisor=routing.advisorPhones(setup).includes(probe.phone),testAdvisor=setup.environment==='test'&&setup.testAdvisorPhone===probe.phone;
   if(this.channel==='whatsapp'&&probe.direction==='inbound'&&(officialAdvisor||testAdvisor)){

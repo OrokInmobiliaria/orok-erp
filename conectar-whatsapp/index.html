@@ -1,0 +1,21 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Conectar WhatsApp · ERP ÖRÖK</title>
+<style>
+:root{--ink:#292524;--muted:#57534e;--brand:#85442A;--bg:#FCFAF8;--card:#fff;--line:#E7DFD8}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+main{max-width:640px;margin:0 auto;padding:28px 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 18px 40px -28px rgba(70,35,20,.4)}
+h1{font-size:22px;margin:0 0 8px;color:var(--brand)}p,li{line-height:1.55;color:var(--muted)}
+button{border:0;border-radius:12px;padding:13px 18px;font:inherit;font-weight:700;color:#fff;background:linear-gradient(135deg,#85442A,#5E2817);cursor:pointer}
+button:disabled{opacity:.5;cursor:default}.sec{background:#fff;color:var(--brand);border:1px solid var(--line)}
+#estado{margin-top:14px;white-space:pre-wrap;font-size:14px}.ok{color:#15803d}.err{color:#b42318}
+</style></head><body><main><div class="card">
+<h1>Conectar WhatsApp Business (celular + ERP)</h1>
+<p>Este paso conecta el número de ventas al ERP <b>sin sacarlo del celular</b>. Ten a mano el celular donde está WhatsApp Business con ese número.</p>
+<ol><li>Pulsa el botón y entra con tu cuenta de Facebook (la de Gerencia).</li><li>Elige el portafolio <b>Orok Inmobiliaria</b> y la opción de conectar tu app <b>WhatsApp Business</b>.</li><li>Escribe el número y confirma en el celular (WhatsApp te mostrará un aviso o un código QR).</li><li>Al terminar, vuelve aquí: el ERP guardará la conexión y pedirá a Meta los contactos y el historial.</li></ol>
+<p><button id="go" disabled>Cargando…</button></p>
+<p><button id="sync1" class="sec" hidden>Sincronizar contactos</button> <button id="sync2" class="sec" hidden>Sincronizar historial</button></p>
+<div id="estado" role="status"></div></div></main>
+<script src="/conectar-whatsapp/app.js"></script>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/es_LA/sdk.js"></script>
+</body></html>

@@ -20,7 +20,7 @@ function request(url,options={}){
  });
 }
 function readSetup(privateDir){let s;try{s=JSON.parse(fs.readFileSync(path.join(privateDir,'whatsapp-inbox.json'),'utf8'));}catch{s={};}if(s.ffmpegPath===undefined&&fs.existsSync('/usr/bin/ffmpeg'))s.ffmpegPath='/usr/bin/ffmpeg';return s;}
-function publicSetup(s){return {business_account_id:s.businessAccountId||'',calendar_id:s.calendarId||DEFAULT_CALENDAR_ID,test_advisor_phone:s.environment==='test'?s.testAdvisorPhone||'':'',advisor_phones:s.advisorPhones||[],enabled:s.enabled===true,sending_enabled:s.sendingEnabled===true,automatic_enabled:s.automaticEnabled===true,agenda_enabled:s.agendaEnabled===true,environment:s.environment||'test',phone_number_ids:s.phoneNumberIds||[],test_recipients:s.testRecipients||[],api_version:s.apiVersion||'',configured:!!s.accessToken,verification_configured:!!s.appSecret&&!!s.verifyToken,audio_conversion:!!s.ffmpegPath,new_conversation_mode:s.newConversationMode||'observer'};}
+function publicSetup(s){return {business_account_id:s.businessAccountId||'',calendar_id:s.calendarId||DEFAULT_CALENDAR_ID,test_advisor_phone:s.environment==='test'?s.testAdvisorPhone||'':'',advisor_phones:s.advisorPhones||[],enabled:s.enabled===true,sending_enabled:s.sendingEnabled===true,automatic_enabled:s.automaticEnabled===true,agenda_enabled:s.agendaEnabled===true,environment:s.environment||'test',phone_number_ids:s.phoneNumberIds||[],test_recipients:s.testRecipients||[],api_version:s.apiVersion||'',configured:!!s.accessToken,signup_config_id:s.signupConfigId||'',app_id:String(s.appId||'1633244618375190'),coexistencia:s.signup?{evento:s.signup.event||'',conectado:s.signup.at||null,waba_id:s.signup.waba_id||'',phone_number_id:s.signup.phone_number_id||'',sincronizacion:s.signup.sync||{}}:null,verification_configured:!!s.appSecret&&!!s.verifyToken,audio_conversion:!!s.ffmpegPath,new_conversation_mode:s.newConversationMode||'observer'};}
 function saveSetup(privateDir,input,actor){
  const old=readSetup(privateDir),s={...old};
  for(const field of ['enabled','sendingEnabled','automaticEnabled','agendaEnabled'])s[field]=input[field]===true;
@@ -37,6 +37,7 @@ function saveSetup(privateDir,input,actor){
  for(const field of ['accessToken','appSecret','verifyToken'])if(String(input[field]||'').trim())s[field]=String(input[field]).trim();
  if(s.enabled&&(!s.accessToken||String(s.appSecret||'').length<24||String(s.verifyToken||'').length<24))throw Error('Completa el token, App Secret y token de verificación privados.');
  if(input.ffmpegPath!==undefined){const file=String(input.ffmpegPath||'');if(file&&!/^\/[A-Za-z0-9_./-]+$/.test(file))throw Error('Ruta de conversión de audio no válida.');s.ffmpegPath=file;}
+ if(input.signupConfigId!==undefined){s.signupConfigId=String(input.signupConfigId||'').trim();if(s.signupConfigId&&!/^\d{5,30}$/.test(s.signupConfigId))throw Error('El ID de configuración del registro integrado debe tener solo números.');}
  if(input.businessAccountId!==undefined){s.businessAccountId=String(input.businessAccountId||'').trim();if(s.businessAccountId&&!/^\d{5,30}$/.test(s.businessAccountId))throw Error('WABA ID de Meta no válido.');}
  s.savedAt=new Date().toISOString();s.savedBy=actor;
  fs.mkdirSync(privateDir,{recursive:true,mode:0o700});const dest=path.join(privateDir,'whatsapp-inbox.json'),tmp=dest+'.'+randomUUID();fs.writeFileSync(tmp,JSON.stringify(s,null,2),{mode:0o600});fs.renameSync(tmp,dest);return publicSetup(s);
@@ -69,11 +70,41 @@ class WhatsAppGateway{
   for(const id of s.phoneNumberIds){const p=await this.api(s,encodeURIComponent(id)+'?fields=display_phone_number,verified_name,quality_rating,status,name_status,platform_type');phones.push({id,numero:p.display_phone_number||'',nombre:p.verified_name||'',calidad:p.quality_rating||'',estado:p.status||'',plataforma:p.platform_type||''});}
   const sub=await this.api(s,encodeURIComponent(s.businessAccountId)+'/subscribed_apps'),apps=(sub.data||[]).map(a=>({id:String(a.whatsapp_business_api_data?.id||a.id||''),nombre:String(a.whatsapp_business_api_data?.name||a.name||'')}));
   let permisos=[];try{const pr=await this.api(s,'me/permissions');permisos=(pr.data||[]).filter(x=>x.status==='granted').map(x=>String(x.permission));}catch{permisos=null;}
-  return {ok:true,phones,apps,app_id:appId,permisos,puede_enviar:Array.isArray(permisos)?permisos.includes('whatsapp_business_messaging'):null,puede_administrar:Array.isArray(permisos)?permisos.includes('whatsapp_business_management'):null,app_suscrita:apps.some(a=>a.id===appId),webhook:'https://erp.orok.com.pe/api/integrations/whatsapp',habilitada:s.enabled===true,verificacion:!!s.appSecret&&!!s.verifyToken,probado:new Date().toISOString()};
+  return {ok:true,coexistencia:s.signup?{conectado:s.signup.at,sincronizacion:s.signup.sync||{}}:null,phones,apps,app_id:appId,permisos,puede_enviar:Array.isArray(permisos)?permisos.includes('whatsapp_business_messaging'):null,puede_administrar:Array.isArray(permisos)?permisos.includes('whatsapp_business_management'):null,app_suscrita:apps.some(a=>a.id===appId),webhook:'https://erp.orok.com.pe/api/integrations/whatsapp',habilitada:s.enabled===true,verificacion:!!s.appSecret&&!!s.verifyToken,probado:new Date().toISOString()};
  }
  async subscribeApp(){
   const s=this.setup();if(!s.accessToken||!s.businessAccountId||!/^v\d{2}\.\d+$/.test(s.apiVersion||''))throw Error('Primero guarda el token, el WABA ID y la versión.');
   const r=await this.api(s,encodeURIComponent(s.businessAccountId)+'/subscribed_apps',{method:'POST'});if(r.success!==true)throw Error('Meta no confirmó la suscripción.');return this.diagnose();
+ }
+ // R72 · Registro integrado de Meta (coexistencia celular + ERP). El código dura 30 s: se cambia de inmediato por la
+ // llave del negocio. Luego se suscribe la app a la cuenta y, si el número viene de la app WhatsApp Business, se pide
+ // a Meta la sincronización de contactos e historial (solo una vez, dentro de 24 h).
+ async signup(input){
+  const s=this.setup(),appId=String(s.appId||'1633244618375190'),code=String(input?.code||'');
+  if(!/^[\w.-]{10,2000}$/.test(code))throw Error('Meta no entregó un código de autorización válido.');
+  if(!s.appSecret||!/^v\d{2}\.\d+$/.test(s.apiVersion||''))throw Error('Guarda primero el App Secret y la versión de Graph API.');
+  const waba=String(input?.waba_id||'').replace(/\D/g,''),phone=String(input?.phone_number_id||'').replace(/\D/g,''),event=String(input?.event||'').slice(0,60);
+  const q=new URLSearchParams({client_id:appId,client_secret:s.appSecret,code});
+  const r=await this.request('https://graph.facebook.com/'+s.apiVersion+'/oauth/access_token?'+q);let d={};try{d=r.json();}catch{}
+  if(!r.ok||!d.access_token)throw Error('Meta no aceptó el código del registro (HTTP '+r.status+(d.error?.message?': '+String(d.error.message).slice(0,160):'')+'). Vuelve a intentarlo.');
+  const token=String(d.access_token),bs={...s,accessToken:token},out={event,waba_id:waba,phone_number_id:phone,at:new Date().toISOString(),sync:{}};
+  if(waba){try{await this.api(bs,waba+'/subscribed_apps',{method:'POST'});out.suscrita=true;}catch(e){out.suscrita=false;out.error_suscripcion=e.message.slice(0,200);}}
+  const fields={signupToken:token,signup:out};
+  if(waba&&!s.businessAccountId)fields.businessAccountId=waba;
+  if(phone&&!(s.phoneNumberIds||[]).includes(phone))fields.phoneNumberIds=[...(s.phoneNumberIds||[]),phone];
+  patchSetup(this.privateDir,fields);
+  if(event==='FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING'&&phone){for(const k of ['smb_app_state_sync','history'])await this.sync(k).catch(()=>{});}
+  return this.setup().signup;
+ }
+ async sync(kind){
+  if(!['smb_app_state_sync','history'].includes(kind))throw Error('Tipo de sincronización no válido.');
+  const s=this.setup(),sig=s.signup||{};if(!sig.phone_number_id)throw Error('Primero conecta el número con «Conectar WhatsApp Business».');
+  if(sig.sync?.[kind]?.ok)throw Error('Meta permite esta sincronización una sola vez por conexión.');
+  if(Date.now()-Date.parse(sig.at)>24*3600e3)throw Error('Pasaron más de 24 horas desde la conexión; Meta ya no permite sincronizar.');
+  const bs={...s,accessToken:s.signupToken||s.accessToken};let res;
+  try{const d=await this.api(bs,sig.phone_number_id+'/smb_app_data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messaging_product:'whatsapp',sync_type:kind})});res={ok:true,request_id:String(d.request_id||''),at:new Date().toISOString()};}
+  catch(e){res={ok:false,error:e.message.slice(0,240),at:new Date().toISOString()};}
+  patchSetup(this.privateDir,{signup:{...sig,sync:{...(sig.sync||{}),[kind]:res}}});if(!res.ok)throw Error(res.error);return res;
  }
  async approvedRecovery(account){return this.approvedTemplate(account,require('./recoveryTemplate').definition);}
  async approvedTemplate(account,definition){
@@ -114,4 +145,5 @@ class WhatsAppGateway{
   try{fs.writeFileSync(input,bytes,{mode:0o600});await new Promise((resolve,reject)=>{const child=this.spawnProcess(ffmpeg,['-nostdin','-y','-i',input,'-vn','-ac','1','-ar','48000','-c:a','libopus','-b:a','32k','-threads','1',output],{stdio:'ignore'}),timer=setTimeout(()=>{child.kill('SIGKILL');reject(Error('La conversión de audio tardó demasiado.'));},15000);child.once('error',()=>{clearTimeout(timer);reject(Error('No se pudo iniciar FFmpeg.'));});child.once('exit',code=>{clearTimeout(timer);code===0?resolve():reject(Error('No se pudo convertir el audio.'));});});const converted=fs.readFileSync(output);if(!converted.length||converted.length>16*1024*1024||converted.subarray(0,4).toString()!=='OggS'||!converted.includes(Buffer.from('OpusHead')))throw Error('La conversión no produjo un OGG/Opus válido.');return {bytes:converted,mime:'audio/ogg'};}finally{fs.rmSync(folder,{recursive:true,force:true});}
  }
 }
-module.exports={WhatsAppGateway,readSetup,publicSetup,saveSetup,AUDIO,request,audioMime};
+function patchSetup(privateDir,fields){const s={...readSetup(privateDir),...fields};fs.mkdirSync(privateDir,{recursive:true,mode:0o700});const dest=path.join(privateDir,'whatsapp-inbox.json'),tmp=dest+'.'+randomUUID();fs.writeFileSync(tmp,JSON.stringify(s,null,2),{mode:0o600});fs.renameSync(tmp,dest);return s;}
+module.exports={patchSetup,WhatsAppGateway,readSetup,publicSetup,saveSetup,AUDIO,request,audioMime};
