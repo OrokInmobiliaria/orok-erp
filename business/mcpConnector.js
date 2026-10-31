@@ -116,7 +116,19 @@ const TOOLS = [
       if (a.ia === 'greta') return { respuesta: (await x.call('gretaAsk', [{ pregunta: q }])).respuesta };
       if (a.ia === 'clara') { const r = await x.call('claraAsk', [{ messages: [{ role: 'user', text: q }] }]); return { respuesta: r.reply || r.respuesta || r.text || r }; }
       const r = await x.call('askLolaAssistant', [{ messages: [{ role: 'user', text: q }] }]); return { respuesta: r.reply };
-    } }
+    } },
+  { name: 'mercado_tareas_pendientes', title: 'Estudio de mercado: tomar investigación pendiente', ro: false,
+    description: 'Toma la siguiente investigación de mercado que Gerencia pidió desde el ERP (distrito, portales, tipologías y notas) y la marca «en curso». Devuelve la tarea y cómo subir los resultados. Si no hay tareas, devuelve tarea null.',
+    schema: obj({ id: { type: 'string', description: 'Id de una tarea concreta (opcional).' } }),
+    run: async (a, x) => x.call('mercadoTareaTomar', [{ id: a.id }]) },
+  { name: 'mercado_subir_comparables', title: 'Estudio de mercado: subir comparables', ro: false,
+    description: 'Sube hasta 100 comparables (avisos de departamentos en venta) al Estudio de mercado del ERP. Cada uno con precio, moneda (PEN o USD), área en m², distrito y, si se tienen: dormitorios, baños, piso, cochera, proyecto, inmobiliaria, dirección, etapa, url del aviso, fuente (portal) y fecha. Los repetidos (mismo enlace) se actualizan, no se duplican. No inventes datos.',
+    schema: obj({ tarea_id: { type: 'string' }, comparables: { type: 'array', maxItems: 100, items: { type: 'object', properties: { precio: { type: 'number' }, moneda: { type: 'string', enum: ['PEN', 'USD'] }, area: { type: 'number' }, distrito: { type: 'string' }, dormitorios: { type: 'number' }, banos: { type: 'number' }, piso: { type: 'string' }, cochera: { type: 'string' }, proyecto: { type: 'string' }, inmobiliaria: { type: 'string' }, direccion: { type: 'string' }, etapa: { type: 'string' }, url: { type: 'string' }, fuente: { type: 'string' }, fecha: { type: 'string' } }, required: ['precio', 'area'] } } }, ['comparables']),
+    run: async (a, x) => x.call('mercadoSubir', [{ tarea_id: a.tarea_id, comparables: a.comparables }]) },
+  { name: 'mercado_tarea_completar', title: 'Estudio de mercado: cerrar investigación', ro: false,
+    description: 'Marca una investigación de mercado como completa (o fallida) y deja un resumen breve de lo encontrado: rango de precios por m², tipologías más ofertadas, proyectos competidores y observaciones.',
+    schema: obj({ id: { type: 'string' }, estado: { type: 'string', enum: ['completa', 'fallida'] }, resumen: { type: 'string' } }, ['id']),
+    run: async (a, x) => x.call('mercadoTareaCompletar', [{ id: a.id, estado: a.estado, resumen: a.resumen }]) },
 ];
 function ordenCorta(o) { return { id: o.id, numero: o.n || o.numero || null, tipo: o.tipo || null, empresa: o.empresa || null, proveedor: o.proveedor_nombre || o.proveedor || null, proyecto: o.proyecto || null, total: o.total ?? null, moneda: o.moneda || null, estado: o.estado || null, solicitante: o.solicitante?.nombre || o.solicitante?.name || null, aprobacion: (o.aprobacion?.pasos || []).map(p => ({ rol: p.rol || p.cargo || null, nombre: p.nombre || p.name || null, estado: p.estado || 'pendiente' })), actualizado: o.upd || null }; }
 async function pendientes(x) {

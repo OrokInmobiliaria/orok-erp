@@ -15,6 +15,7 @@ import SocialInbox from './SocialInbox';
 import AdsDashboard from './AdsDashboard';
 import CampaignStudio from './CampaignStudio';
 import MarketingAssistant from './MarketingAssistant';
+import EstudioMercado from './EstudioMercado'; // R74 · estudio de mercado por distrito
 import {GretaPlanSemanal, GretaHoy, GretaTendencias, GretaPublicar, GretaKpis, GretaConfig, GretaAssistant, GretaFormularios} from './Greta'; // R42 · módulo Marketing con G.R.E.T.A
 import PowerDashboard from './PowerDashboard';
 import GroupedNav from './GroupedNav';
@@ -1331,6 +1332,7 @@ function DesktopView({ data }) {
         {activeTab==='campaigns'&&currentUser.role==='Gerente'&&<CampaignStudio key={studioCampaign} initialCampaign={studioCampaign}/>}
         {currentUser.role==='Gerente'&&<>{/* R42 · Marketing con G.R.E.T.A */}
           {activeTab==='mkHome'&&<GretaHoy onGo={handleTabChange}/>}
+          {currentUser.role==='Gerente'&&activeTab==='mercadoEstudio'&&<EstudioMercado/>}{/* R74 */}
           {activeTab==='mkPlan'&&<GretaPlanSemanal/>}{/* R73 · plan semanal */}
           {activeTab==='mkForms'&&<GretaFormularios/>}{/* R43 · formularios instantáneos */}
           {activeTab==='mkTrends'&&<GretaTendencias onOpenCampaign={id=>{setStudioCampaign(id);handleTabChange('campaigns');}}/>}

@@ -144,12 +144,12 @@ test('R33b: Vendedor y Broker solo ven el CRM (Inicio, Ventas, Configuración; R
   assert.deepEqual(navGroups(r).map(g=>g.label),['Inicio','Ventas','Órdenes OC/OS','Configuración'],r);
   assert.deepEqual(navGroups(r,'evaluador').map(g=>g.label),['Inicio','Ventas','Órdenes OC/OS','Configuración'],r+' no entra al Evaluador');
   assert.equal(ids(r).includes('contabilidad'),false,r+' no entra a Contabilidad');
-  for(const id of ['mora','moraAdmin','evaluador'])assert.equal(ids(r).includes(id),false,r+' '+id);
+  for(const id of ['mora','moraAdmin','evaluador','mercadoEstudio'])assert.equal(ids(r).includes(id),false,r+' '+id);
   assert.deepEqual(modulesFor(r).map(m=>m.id),['crm']);
  }
  assert.deepEqual(navGroups('Gerente').map(g=>g.label),['Inicio','Ventas','Configuración']); // R42 · Marketing salió del CRM
  assert.deepEqual(navGroups('Gerente','marketing').map(g=>g.label),['Hoy','Crear','Publicar','Medir','Marca']);
- assert.deepEqual(ids('Gerente','evaluador'),['evaluador','mora','moraAdmin']);
+ assert.deepEqual(ids('Gerente','evaluador'),['evaluador','mercadoEstudio','mora','moraAdmin']);
  assert.deepEqual(modulesFor('Gerente').map(m=>m.id),['evaluador','marketing','crm','erp']);
  assert.equal(moduleOf('mora'),'evaluador');assert.equal(moduleOf('kanban'),'crm');
  for(const id of ['mora','moraAdmin','evaluador'])assert.ok(MANAGER_ONLY.includes(id),id);
