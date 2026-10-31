@@ -93,12 +93,12 @@ function createServer({config,store,auth,cache,authCache,supportMail,whatsappOpt
     }
     if(req.method!=='POST')return json(405,{error:'Método no disponible.'});
     if(!String(req.headers['content-type']||'').startsWith('application/json'))return json(415,{error:'Formato no válido.'});
-    const raw=await body(req,256*1024),expected='sha256='+crypto.createHmac('sha256',setup.appSecret).update(raw).digest('hex');
+    const raw=await body(req,8*1024*1024),expected='sha256='+crypto.createHmac('sha256',setup.appSecret).update(raw).digest('hex');
     if(!validSecret(expected,req.headers['x-hub-signature-256']))return json(401,{error:'Firma WhatsApp no válida.'});
     const events=metaEvents(JSON.parse(raw.toString('utf8')));
     if(events.some(event=>!setup.phoneNumberIds.map(String).includes(event.business_phone_id)))return json(403,{error:'Número WhatsApp no autorizado.'});
-    for(const item of events)await (item.kind==='message'?app.whatsapp.ingest(item):app.whatsapp.status(item));
-    return json(200,{ok:true,events:events.length,processing_async:true});
+    let historicos=0;for(const item of events){if(item.historical){try{await app.whatsapp.ingest(item);historicos++;}catch{}continue;}await (item.kind==='message'?app.whatsapp.ingest(item):app.whatsapp.status(item));}
+    return json(200,{ok:true,events:events.length,historicos,processing_async:true});
    }
    if(url.pathname==='/api/integrations/lola'){
     if(req.method!=='POST')return json(405,{error:'Método no disponible.'});
@@ -172,6 +172,12 @@ function createServer({config,store,auth,cache,authCache,supportMail,whatsappOpt
      const campaign=String(req.headers['x-campaign-id']||''),input={request_id:String(req.headers['x-request-id']||''),filename:decodeURIComponent(String(req.headers['x-file-name']||'')),label:decodeURIComponent(String(req.headers['x-media-label']||'')),approved:req.headers['x-media-approved']==='1',export:req.headers['x-media-export']==='1',revision:Number(req.headers['x-campaign-revision']),mime:String(req.headers['content-type']||'').split(';')[0]};
      return json(200,{value:await papp.creative.addMedia(campaign,input,await body(req,40*1024*1024),user.name)});
     }
+    if(url.pathname==='/api/whatsapp-signup'){
+     const user=await authCache.require(cookie);if(user.role!=='Gerente')return json(403,{error:'Requiere Gerencia.'});if(req.method!=='POST')return json(405,{error:'Método no disponible.'});
+     const input=JSON.parse((await body(req,16*1024)).toString('utf8')||'{}');
+     if(input.sync)return json(200,{value:await app.whatsapp.gateway.sync(String(input.sync))});
+     return json(200,{value:await app.whatsapp.gateway.signup(input)});
+    }
     if(url.pathname==='/api/whatsapp-attachment'){
      const user=await authCache.require(cookie),leadId=String(req.headers['x-lead-id']||''),requestId=String(req.headers['x-request-id']||''),mime=String(req.headers['content-type']||'').split(';')[0],filename=decodeURIComponent(String(req.headers['x-file-name']||'')),text=decodeURIComponent(String(req.headers['x-file-caption']||''));
      return json(200,{value:await papp.whatsapp.send(leadId,{request_id:requestId,text},user.name,{attachment:{bytes:await body(req,16*1024*1024),mime,filename}})});
@@ -215,6 +221,15 @@ function createServer({config,store,auth,cache,authCache,supportMail,whatsappOpt
     res.writeHead(200,{'Content-Type':media.mime,'Content-Length':media.bytes.length,'Cache-Control':'private, no-store','Content-Disposition':media.mime.startsWith('audio/')?'inline':"attachment; filename*=UTF-8''"+encodeURIComponent(media.filename||'Archivo')});return res.end(req.method==='HEAD'?undefined:media.bytes);
    }
    let target;
+   if(url.pathname==='/conectar-whatsapp'||url.pathname==='/conectar-whatsapp/app.js'){
+    // R72 · Registro integrado de Meta (coexistencia). Página propia: es la única que carga el SDK de Facebook.
+    const user=await authCache.require(cookie);if(user.role!=='Gerente')return json(403,{error:'Conectar WhatsApp requiere Gerencia.'});
+    if(url.pathname.endsWith('app.js')){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store'});return res.end(fs.readFileSync(path.join(__dirname,'conectar-whatsapp','app.js')));}
+    const ws=app.whatsapp.gateway.setup(),cfgJson=JSON.stringify({app_id:String(ws.appId||'1633244618375190'),config_id:String(ws.signupConfigId||''),version:ws.apiVersion||'v26.0'}).replace(/</g,'\\u003c');
+    res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self' https://connect.facebook.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; frame-src https://www.facebook.com https://web.facebook.com https://*.facebook.com; connect-src 'self' https://*.facebook.com https://graph.facebook.com; base-uri 'self'; frame-ancestors 'self'");
+    res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});
+    return res.end(fs.readFileSync(path.join(__dirname,'conectar-whatsapp','index.html'),'utf8').replace('<script src="/conectar-whatsapp/app.js">','<script type="application/json" id="cfg">'+cfgJson+'</script><script src="/conectar-whatsapp/app.js">'));
+   }
    if(url.pathname==='/evaluador'||url.pathname.startsWith('/evaluador/')){
     // R33b · Evaluador Inmobiliario M.O.R.A: solo Gerencia, servido fuera de dist/ y sin caché.
     const user=await authCache.require(cookie);if(user.role!=='Gerente')return json(403,{error:'El Evaluador Inmobiliario requiere Gerencia.'});

@@ -56,6 +56,7 @@ class WhatsAppInbox{
    const data=read(),receipt=await tx.get(receiptRef),previous=receipt.exists?receipt.data():{};
    if(previous.message_recorded)return {ok:true,duplicate:true,lead_id:previous.lead_id,writes:0,reply_disabled:true};
    let lead=this.resolveContact(data,message,input),created=false;
+   if(!lead&&input.historical)return {ok:true,skipped:'historial_sin_lead',writes:0,reply_disabled:true};
    if(!lead){
     if(message.direction!=='inbound')throw Error('Un mensaje saliente no puede crear un lead sin identificar.');
     lead=leadDefaults({name:message.name||message.phone,phone:message.phone,status:'Lead Inicial',source:message.referral?.source_type==='ad'?'Meta · WhatsApp':'WhatsApp',project:data.settings?.projectName||'Infinity 224',received_at:message.at,received_date_source:'WhatsApp · observador',sales_owner:data.settings?.defaultSalesOwner||data.settings?.agentName||'',events:[],milestones:{},external_ids:{whatsapp:message.phone},history_complete:true},data.leads||[]);
@@ -107,6 +108,10 @@ function metaEvents(payload){
  if(payload?.object!=='whatsapp_business_account')throw Error('Evento Meta no válido.');
  const output=[];
  for(const entry of payload.entry||[])for(const change of entry.changes||[]){
+  if(change.field==='history'){const value=change.value||{},account=clean(value.metadata?.phone_number_id,100),own=String(value.metadata?.display_phone_number||'').replace(/\D/g,'');
+   for(const h of value.history||[])for(const th of h.threads||[])for(const message of th.messages||[]){const contactId=String(th.id||'').replace(/\D/g,''),from=String(message.from||'').replace(/\D/g,''),outbound=from!==contactId||(own&&from===own),type=message.type;
+    output.push({kind:'message',historical:true,business_phone_id:account,phone:contactId,message:{id:message.id,at:message.timestamp,direction:outbound?'outbound':'inbound',sender:outbound?'Equipo · historial del celular':undefined,type,text:message.text?.body||(type&&type!=='text'?'['+type+']':''),media:message[type],historical:true}});}
+   continue;}
   if(!['messages','smb_message_echoes'].includes(change.field))continue;const value=change.value||{},account=clean(value.metadata?.phone_number_id,100);
   for(const message of (change.field==='smb_message_echoes'?value.message_echoes:value.messages)||[]){
    const outbound=change.field==='smb_message_echoes';
@@ -118,6 +123,6 @@ function metaEvents(payload){
   }
   for(const status of value.statuses||[])if(STATES.includes(status.status))output.push({kind:'status',business_phone_id:account,message_id:status.id,status:status.status,at:status.timestamp});
  }
- if(output.length>100)throw Error('El lote WhatsApp supera 100 eventos.');return output;
+ if(output.filter(e=>!e.historical).length>100)throw Error('El lote WhatsApp supera 100 eventos.');return output.slice(0,5000);
 }
 module.exports={WhatsAppInbox,normalizeMessage,metaEvents,statusUpdate,legacyMessages};
