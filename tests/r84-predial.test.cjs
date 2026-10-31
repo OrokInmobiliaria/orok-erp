@@ -13,3 +13,10 @@ test('R84: predial año por año: casa, terreno, unidades sin vender',()=>{
  const r2=X.predialPlan({...p,inicio:'2026-06'},{},{io:12,ind:3,indStart:20,H:20,soldCum,obraOficial:0});assert.equal(Math.round(r2.anios[0].imp*100)/100,431.52);
 });
 test('R84: datos de la HR/PU de Infinity y campos en Tributarios',()=>{assert.match(s,/predArancel=396/);assert.match(s,/predConstrExist=135478\.68/);assert.match(s,/Impuesto predial año por año/);assert.doesNotMatch(s,/10798879|KARMIGATEK/i);});
+test('R85: arbitrios y emisión año por año',()=>{
+ const p={inicio:'2026-01',predAnioBase:2026,areaTerreno:160,predArancel:396,predConstrExist:135478.68,uit:5500,predEmision:4.79,arbAnual:813.12};
+ const r=X.predialPlan(p,{units:[1,2,3,4]},{io:12,ind:3,indStart:20,H:40,soldCum:new Array(41).fill(0).map((_,t)=>t<30?0.5:1),obraOficial:0});
+ assert.equal(Math.round(r.anios[0].imp*100)/100,867.82);assert.equal(r.anios[0].arb,813.12);assert.equal(r.anios[2].arb,813.12*0.5);
+ const r2=X.predialPlan({...p,arbUnidad:300},{units:[1,2,3,4]},{io:12,ind:3,indStart:20,H:40,soldCum:new Array(41).fill(0).map((_,t)=>t<30?0.5:1),obraOficial:0});assert.equal(r2.anios[2].arb,600);
+ assert.match(s,/arbAnual=813\.12/);
+});
