@@ -381,9 +381,13 @@ class Greta {
       if (name === 'gretaPlanSemana') return P.semana(a0.id);
       if (name === 'gretaPlanGenerar') return P.generar(a0, user, data);
       if (name === 'gretaPlanPieza') return P.pieza(a0, user);
-      if (name === 'gretaPlanAprobar') return P.aprobarDia(a0, user); }
+      if (name === 'gretaPlanAprobar') return P.aprobarDia(a0, user);
+      if (name.startsWith('gretaPlanVideo')) { const V = P.video || (P.video = new (require('./videoHF').VideoHF)(P)); // R77
+        if (name === 'gretaPlanVideoCrear') return V.crear(a0, user);
+        if (name === 'gretaPlanVideoEstado') return V.estado(a0);
+        if (name === 'gretaPlanVideoArchivo') return V.archivo(a0); } }
     throw Error('Operación de G.R.E.T.A no reconocida.');
   }
 }
-const GRETA_METHODS = ['gretaPlanMarca', 'gretaPlanMarcaGuardar', 'gretaPlanAnalizar', 'gretaPlanSemanas', 'gretaPlanSemanaCrear', 'gretaPlanSemana', 'gretaPlanGenerar', 'gretaPlanPieza', 'gretaPlanAprobar', 'gretaHoy', 'gretaAsk', 'gretaTendencias', 'gretaTendenciasLista', 'gretaIdea', 'gretaImagen', 'gretaKpis', 'gretaKpisLectura', 'gretaConfig', 'gretaConfigGuardar', 'gretaAvisarLola', 'gretaArmar', 'gretaFormularios', 'gretaFormulario', 'gretaFormularioRedactar', 'gretaFormularioGuardar', 'gretaFormularioAprobar', 'gretaFormularioCrear', 'gretaFormularioVersion', 'gretaFormularioArchivar'];
+const GRETA_METHODS = ['gretaPlanMarca', 'gretaPlanMarcaGuardar', 'gretaPlanAnalizar', 'gretaPlanSemanas', 'gretaPlanSemanaCrear', 'gretaPlanSemana', 'gretaPlanGenerar', 'gretaPlanPieza', 'gretaPlanAprobar', 'gretaPlanVideoCrear', 'gretaPlanVideoEstado', 'gretaPlanVideoArchivo', 'gretaHoy', 'gretaAsk', 'gretaTendencias', 'gretaTendenciasLista', 'gretaIdea', 'gretaImagen', 'gretaKpis', 'gretaKpisLectura', 'gretaConfig', 'gretaConfigGuardar', 'gretaAvisarLola', 'gretaArmar', 'gretaFormularios', 'gretaFormulario', 'gretaFormularioRedactar', 'gretaFormularioGuardar', 'gretaFormularioAprobar', 'gretaFormularioCrear', 'gretaFormularioVersion', 'gretaFormularioArchivar'];
 module.exports = { Greta, GRETA_METHODS, paraLola, NICHOS, jsonDe };
