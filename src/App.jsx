@@ -15,7 +15,8 @@ import SocialInbox from './SocialInbox';
 import AdsDashboard from './AdsDashboard';
 import CampaignStudio from './CampaignStudio';
 import MarketingAssistant from './MarketingAssistant';
-import EstudioMercado from './EstudioMercado'; // R74 · estudio de mercado por distrito
+import EstudioMercado from './EstudioMercado';
+import Lecciones from './Lecciones'; // R75 · lecciones de la IA // R74 · estudio de mercado por distrito
 import {GretaPlanSemanal, GretaHoy, GretaTendencias, GretaPublicar, GretaKpis, GretaConfig, GretaAssistant, GretaFormularios} from './Greta'; // R42 · módulo Marketing con G.R.E.T.A
 import PowerDashboard from './PowerDashboard';
 import GroupedNav from './GroupedNav';
@@ -1321,7 +1322,7 @@ function DesktopView({ data }) {
         {activeTab === 'weekly' && <WeeklyAnalysis selection={weeklySelection} revision={JSON.stringify([leads,units,marketingExpenses,settings])} onLead={openLifecycle} onBack={()=>setActiveTab('dashboard')} leads={leads} units={units} expenses={marketingExpenses} separations={separations}/>}
         {activeTab === 'proyectos' && <Proyectos user={currentUser}/>}
         {activeTab === 'dashboard' && (dashboardClassic?<><div style={{textAlign:'right',marginBottom:8}}><button className="orok-btn orok-btn-secondary" onClick={()=>setDashboardClassic(false)}>Volver al panel interactivo</button></div><BusinessDashboard initialFilters={dashboardFilters} onFilters={setDashboardFilters} onMonth={openWeekly} revision={JSON.stringify([leads,units,marketingExpenses,settings])} onLead={openLifecycle}/></>:<PowerDashboard leads={leads} units={units} expenses={marketingExpenses} onClassic={()=>setDashboardClassic(true)}/>)}
-        {activeTab === 'help' && <HelpCenter/>}
+        {activeTab === 'help' && <HelpCenter role={currentUser.role}/>}
         {currentUser.role==='Gerente'&&(activeTab==='mora'||activeTab==='moraAdmin')&&<MoraPanel section={activeTab}/>}
         {currentUser.role==='Gerente'&&activeTab==='contabilidad'&&<section className="evaluador-frame" aria-label="Contabilidad y Finanzas D.I.A.V.A"><iframe src="/contabilidad/" title="Contabilidad y Finanzas · D.I.A.V.A" style={{width:'100%',height:'calc(100vh - 210px)',minHeight:640,border:'1px solid rgba(255,255,255,.65)',borderRadius:20,background:'transparent',boxShadow:'inset 0 1px 0 rgba(255,255,255,.85),0 22px 50px -24px rgba(70,35,20,.45)',display:'block'}}/></section>}
         {currentUser.role!=='Gerente'&&activeTab==='ordenesErp'&&<section className="evaluador-frame" aria-label="Órdenes OC/OS y aprobaciones"><iframe src="/contabilidad/" title="Órdenes OC/OS y aprobaciones" style={{width:'100%',height:'calc(100vh - 210px)',minHeight:640,border:'1px solid rgba(255,255,255,.65)',borderRadius:20,background:'transparent',boxShadow:'inset 0 1px 0 rgba(255,255,255,.85),0 22px 50px -24px rgba(70,35,20,.45)',display:'block'}}/></section>}
@@ -1332,7 +1333,8 @@ function DesktopView({ data }) {
         {activeTab==='campaigns'&&currentUser.role==='Gerente'&&<CampaignStudio key={studioCampaign} initialCampaign={studioCampaign}/>}
         {currentUser.role==='Gerente'&&<>{/* R42 · Marketing con G.R.E.T.A */}
           {activeTab==='mkHome'&&<GretaHoy onGo={handleTabChange}/>}
-          {currentUser.role==='Gerente'&&activeTab==='mercadoEstudio'&&<EstudioMercado/>}{/* R74 */}
+          {currentUser.role==='Gerente'&&activeTab==='mercadoEstudio'&&<EstudioMercado/>}
+          {currentUser.role==='Gerente'&&activeTab==='lecciones'&&<Lecciones/>}{/* R75 */}{/* R74 */}
           {activeTab==='mkPlan'&&<GretaPlanSemanal/>}{/* R73 · plan semanal */}
           {activeTab==='mkForms'&&<GretaFormularios/>}{/* R43 · formularios instantáneos */}
           {activeTab==='mkTrends'&&<GretaTendencias onOpenCampaign={id=>{setStudioCampaign(id);handleTabChange('campaigns');}}/>}

@@ -90,7 +90,8 @@ class LolaAssistant {
       mis_leads: { alcance: g ? 'todo el equipo' : 'solo los asignados a ti', total: leads.length, por_etapa: byStage, acciones_vencidas: vencidas },
       manual: HELP.manual.map(x => ({ tema: x.title, texto: x.text })),
       playbook: HELP.playbook.map(x => ({ tema: x.title, texto: x.text })),
-      ruta_comercial: HELP.route.map(x => x.label + ': ' + x.detail)
+      ruta_comercial: HELP.route.map(x => x.label + ': ' + x.detail),
+      guia_modulos: (HELP.modulos || []).filter(m => g || m.roles === 'todos').map(m => ({ modulo: m.title, ia_hace: m.ia, decides_tu: m.tu }))
     };
   }
   system(ctx, voice) {
@@ -154,7 +155,8 @@ ${JSON.stringify(ctx)}`;
     for (let i = msgs.length - 1; i > 0; i--) if (msgs[i].role === msgs[i - 1].role) { msgs[i - 1].text += '\n' + msgs[i].text; msgs.splice(i, 1); }
     await this.count(user, c);
     const ctx=await this.context(user,d);if(this.projectDrive){const drive=await this.projectDrive.context('lola',d.settings?.projectName||'Infinity224',user);if(drive?.fuentes?.length||drive?.historial_otros_proyectos)ctx.drive=drive;}
-    const reply = await this.call(c, k.key, this.system(ctx, input?.voice === true), msgs);
+    let extra = ''; if (this.lecciones) { try { extra = await this.lecciones.instrucciones('lola'); } catch {} } // R75 · lecciones aprobadas
+    const reply = await this.call(c, k.key, this.system(ctx, input?.voice === true) + extra, msgs);
     if (!reply) throw Error('El asistente no devolvió respuesta. Intenta de nuevo.');
     return { reply: reply.slice(0, 4000), provider: PROVIDERS[c.provider].label };
   }

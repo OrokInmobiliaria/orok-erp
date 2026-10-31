@@ -95,6 +95,7 @@ class Greta {
     const c = a.raw(); if (!c.enabled) throw Error('La IA está apagada. Actívala en el asistente L.O.L.A (engranaje del panel); G.R.E.T.A usa el mismo proveedor.');
     const k = a.key(c, data.settings); if (!k.key) throw Error('Falta la clave del proveedor de IA de L.O.L.A.');
     await a.count(user, c);
+    if (this.lecciones) { try { system += await this.lecciones.instrucciones('greta'); } catch {} } // R75 · lecciones aprobadas
     const model = c.model || PROVIDERS[c.provider]?.model;
     if (!model) throw Error('Proveedor de IA no válido. Revisa la configuración de L.O.L.A.');
     const post = async (url, headers, body) => {

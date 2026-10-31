@@ -1,5 +1,5 @@
 // R31 · Estructura del menú agrupado. Los íconos se nombran como texto para poder probar el modelo sin React.
-export const MANAGER_ONLY = ['precios', 'mkHome', 'mkTrends', 'mkPlan', 'mkForms', 'mkPublish', 'mkKpis', 'comisiones', 'marketing', 'campaigns', 'mkBrand', 'mkVariants', 'mkBudget', 'mkConnections', 'mkBrief', 'finanzas', 'ai', 'settings', 'moraAdmin', 'mora', 'evaluador', 'mercadoEstudio', 'contabilidad'];
+export const MANAGER_ONLY = ['precios', 'mkHome', 'mkTrends', 'mkPlan', 'mkForms', 'mkPublish', 'mkKpis', 'comisiones', 'marketing', 'campaigns', 'mkBrand', 'mkVariants', 'mkBudget', 'mkConnections', 'mkBrief', 'finanzas', 'ai', 'settings', 'moraAdmin', 'mora', 'evaluador', 'mercadoEstudio', 'contabilidad', 'lecciones'];
 // R33b · ÖRÖK: CRM inmobiliario (todos los roles), Evaluador Inmobiliario con M.O.R.A (solo Gerencia)
 // R34 · y Contabilidad y Finanzas (ERP) con D.I.A.V.A (solo Gerencia).
 export const MODULES = [
@@ -68,7 +68,7 @@ export function navGroups(role, module = 'crm') {
     ]}] : []),
     {id: 'config', label: 'Configuración', icon: 'Settings', items: [
       ['integrations', 'Herramientas', 'Wrench', 'Importaciones y enlaces'],
-      ...(g ? [['ai', 'IA y automatizaciones', 'Bot'], ['settings', 'Ajustes del proyecto', 'Settings']] : []),
+      ...(g ? [['ai', 'IA y automatizaciones', 'Bot'], ['lecciones', 'Lecciones de la IA', 'Sparkles', 'Aprueba lo que la IA aprende de las correcciones del equipo'], ['settings', 'Ajustes del proyecto', 'Settings']] : []),
       ['help', 'Ayuda', 'BookOpen'],
     ]},
   ];
@@ -84,6 +84,6 @@ export function navEtapas(role) {
     {id: 'vender', label: 'Vender', items: [['kanban', 'Leads (Kanban)', 'KanbanSquare'], ['newLead', 'Nuevo lead', 'UserPlus'], ['social', 'Bandeja WhatsApp y redes', 'MessageCircle'], ['inventory', 'Inventario', 'Building2'], ...(g ? [['precios', 'Estrategia de precios', 'LineChart']] : []), ['quotes', 'Cotizaciones', 'FileText'], ...(g ? [['comisiones', 'Comisiones', 'DollarSign']] : [])]},
     ...(g ? [{id: 'promocionar', label: 'Promocionar', items: [['mkHome', 'Hoy con G.R.E.T.A', 'Home'], ['mkTrends', 'Tendencias', 'LineChart'], ['mkPlan', 'Plan semanal', 'LayoutGrid'], ['campaigns', 'Estudio creativo', 'Sparkles'], ['mkForms', 'Formularios', 'FileText'], ['mkPublish', 'Publicar', 'Send'], ['mkKpis', 'Pauta y KPIs', 'PiggyBank'], ['marketing', 'Ventas atribuidas', 'Megaphone'], ['mkBrand', 'Marca', 'Palette']]}] : []),
     {id: 'construir', label: 'Construir y finanzas', items: g ? [['contabilidad', 'Órdenes, tesorería y finanzas', 'Wallet']] : [['ordenesErp', 'Órdenes OC/OS', 'Wallet']]},
-    {id: 'ajustes', label: 'Ajustes', items: [['integrations', 'Herramientas', 'Wrench'], ...(g ? [['ai', 'IA y automatizaciones', 'Bot'], ['settings', 'Datos del proyecto', 'Settings']] : []), ['help', 'Ayuda', 'BookOpen']]},
+    {id: 'ajustes', label: 'Ajustes', items: [['integrations', 'Herramientas', 'Wrench'], ...(g ? [['ai', 'IA y automatizaciones', 'Bot'], ['lecciones', 'Lecciones de la IA', 'Sparkles'], ['settings', 'Datos del proyecto', 'Settings']] : []), ['help', 'Ayuda', 'BookOpen']]},
   ];
 }

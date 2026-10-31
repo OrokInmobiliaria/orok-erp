@@ -130,5 +130,132 @@
    "color": "#f3eee8",
    "edge": "#92400e"
   }
+ ],
+ "modulos": [
+  {
+   "id": "crm",
+   "title": "CRM y Kanban de leads",
+   "roles": "todos",
+   "tags": "crm kanban lead ficha etapa comentario cotización",
+   "ia": [
+    "Ordena tus leads por prioridad y te avisa cuáles se están enfriando.",
+    "Propone la próxima acción y la etapa a partir del último contacto.",
+    "Convierte en comentario lo que dictas por voz y prellena la evidencia al mover una tarjeta.",
+    "Completa la ficha con lo que el cliente ya dijo en WhatsApp."
+   ],
+   "tu": [
+    "Confirmas o corriges lo que la IA propone (un clic).",
+    "Decides los cambios de etapa importantes: cita, separación, perdido.",
+    "Hablas con el cliente: la IA prepara, tú cierras."
+   ]
+  },
+  {
+   "id": "lola",
+   "title": "L.O.L.A y WhatsApp",
+   "roles": "todos",
+   "tags": "lola whatsapp asistente mensajes conversación seguimiento voz",
+   "ia": [
+    "Responde dudas frecuentes y saluda a los leads nuevos según el modo configurado.",
+    "Resume la conversación y te dice qué falta responder.",
+    "Redacta respuestas y seguimientos listos para enviar.",
+    "Responde tus preguntas sobre el ERP desde el panel de L.O.L.A o la barra «Pídele a la IA»."
+   ],
+   "tu": [
+    "Apruebas los mensajes antes de enviarlos a clientes nuevos.",
+    "Atiendes lo comercial o sensible: precios especiales, quejas, negociación.",
+    "Corriges a L.O.L.A cuando se equivoca: la corrección queda como lección para Gerencia."
+   ]
+  },
+  {
+   "id": "greta",
+   "title": "Marketing con G.R.E.T.A",
+   "roles": "gerencia",
+   "tags": "greta marketing tendencias plan semanal publicaciones reels hashtags estudio creativo kpis marca",
+   "ia": [
+    "Analiza tus perfiles y el nicho de edificios boutique.",
+    "Prepara el Plan semanal: 7 publicaciones diarias con versión para Instagram, Facebook y TikTok (gancho, guion, motion, voz, música, copy y hashtags).",
+    "Detecta tendencias, arma campañas en el Estudio creativo y lee los KPIs de la pauta.",
+    "Atribuye cada lead a su anuncio o publicación."
+   ],
+   "tu": [
+    "Apruebas o rechazas cada día del plan (si rechazas, di por qué: G.R.E.T.A aprende).",
+    "Decides presupuesto de pauta y qué se publica.",
+    "Grabas las piezas marcadas «Graba el equipo»."
+   ]
+  },
+  {
+   "id": "mora",
+   "title": "Evaluador M.O.R.A",
+   "roles": "gerencia",
+   "tags": "mora evaluador terreno cabida costos flujo banca inversionistas",
+   "ia": [
+    "Calcula cabida, costos, flujo y rentabilidad del terreno.",
+    "Prepara la carpeta para banca e inversionistas.",
+    "Responde preguntas sobre la evaluación guardada."
+   ],
+   "tu": [
+    "Validas los supuestos (precio de terreno, costos, ventas).",
+    "Decides comprar, negociar o descartar."
+   ]
+  },
+  {
+   "id": "mercado",
+   "title": "Estudio de mercado",
+   "roles": "gerencia",
+   "tags": "estudio de mercado comparables distrito precio m2 portales urbania adondevivir excel sheets pdf",
+   "ia": [
+    "Claude en tu PC (L.O.L.A personal) revisa los portales del distrito que elijas y sube los comparables con su enlace.",
+    "Lee tus bases en Excel, CSV, Google Sheets, Markdown, JSON o PDF.",
+    "Calcula el precio por m² (mediana y rango) por moneda y dormitorios."
+   ],
+   "tu": [
+    "Eliges el distrito y pides la investigación.",
+    "Revisas la vista previa antes de guardar una base.",
+    "Descartas comparables que no aplican (no se borran)."
+   ]
+  },
+  {
+   "id": "diava",
+   "title": "Contabilidad D.I.A.V.A y Órdenes OC/OS",
+   "roles": "gerencia",
+   "tags": "diava contabilidad facturas recibos ordenes compra servicio oc os aprobacion proveedor",
+   "ia": [
+    "Lee facturas, recibos y cotizaciones y prellena las órdenes de compra o servicio.",
+    "Clasifica los documentos contables desde Drive.",
+    "Te recuerda las órdenes pendientes de aprobación."
+   ],
+   "tu": [
+    "Apruebas las órdenes y pagos: la IA nunca mueve dinero.",
+    "Revisas lo que la IA marque como dudoso."
+   ]
+  },
+  {
+   "id": "aprendizaje",
+   "title": "Aprendizaje aprobado por Gerencia",
+   "roles": "gerencia",
+   "tags": "aprendizaje lecciones correcciones aprobar ia mejora",
+   "ia": [
+    "Cada vez que alguien corrige a una IA (un borrador editado, una pieza rechazada con motivo), se propone una lección.",
+    "Agrupa las lecciones de la semana para revisarlas rápido."
+   ],
+   "tu": [
+    "Apruebas o rechazas cada lección en IA y automatizaciones → Lecciones.",
+    "Solo las aprobadas cambian el comportamiento de L.O.L.A, G.R.E.T.A, M.O.R.A y D.I.A.V.A, con Claude o con GPT."
+   ]
+  },
+  {
+   "id": "conexiones",
+   "title": "Ajustes y conexiones",
+   "roles": "gerencia",
+   "tags": "ajustes conexiones mcp claude whatsapp meta coexistencia drive respaldo",
+   "ia": [
+    "El conector del ERP permite que Claude (en tu PC o teléfono) lea y registre información con tu usuario y tus permisos.",
+    "WhatsApp en coexistencia: el ERP recibe y envía por la vía oficial de Meta y el celular sigue funcionando."
+   ],
+   "tu": [
+    "Decides qué roles pueden usar el conector.",
+    "Generas y pegas tú las claves y tokens: la IA nunca las escribe."
+   ]
+  }
  ]
 }

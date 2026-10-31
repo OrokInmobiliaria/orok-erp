@@ -163,7 +163,11 @@ class GretaPlan {
       if (v.copy !== undefined) cur.copy = text(v.copy, 2200); if (v.cta !== undefined) cur.cta = text(v.cta, 160); if (v.hora !== undefined && /^\d{2}:\d{2}$/.test(v.hora)) cur.hora = v.hora;
       if (v.hashtags !== undefined) cur.hashtags = [...new Set(lista(v.hashtags, 30, 40).map(hashtag).filter(Boolean))].slice(0, MAX_TAGS[r]); next.versiones[r] = cur; } }
     next.revision = (p.revision || 1) + 1; next.editado = now(); next.editado_por = text(user.name, 120);
-    await this.put(ref, next); return next;
+    if (input.estado === 'rechazada' && input.motivo) next.motivo_rechazo = text(input.motivo, 500);
+    await this.put(ref, next);
+    // R75 · Mejora 14: la corrección de Gerencia queda como lección propuesta (no se aplica hasta aprobarla).
+    if (input.motivo && this.g.lecciones) { try { await this.g.lecciones.proponer({ ia: 'greta', leccion: input.motivo, origen: 'Plan semanal', contexto: p.fecha + ' · ' + p.formato + ' · ' + p.titulo, antes: input.estado === 'rechazada' ? 'Pieza rechazada: ' + (p.gancho?.texto_pantalla || '') : p.copy, despues: next.copy !== p.copy ? next.copy : '' }, user); } catch {} }
+    return next;
   }
   async aprobarDia(input, user) {
     const s = await this.semana(input?.semana_id), f = fecha(input?.fecha); let n = 0;

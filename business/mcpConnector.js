@@ -129,6 +129,10 @@ const TOOLS = [
     description: 'Marca una investigación de mercado como completa (o fallida) y deja un resumen breve de lo encontrado: rango de precios por m², tipologías más ofertadas, proyectos competidores y observaciones.',
     schema: obj({ id: { type: 'string' }, estado: { type: 'string', enum: ['completa', 'fallida'] }, resumen: { type: 'string' } }, ['id']),
     run: async (a, x) => x.call('mercadoTareaCompletar', [{ id: a.id, estado: a.estado, resumen: a.resumen }]) },
+  { name: 'ensenar_a_la_ia', title: 'Enseñar una lección a una IA del ERP', ro: false,
+    description: 'Propone una lección para L.O.L.A, G.R.E.T.A, M.O.R.A o D.I.A.V.A (por ejemplo, una corrección de tono o una regla del negocio). Queda como propuesta: solo se aplica cuando Gerencia la aprueba en «Lecciones de la IA».',
+    schema: obj({ ia: { type: 'string', enum: ['lola', 'greta', 'mora', 'diava', 'todas'] }, leccion: { type: 'string', description: 'Qué debe hacer o evitar la IA, en una frase.' }, contexto: { type: 'string' } }, ['ia', 'leccion']),
+    run: async (a, x) => { const l = await x.call('leccionProponer', [{ ia: a.ia, leccion: a.leccion, contexto: a.contexto, origen: 'Claude (conector)' }]); return { ok: true, estado: l.estado, id: l.id, nota: 'Pendiente de aprobación de Gerencia.' }; } },
 ];
 function ordenCorta(o) { return { id: o.id, numero: o.n || o.numero || null, tipo: o.tipo || null, empresa: o.empresa || null, proveedor: o.proveedor_nombre || o.proveedor || null, proyecto: o.proyecto || null, total: o.total ?? null, moneda: o.moneda || null, estado: o.estado || null, solicitante: o.solicitante?.nombre || o.solicitante?.name || null, aprobacion: (o.aprobacion?.pasos || []).map(p => ({ rol: p.rol || p.cargo || null, nombre: p.nombre || p.name || null, estado: p.estado || 'pendiente' })), actualizado: o.upd || null }; }
 async function pendientes(x) {
