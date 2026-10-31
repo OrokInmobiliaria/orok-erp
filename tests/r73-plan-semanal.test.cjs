@@ -17,9 +17,15 @@ test('R73: semana, generación por red y día, aprobación',async()=>{
  const P=new GretaPlan(greta),u={name:'Gerente'};
  assert.equal(P.marca().colores[0].hex,DEFAULT_MARCA.colores[0].hex);
  const s=await P.crearSemana({inicio:'2026-11-04'},u);assert.equal(s.inicio,'2026-11-02');
- const r=await P.generar({semana_id:s.id,fecha:'2026-11-02',red:'instagram'},u,{});assert.equal(r.piezas.length,5);
+ const r=await P.generar({semana_id:s.id,fecha:'2026-11-02',red:'instagram'},u,{});assert.equal(r.piezas.length,7);
  const again=await P.generar({semana_id:s.id,fecha:'2026-11-02',red:'instagram'},u,{});assert.equal(again.ya_existian,true);
- const a=await P.aprobarDia({semana_id:s.id,fecha:'2026-11-02'},u);assert.equal(a.aprobadas,5);
+ const a=await P.aprobarDia({semana_id:s.id,fecha:'2026-11-02'},u);assert.equal(a.aprobadas,7);
  const full=await P.semana(s.id);assert.ok(full.piezas.every(p=>p.estado==='aprobada'));
  await assert.rejects(()=>P.generar({semana_id:s.id,fecha:'2026-12-01',red:'instagram'},u,{}),/día/);
+});
+test('R74b: 7 piezas por red, distintas, con características y límite de hashtags por red',()=>{
+ const {SPECS,SLOTS,POR_DIA,MAX_TAGS,limpiarPieza:lp}=require('../business/gretaPlan');
+ assert.equal(POR_DIA,7);for(const r of ['instagram','facebook','tiktok']){assert.equal(SLOTS[r].length,7);assert.ok(SPECS[r].includes('9:16'));}
+ const p=lp({hashtags:['#a1','#b2','#c3','#d4','#e5','#f6','#g7']},5,{semana_id:'s',fecha:'2026-11-02',red:'facebook',desde:4});
+ assert.equal(p.hashtags.length,MAX_TAGS.facebook);assert.equal(p.orden,10);assert.equal(p.hora,SLOTS.facebook[9]?.hora||'19:00');
 });

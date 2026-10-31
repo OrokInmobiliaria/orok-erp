@@ -26,7 +26,7 @@ export function navGroups(role, module = 'crm') {
     {id: 'mkHoy', label: 'Hoy', icon: 'Home', items: [['mkHome', 'Hoy', 'Home', 'Pendientes, sugerencias de G.R.E.T.A y lo que preguntan los clientes']]},
     {id: 'mkCrear', label: 'Crear', icon: 'Sparkles', items: [
       ['mkTrends', 'Tendencias', 'LineChart', 'Lo que funciona en tu nicho en Instagram y TikTok'],
-      ['mkPlan', 'Plan semanal', 'LayoutGrid', '5 publicaciones diarias por red: ganchos, guion, voz, música y hashtags'],
+      ['mkPlan', 'Plan semanal', 'LayoutGrid', '7 publicaciones diarias distintas por red: ganchos, guion, voz, música y hashtags'],
       ['campaigns', 'Estudio', 'Sparkles', 'Alternativas, fotos, reels y aprobación'],
       ['mkForms', 'Formularios', 'FileText', 'Formularios instantáneos para anuncios de Facebook, Instagram y TikTok'],
     ]},

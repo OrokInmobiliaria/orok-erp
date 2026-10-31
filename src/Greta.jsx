@@ -483,6 +483,7 @@ function PiezaPlan({p, onChange, onClose}) {
       <div style={{display: 'flex', justifyContent: 'space-between', gap: 8}}><div><small style={{color: '#78716c'}}>{p.red} · {p.fecha} · {p.formato} · {p.pilar} · {p.produccion === 'equipo' ? 'Graba el equipo' : 'Lo arma el ERP'}</small><h3 style={{margin: '4px 0'}}>{p.titulo}</h3><b style={{color: col}}>{et}</b></div><button className="orok-btn" onClick={onClose} aria-label="Cerrar"><X size={16}/></button></div>
       <div style={{background: '#fdf4ee', borderRadius: 12, padding: 12}}><b>Gancho 0-2 s</b><div style={{fontSize: 18, fontWeight: 800, color: '#85442A'}}>{p.gancho?.texto_pantalla}</div><div>🎙 {p.gancho?.primera_frase}</div><div style={{color: '#57534e'}}>🎬 {p.gancho?.visual}</div></div>
       {!!p.guion?.length && <div style={{overflowX: 'auto'}}><table style={{width: '100%', fontSize: 12, borderCollapse: 'collapse'}}><thead><tr>{['Seg', 'Visual', 'Texto en pantalla', 'Motion', 'Voz'].map(h => <th key={h} style={{textAlign: 'left', borderBottom: '1px solid #e7dfd8', padding: 4}}>{h}</th>)}</tr></thead><tbody>{p.guion.map((e, i) => <tr key={i}>{[e.seg, e.visual, e.texto_pantalla, e.motion, e.voz].map((v, j) => <td key={j} style={{verticalAlign: 'top', padding: 4, borderBottom: '1px solid #f1ebe6'}}>{v}</td>)}</tr>)}</tbody></table></div>}
+      {p.medidas && <div><b>Formato y medidas:</b> {p.medidas}</div>}
       <div><b>Motion graphics:</b> {p.motion_graphics}</div>
       <div><b>Voz en off</b> ({p.voz_en_off?.estilo}): {p.voz_en_off?.texto}</div>
       <div><b>Música:</b> {[p.musica?.estilo, p.musica?.bpm && p.musica.bpm + ' BPM', p.musica?.sugerencia, p.musica?.nota].filter(Boolean).join(' · ')}</div>
@@ -513,7 +514,7 @@ export function GretaPlanSemanal() {
   const aprobarDia = async fecha => {try {await db.gretaPlanAprobar({semana_id: sem.id, fecha}); setSem(await db.gretaPlanSemana({id: sem.id}));} catch (e) {setErr(e.message);}};
   const piezas = sem?.piezas || [], cuenta = k => piezas.filter(p => p.estado === k).length;
   return <div style={{display: 'grid', gap: 16}}>
-    <div className="orok-card" style={{padding: 16}}><h2 style={{margin: 0}}>Plan semanal de contenido</h2><p style={{margin: '6px 0 0', color: '#57534e'}}>G.R.E.T.A analiza tus perfiles y lo que funciona en edificios boutique, y prepara 5 publicaciones diarias por red con gancho, guion, motion graphics, voz en off, música, copy y hashtags. Nada se publica sin aprobación.</p></div>
+    <div className="orok-card" style={{padding: 16}}><h2 style={{margin: 0}}>Plan semanal de contenido</h2><p style={{margin: '6px 0 0', color: '#57534e'}}>G.R.E.T.A analiza tus perfiles y lo que funciona en edificios boutique, y prepara 7 publicaciones diarias distintas por red (Instagram, Facebook y TikTok, cada una con sus medidas, duración y estilo propios) con gancho, guion, motion graphics, voz en off, música, copy y hashtags. Nada se publica sin aprobación.</p></div>
     <MarcaPlan marca={lista?.marca} onSaved={() => cargar()}/>
     <AnalisisPlan analisis={lista?.analisis} onDone={a => setLista(l => ({...l, analisis: a}))}/>
     <section className="orok-card" style={{padding: 16, display: 'grid', gap: 10}}>
@@ -522,7 +523,7 @@ export function GretaPlanSemanal() {
         <label>Semana que empieza el lunes<input className="orok-input" type="date" value={inicio} onChange={e => setInicio(lunesPlan(e.target.value))}/></label>
         <button className="orok-btn" onClick={crear}>Crear o abrir semana</button>
         {lista?.semanas?.length > 0 && <select className="orok-input" value={sem?.id || ''} onChange={e => cargar(e.target.value)} style={{width: 'auto'}}>{lista.semanas.map(s => <option key={s.id} value={s.id}>{s.inicio} al {s.fin}</option>)}</select>}
-        {sem && <button className="orok-btn orok-btn-primary" disabled={!!prog} onClick={() => generar()}>{prog ? `Generando ${prog.i + 1}/${prog.n} · ${prog.txt}` : piezas.length ? 'Completar lo que falta' : 'Generar semana completa (105 piezas)'}</button>}
+        {sem && <button className="orok-btn orok-btn-primary" disabled={!!prog} onClick={() => generar()}>{prog ? `Generando ${prog.i + 1}/${prog.n} · ${prog.txt}` : piezas.length ? 'Completar lo que falta' : 'Generar semana completa (147 piezas)'}</button>}
       </div>
       {sem && <small style={{color: '#57534e'}}>{piezas.length} piezas · {cuenta('aprobada')} aprobadas · {cuenta('borrador')} por revisar · {cuenta('rechazada')} rechazadas. Generar la semana toma unos minutos (21 pasos).</small>}
       {err && <p role="alert" style={{color: '#b42318', margin: 0}}>{err}</p>}
@@ -531,7 +532,7 @@ export function GretaPlanSemanal() {
           <td style={{verticalAlign: 'top', whiteSpace: 'nowrap'}}><b>{d}</b><br/><small>{fecha.slice(5)}</small><br/>{piezas.some(p => p.fecha === fecha && p.estado === 'borrador') && <button className="orok-btn" style={{fontSize: 11, padding: '4px 8px', marginTop: 4}} onClick={() => aprobarDia(fecha)}>Aprobar día</button>}</td>
           {REDES_PLAN.map(([k]) => {const ps = piezas.filter(p => p.fecha === fecha && p.red === k && p.estado !== 'rechazada'); return <td key={k} style={{verticalAlign: 'top', background: '#fbf8f5', borderRadius: 12, padding: 6, minWidth: 220}}>
             {ps.map(p => {const [et, col] = ESTADO_PLAN[p.estado] || ESTADO_PLAN.borrador; return <button key={p.id} onClick={() => setAbierta(p)} style={{display: 'block', width: '100%', textAlign: 'left', border: '1px solid #e7dfd8', borderLeft: '4px solid ' + col, borderRadius: 10, background: '#fff', padding: '6px 8px', marginBottom: 6, cursor: 'pointer', font: 'inherit', fontSize: 12}}><b>{p.hora}</b> · {p.formato} <span style={{color: col}}>· {et}</span><div style={{fontWeight: 600}}>{p.titulo}</div><div style={{color: '#85442A'}}>“{p.gancho?.texto_pantalla}”</div></button>;})}
-            {!ps.length && <button className="orok-btn" style={{fontSize: 11}} disabled={!!prog} onClick={() => generar([i], [k])}>Generar 5</button>}
+            {!ps.length && <button className="orok-btn" style={{fontSize: 11}} disabled={!!prog} onClick={() => generar([i], [k])}>Generar 7</button>}
             {ps.length > 0 && ps.every(p => p.estado === 'borrador') && <button className="orok-btn" style={{fontSize: 11}} disabled={!!prog} onClick={() => generar([i], [k], true)}>Rehacer</button>}
           </td>;})}
         </tr>;})}
