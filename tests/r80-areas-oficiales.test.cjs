@@ -23,3 +23,9 @@ test('R81: pila de deshacer del ERP',async()=>{
  const m=await import('../src/deshacer.js');let n=0,v=0;const off=m.suscribirDeshacer(c=>{n=c});
  m.registrarDeshacer('a',async()=>{v=1});m.registrarDeshacer('b',async()=>{v=2});assert.equal(n,2);assert.equal(await m.deshacer(),'b');assert.equal(v,2);assert.equal(await m.deshacer(),'a');assert.equal(v,1);assert.equal(await m.deshacer(),null);off();
 });
+test('R82: área libre vendible con precio por m² por unidad y vendible total en resúmenes',()=>{
+ const s=fs.readFileSync(path.join(__dirname,'..','evaluador-src','evaluador.html'),'utf8');
+ assert.match(s,/Área vendible total \(techada \+ libre\)/);assert.match(s,/units\.\$\{i\}\.pl/);assert.match(s,/ES VENDIBLE y siempre entra al precio/);
+ const src=s.slice(s.indexOf('const UNIT_USOS'),s.indexOf('function usoCostoM2'));const f=new Function(src+';return fLib')();
+ const p={precioM2:6000,factorLibre:1};assert.equal(f({},p),1);assert.equal(f({pl:3000},p),0.5);assert.equal(f({pl:'',fl:0.8},p),0.8);
+});
