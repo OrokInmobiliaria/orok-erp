@@ -1,6 +1,6 @@
 {
   "name": "orok-crm-cloud",
-  "version": "67.6.63-r76",
+  "version": "67.6.64-r77",
   "private": true,
   "engines": {
     "node": ">=22"
@@ -31,6 +31,8 @@
     "exceljs": "^4.4.0",
     "firebase-admin": "14.4.0",
     "google-auth-library": "10.9.1",
+    "gsap": "3.13.0",
+    "hyperframes": "0.8.223",
     "lucide-react": "0.344.0",
     "nodemailer": "10.2.1",
     "pdf-lib": "1.17.1",

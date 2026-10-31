@@ -175,5 +175,5 @@ class GretaPlan {
     return { aprobadas: n };
   }
 }
-const PLAN_METHODS = ['gretaPlanMarca', 'gretaPlanMarcaGuardar', 'gretaPlanAnalizar', 'gretaPlanSemanas', 'gretaPlanSemanaCrear', 'gretaPlanSemana', 'gretaPlanGenerar', 'gretaPlanPieza', 'gretaPlanAprobar'];
+const PLAN_METHODS = ['gretaPlanMarca', 'gretaPlanMarcaGuardar', 'gretaPlanAnalizar', 'gretaPlanSemanas', 'gretaPlanSemanaCrear', 'gretaPlanSemana', 'gretaPlanGenerar', 'gretaPlanPieza', 'gretaPlanAprobar', 'gretaPlanVideoCrear', 'gretaPlanVideoEstado', 'gretaPlanVideoArchivo'];
 module.exports = { GretaPlan, PLAN_METHODS, DEFAULT_MARCA, lunesDe, limpiarPieza, REDES, SPECS, SLOTS, POR_DIA, MAX_TAGS, limpiarVersion };

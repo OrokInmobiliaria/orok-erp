@@ -473,6 +473,32 @@ function AnalisisPlan({analisis, onDone}) {
     </div>}
   </section>;
 }
+// R77 · Videos automáticos (HyperFrames): uno por red con sus medidas, a partir de la pieza aprobada.
+function VideosPieza({p}) {
+  const [v, setV] = useState(null), [err, setErr] = useState(''), [busy, setBusy] = useState(false), [ver, setVer] = useState({});
+  const cargar = () => db.gretaPlanVideoEstado({pieza_id: p.id}).then(setV).catch(e => setErr(e.message));
+  useEffect(() => { cargar(); }, [p.id]);
+  const pend = (v?.videos || []).some(x => ['en_cola', 'renderizando'].includes(x.estado));
+  useEffect(() => { if (!pend) return; const t = setInterval(cargar, 6000); return () => clearInterval(t); }, [pend]);
+  const crear = async () => { setBusy(true); setErr(''); try { await db.gretaPlanVideoCrear({pieza_id: p.id}); await cargar(); } catch (e) { setErr(e.message); } finally { setBusy(false); } };
+  const bajar = async (x, mostrar) => { try { const f = await db.gretaPlanVideoArchivo({id: x.id}); const bin = atob(f.base64), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); const url = URL.createObjectURL(new Blob([u], {type: f.mime}));
+    if (mostrar) { setVer(o => ({...o, [x.id]: url})); return; } const a = document.createElement('a'); a.href = url; a.download = f.nombre; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000); } catch (e) { setErr(e.message); } };
+  const ET = {en_cola: 'En cola', renderizando: 'Creando…', listo: 'Listo', error: 'Error'};
+  const video = !['imagen', 'carrusel', 'historia'].includes(p.formato);
+  if (!video) return null;
+  return <div style={{border: '1px solid #e7dfd8', borderRadius: 12, padding: 10, display: 'grid', gap: 6}}>
+    <b>🎬 Videos automáticos</b>
+    <small style={{color: '#57534e'}}>Se crea un MP4 por red con su formato (gancho, escenas del guion, CTA, colores y tipografía de marca). La música y la voz se agregan al publicar.</small>
+    {p.estado !== 'aprobada' ? <small>Aprueba la pieza para crear sus videos.</small> : <button className="orok-btn" disabled={busy || pend} onClick={crear}>{(v?.videos || []).length ? 'Volver a crear videos' : 'Crear videos (Instagram · Facebook · TikTok)'}</button>}
+    {(v?.videos || []).map(x => <div key={x.id} style={{display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', fontSize: 13}}>
+      <b style={{minWidth: 80}}>{x.red}</b><span>{x.medidas} · {x.duracion} s · {ET[x.estado] || x.estado}</span>
+      {x.estado === 'listo' && <><button className="orok-btn" style={{fontSize: 11}} onClick={() => bajar(x, true)}>Ver</button><button className="orok-btn" style={{fontSize: 11}} onClick={() => bajar(x)}>Descargar</button></>}
+      {x.estado === 'error' && <small style={{color: '#b42318'}}>{x.error}</small>}
+      {ver[x.id] && <video src={ver[x.id]} controls style={{width: '100%', maxHeight: 420, borderRadius: 10, background: '#000'}}/>}
+    </div>)}
+    {err && <small role="alert" style={{color: '#b42318'}}>{err}</small>}
+  </div>;
+}
 function PiezaPlan({p, onChange, onClose}) {
   const [busy, setBusy] = useState(false), [err, setErr] = useState(''), [copy, setCopy] = useState(p.copy), [tags, setTags] = useState((p.hashtags || []).join(' ')), [hora, setHora] = useState(p.hora);
   const [motivo, setMotivo] = useState('');
@@ -508,6 +534,7 @@ function PiezaPlan({p, onChange, onClose}) {
       <label>Copy (texto de la publicación)<textarea className="orok-input" rows={5} value={copy} onChange={e => setCopy(e.target.value)}/></label>
       <div><b>CTA:</b> {p.cta}</div>
       <label>Hashtags<textarea className="orok-input" rows={2} value={tags} onChange={e => setTags(e.target.value)}/></label></>}
+      <VideosPieza p={p}/>
       <label>¿Qué debe aprender G.R.E.T.A? <small style={{color: '#78716c'}}>(opcional · por ejemplo «no usar la palabra lujo», «en TikTok hablar de obra»; Gerencia la aprueba en Lecciones de la IA)</small><input className="orok-input" value={motivo} onChange={e => setMotivo(e.target.value)} placeholder="Motivo del cambio o del rechazo"/></label>
       <div style={{display: 'flex', gap: 8, flexWrap: 'wrap'}}>
         <button className="orok-btn" disabled={busy} onClick={() => act({cambios: cambios(), motivo: motivo.trim() || undefined})}>Guardar cambios</button>
