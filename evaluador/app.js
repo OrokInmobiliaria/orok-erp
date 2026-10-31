@@ -627,7 +627,7 @@ V.gg=()=>{
 function costTable(g,title){
   const items=S[g];const lines=M.L.filter(o=>o.g===g);const eg=M.egresos;
   const rows=items.map((it,i)=>{const o=lines.find(l=>l.i===i)||{q:0,sub:0,igv:0,tot:0};const pct=String(it.d).startsWith('pct');
-    return `<tr><td>${g==='com'?`<select data-k="${g}.${i}.cat" id="i-${g}-${i}-cat">${['Marketing','Ventas','Posventa'].map(c=>`<option ${c===it.cat?'selected':''}>${c}</option>`).join('')}</select>`:''}${inp(`${g}.${i}.n`,it.n,'w','text')}</td>
+    return `<tr><td>${g==='com'?`<div class="cat-concepto"><select data-k="${g}.${i}.cat" id="i-${g}-${i}-cat" aria-label="Categoría">${['Marketing','Ventas','Posventa'].map(c=>`<option ${c===it.cat?'selected':''}>${c}</option>`).join('')}</select>${inp(`${g}.${i}.n`,it.n,'w','text')}</div>`:inp(`${g}.${i}.n`,it.n,'w','text')}</td>
     <td><select data-k="${g}.${i}.d" id="i-${g}-${i}-d">${Object.entries(DRV).map(([k,l])=>`<option value="${k}" ${k===it.d?'selected':''}>${l}</option>`).join('')}</select></td>
     <td>${it.d==='manual'?inp(`${g}.${i}.q`,it.q,'xs'):`<span class="n mut" style="font-family:var(--f-mono)">${pct?S_(o.q):nf(o.q,2)}</span>`}</td>
     <td>${it.d==='predial'?`<span class="mut">${S_(M.pred.total,2)}/año</span>`:inp(`${g}.${i}.pu`,it.pu,'s')}</td>
