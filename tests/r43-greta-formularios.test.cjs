@@ -113,7 +113,7 @@ test('armado automático: asigna recursos propios a cada escena, genera las imá
 });
 test('UI: Crear › Formularios con editor y vista previa; Armar en Estudio; flujo n8n inactivo con las acciones del CRM',async()=>{
  const {navGroups,moduleOf}=await import('../src/navModel.mjs');
- assert.deepEqual(navGroups('Gerente','marketing').find(g=>g.label==='Crear').items.map(i=>i[0]),['mkTrends','campaigns','mkForms']);assert.equal(moduleOf('mkForms'),'marketing');
+ assert.deepEqual(navGroups('Gerente','marketing').find(g=>g.label==='Crear').items.map(i=>i[0]),['mkTrends','mkPlan','campaigns','mkForms']);assert.equal(moduleOf('mkForms'),'marketing');
  assert.equal(navGroups('Vendedor').some(g=>g.items.some(i=>i[0]==='mkForms')),false);
  const ui=fs.readFileSync(path.join(__dirname,'..','src','Greta.jsx'),'utf8'),app=fs.readFileSync(path.join(__dirname,'..','src','App.jsx'),'utf8'),studio=fs.readFileSync(path.join(__dirname,'..','src','CampaignStudio.jsx'),'utf8');
  for(const x of ['export function GretaFormularios','FormPreview','Nueva versión','Descargar ficha','Crear en Meta','export function GretaArmar','Formularios instantáneos'])assert.ok(ui.includes(x),x);

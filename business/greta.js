@@ -370,8 +370,19 @@ class Greta {
     if (name === 'gretaFormularioCrear') return this.forms.solicitarCreacion(a0.id, a0.revision, user, a0.request_id);
     if (name === 'gretaFormularioVersion') return this.forms.nuevaVersion(a0.id, user);
     if (name === 'gretaFormularioArchivar') return this.forms.archivar(a0.id, user);
+    // R73 · Plan semanal de contenido
+    if (name.startsWith('gretaPlan')) { const P = this.plan || (this.plan = new (require('./gretaPlan').GretaPlan)(this));
+      if (name === 'gretaPlanMarca') return P.marca();
+      if (name === 'gretaPlanMarcaGuardar') return P.guardarMarca(a0, user);
+      if (name === 'gretaPlanAnalizar') return P.analizar(a0, user, data);
+      if (name === 'gretaPlanSemanas') return P.semanasLista();
+      if (name === 'gretaPlanSemanaCrear') return P.crearSemana(a0, user);
+      if (name === 'gretaPlanSemana') return P.semana(a0.id);
+      if (name === 'gretaPlanGenerar') return P.generar(a0, user, data);
+      if (name === 'gretaPlanPieza') return P.pieza(a0, user);
+      if (name === 'gretaPlanAprobar') return P.aprobarDia(a0, user); }
     throw Error('Operación de G.R.E.T.A no reconocida.');
   }
 }
-const GRETA_METHODS = ['gretaHoy', 'gretaAsk', 'gretaTendencias', 'gretaTendenciasLista', 'gretaIdea', 'gretaImagen', 'gretaKpis', 'gretaKpisLectura', 'gretaConfig', 'gretaConfigGuardar', 'gretaAvisarLola', 'gretaArmar', 'gretaFormularios', 'gretaFormulario', 'gretaFormularioRedactar', 'gretaFormularioGuardar', 'gretaFormularioAprobar', 'gretaFormularioCrear', 'gretaFormularioVersion', 'gretaFormularioArchivar'];
+const GRETA_METHODS = ['gretaPlanMarca', 'gretaPlanMarcaGuardar', 'gretaPlanAnalizar', 'gretaPlanSemanas', 'gretaPlanSemanaCrear', 'gretaPlanSemana', 'gretaPlanGenerar', 'gretaPlanPieza', 'gretaPlanAprobar', 'gretaHoy', 'gretaAsk', 'gretaTendencias', 'gretaTendenciasLista', 'gretaIdea', 'gretaImagen', 'gretaKpis', 'gretaKpisLectura', 'gretaConfig', 'gretaConfigGuardar', 'gretaAvisarLola', 'gretaArmar', 'gretaFormularios', 'gretaFormulario', 'gretaFormularioRedactar', 'gretaFormularioGuardar', 'gretaFormularioAprobar', 'gretaFormularioCrear', 'gretaFormularioVersion', 'gretaFormularioArchivar'];
 module.exports = { Greta, GRETA_METHODS, paraLola, NICHOS, jsonDe };
