@@ -23,6 +23,8 @@ function PruebaMeta(){
    <span>{ok(true)} La llave funciona.</span>
    {r.phones.map(p=><span key={p.id}>{ok(p.estado!=='DISCONNECTED')} Número {p.numero} · {p.nombre} · calidad {p.calidad||'—'} · estado {p.estado||'—'}</span>)}
    <span>{ok(r.app_suscrita)} {r.app_suscrita?'El ERP está suscrito y puede recibir mensajes.':'El ERP aún no está suscrito a la cuenta de WhatsApp.'} Apps suscritas: {r.apps.map(a=>a.nombre||a.id).join(', ')||'ninguna'}.</span>
+   {Array.isArray(r.permisos)&&<span>{ok(r.puede_enviar)} Permiso para enviar mensajes (whatsapp_business_messaging){r.puede_enviar?'':': falta. Genera una llave nueva marcando este permiso y pégala.'}</span>}
+   {Array.isArray(r.permisos)&&<span>{ok(r.puede_administrar)} Permiso para administrar la cuenta (whatsapp_business_management).</span>}
    <span>{ok(r.verificacion)} Clave secreta y token de verificación guardados.</span>
    <span>{ok(r.habilitada)} Conexión {r.habilitada?'habilitada':'sin habilitar (necesaria para recibir mensajes)'}.</span>
    <span style={{color:'#57534e'}}>Dirección para Meta (webhook): <code>{r.webhook}</code></span>

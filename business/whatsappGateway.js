@@ -68,7 +68,8 @@ class WhatsAppGateway{
   const appId=String(s.appId||'1633244618375190'),phones=[];
   for(const id of s.phoneNumberIds){const p=await this.api(s,encodeURIComponent(id)+'?fields=display_phone_number,verified_name,quality_rating,status,name_status,platform_type');phones.push({id,numero:p.display_phone_number||'',nombre:p.verified_name||'',calidad:p.quality_rating||'',estado:p.status||'',plataforma:p.platform_type||''});}
   const sub=await this.api(s,encodeURIComponent(s.businessAccountId)+'/subscribed_apps'),apps=(sub.data||[]).map(a=>({id:String(a.whatsapp_business_api_data?.id||a.id||''),nombre:String(a.whatsapp_business_api_data?.name||a.name||'')}));
-  return {ok:true,phones,apps,app_id:appId,app_suscrita:apps.some(a=>a.id===appId),webhook:'https://erp.orok.com.pe/api/integrations/whatsapp',habilitada:s.enabled===true,verificacion:!!s.appSecret&&!!s.verifyToken,probado:new Date().toISOString()};
+  let permisos=[];try{const pr=await this.api(s,'me/permissions');permisos=(pr.data||[]).filter(x=>x.status==='granted').map(x=>String(x.permission));}catch{permisos=null;}
+  return {ok:true,phones,apps,app_id:appId,permisos,puede_enviar:Array.isArray(permisos)?permisos.includes('whatsapp_business_messaging'):null,puede_administrar:Array.isArray(permisos)?permisos.includes('whatsapp_business_management'):null,app_suscrita:apps.some(a=>a.id===appId),webhook:'https://erp.orok.com.pe/api/integrations/whatsapp',habilitada:s.enabled===true,verificacion:!!s.appSecret&&!!s.verifyToken,probado:new Date().toISOString()};
  }
  async subscribeApp(){
   const s=this.setup();if(!s.accessToken||!s.businessAccountId||!/^v\d{2}\.\d+$/.test(s.apiVersion||''))throw Error('Primero guarda el token, el WABA ID y la versión.');
