@@ -85,7 +85,7 @@ async function change(method,event,...args) {
   window.dispatchEvent(new Event(event));if(event==='crm-leads')window.dispatchEvent(new Event('crm-units'));return result;
 }
 export const api = {
-  ...Object.fromEntries(['getLolaAssistant','saveLolaAssistant','testLolaAssistant','askLolaAssistant','transcribeLolaAssistant','getMoraEvaluation','getMoraConfig','saveMoraConfig','saveMoraEvaluation','getMoraEvaluations','askMora','getMoraThread','getMoraProposals','decideMoraProposal','setMoraEditor','getMoraSalesFeed','getMoraWeekly'].map(n=>[n,(...a)=>window.crmDB[n](...a)])),
+  ...Object.fromEntries(['iaSugerirLead','iaPedir','getLolaAssistant','saveLolaAssistant','testLolaAssistant','askLolaAssistant','transcribeLolaAssistant','getMoraEvaluation','getMoraConfig','saveMoraConfig','saveMoraEvaluation','getMoraEvaluations','askMora','getMoraThread','getMoraProposals','decideMoraProposal','setMoraEditor','getMoraSalesFeed','getMoraWeekly'].map(n=>[n,(...a)=>window.crmDB[n](...a)])),
   getCreativeSetup:()=>window.crmDB.getCreativeSetup(),
   saveCreativeSetup:input=>window.crmDB.saveCreativeSetup(input),
   getCreativeModels:()=>window.crmDB.getCreativeModels(),

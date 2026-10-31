@@ -35,6 +35,7 @@ const {ClaraErp,CLARA_METHODS}=require('./business/claraErp');
 const {Greta,GRETA_METHODS,paraLola}=require('./business/greta');
 const {Mercado,MERCADO_METHODS}=require('./business/mercado');
 const {Lecciones,LECCIONES_METHODS}=require('./business/lecciones');
+const {AsistenteIA,IA_ASISTENTE_METHODS}=require('./business/asistenteIA');
 const {McpConnector,MCP_METHODS}=require('./business/mcpConnector'); // R44 · conector del ERP para Claude
 const {Resguardo,OPS_METHODS}=require('./business/resguardo'); // R45 · L.O.L.A Operaciones: resguardo externo cifrado // R42 · Marketing con G.R.E.T.A
 const {ProjectDrive}=require('./business/projectDrive');
@@ -398,6 +399,7 @@ function application({store,auth,cache,authCache,config,syncer,historialIA=null,
    if(MCP_METHODS.includes(name))return {value:await mcp.rpc(name,args,user)};
    if(OPS_METHODS.includes(name))return {value:await resguardo.rpc(name,args,user)};
    if(PRECIOS_METHODS.includes(name))return {value:await precios.rpc(name,args,user,()=>cache.read())};
+   if(IA_ASISTENTE_METHODS.includes(name)){const asis=new AsistenteIA({lola:lolaAssistant,conversation:crmConversation}),d=await cache.read();if(name==='iaSugerirLead')return {value:await asis.sugerirLead(args[0],user,d)};const {navEtapas:navEtapasIA}=await import('./src/navModel.mjs');const tabs=Object.fromEntries(navEtapasIA(user.role).flatMap(g=>g.items).map(i=>[i[0],i[1]]));return {value:await asis.pedir(args[0],user,d,tabs)};}
    if(LECCIONES_METHODS.includes(name))return {value:await lecciones.rpc(name,args,user)};
    if(MERCADO_METHODS.includes(name))return {value:await mercado.rpc(name,args,user,()=>cache.read())};
    if(GRETA_METHODS.includes(name)){const value=await greta.rpc(name,args,user,()=>cache.read());if(['gretaAsk','gretaTendencias','gretaIdea','gretaImagen','gretaKpisLectura'].includes(name)){try{value.drive=await projectDrive.archiveResult(name,args[0]||{},value,user,creative);}catch(e){value.drive={state:'error',reason:e.message};}}return {value};}
