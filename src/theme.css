@@ -173,3 +173,21 @@ label:has(> input.switch){display:inline-flex;align-items:center;min-height:36px
 .side-item:focus-visible,.side-search:focus-visible{outline:2px solid #85442A;outline-offset:2px}
 .side-foot{margin-top:auto;padding-top:10px;border-top:1px solid var(--hair,#e7e0da)}
 @media print{.has-sidenav{padding-left:0!important}.side-nav{display:none!important}}
+
+/* R74 · Menú lateral retráctil: solo íconos; al pasar el mouse (o con el teclado) se despliega sobre el contenido con los nombres. */
+@media (min-width:1024px) and (hover:hover){
+ .has-sidenav{padding-left:68px}
+ .side-nav{width:68px;overflow-x:hidden;padding:18px 10px 14px;transition:width .18s ease,box-shadow .18s ease}
+ .side-nav:hover,.side-nav:focus-within{width:256px;box-shadow:12px 0 40px -18px rgba(60,35,20,.35)}
+ .side-nav .side-item{justify-content:flex-start;padding:8px 14px;white-space:nowrap}
+ .side-nav .side-item svg{flex:none}
+ .side-nav .side-item span,.side-nav .side-h,.side-nav .side-search span,.side-nav .side-search kbd,.side-nav .side-foot{opacity:0;transition:opacity .12s ease;pointer-events:none}
+ .side-nav .side-h{height:0;padding-top:4px;padding-bottom:0;overflow:hidden}
+ .side-nav .side-sec+.side-sec{border-top:1px solid var(--hair,#e7e0da);padding-top:4px}
+ .side-nav .side-search{justify-content:flex-start;padding:9px 13px}
+ .side-nav:hover .side-item span,.side-nav:hover .side-h,.side-nav:hover .side-search span,.side-nav:hover .side-search kbd,.side-nav:hover .side-foot,
+ .side-nav:focus-within .side-item span,.side-nav:focus-within .side-h,.side-nav:focus-within .side-search span,.side-nav:focus-within .side-search kbd,.side-nav:focus-within .side-foot{opacity:1;pointer-events:auto}
+ .side-nav:hover .side-h,.side-nav:focus-within .side-h{height:auto;padding:8px 10px 4px}
+ .side-nav:hover .side-sec+.side-sec,.side-nav:focus-within .side-sec+.side-sec{border-top:0}
+}
+@media (prefers-reduced-motion:reduce){.side-nav,.side-nav *{transition:none!important}}

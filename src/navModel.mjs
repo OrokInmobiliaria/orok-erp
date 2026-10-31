@@ -1,5 +1,5 @@
 // R31 · Estructura del menú agrupado. Los íconos se nombran como texto para poder probar el modelo sin React.
-export const MANAGER_ONLY = ['precios', 'mkHome', 'mkTrends', 'mkPlan', 'mkForms', 'mkPublish', 'mkKpis', 'comisiones', 'marketing', 'campaigns', 'mkBrand', 'mkVariants', 'mkBudget', 'mkConnections', 'mkBrief', 'finanzas', 'ai', 'settings', 'moraAdmin', 'mora', 'evaluador', 'contabilidad'];
+export const MANAGER_ONLY = ['precios', 'mkHome', 'mkTrends', 'mkPlan', 'mkForms', 'mkPublish', 'mkKpis', 'comisiones', 'marketing', 'campaigns', 'mkBrand', 'mkVariants', 'mkBudget', 'mkConnections', 'mkBrief', 'finanzas', 'ai', 'settings', 'moraAdmin', 'mora', 'evaluador', 'mercadoEstudio', 'contabilidad'];
 // R33b · ÖRÖK: CRM inmobiliario (todos los roles), Evaluador Inmobiliario con M.O.R.A (solo Gerencia)
 // R34 · y Contabilidad y Finanzas (ERP) con D.I.A.V.A (solo Gerencia).
 export const MODULES = [
@@ -14,7 +14,7 @@ export const MARKETING_TABS = ['mkHome', 'mkTrends', 'mkPlan', 'campaigns', 'mkF
 // Pestañas anteriores: siguen funcionando y abren su lugar nuevo (sin pantallas repetidas).
 export const LEGACY_TABS = {mkVariants: 'mkKpis', mkBudget: 'mkKpis', mkConnections: 'mkPublish', mkBrief: 'mkBrand', finanzas: 'marketing'};
 export const canonicalTab = tab => LEGACY_TABS[tab] || tab;
-export const moduleOf = tab => { tab = canonicalTab(tab); return ['evaluador', 'mora', 'moraAdmin'].includes(tab) ? 'evaluador' : tab === 'contabilidad' ? 'erp' : MARKETING_TABS.includes(tab) ? 'marketing' : 'crm'; };
+export const moduleOf = tab => { tab = canonicalTab(tab); return ['evaluador', 'mercadoEstudio', 'mora', 'moraAdmin'].includes(tab) ? 'evaluador' : tab === 'contabilidad' ? 'erp' : MARKETING_TABS.includes(tab) ? 'marketing' : 'crm'; };
 export function navGroups(role, module = 'crm') {
   const g = role === 'Gerente';
   if (module === 'erp' && g) return [
@@ -40,6 +40,7 @@ export function navGroups(role, module = 'crm') {
   if (module === 'evaluador' && g) return [
     {id: 'evaluacion', label: 'Evaluador Inmobiliario', icon: 'Building2', items: [
       ['evaluador', 'Evaluador Inmobiliario', 'Building2', 'Cabida, costos, flujo, banca, seguimiento e inversionistas'],
+      ['mercadoEstudio', 'Estudio de mercado', 'LineChart', 'Comparables por distrito: portales con Claude y bases propias'],
     ]},
     {id: 'moraIa', label: 'M.O.R.A', icon: 'Bot', items: [
       ['mora', 'Consultas a M.O.R.A', 'LineChart', 'Preguntas sobre la evaluación guardada en el CRM'],
@@ -79,7 +80,7 @@ export function navEtapas(role) {
   const g = role === 'Gerente';
   return [
     {id: 'proyecto', label: 'Proyecto', items: [['proyectos', 'Mis proyectos', 'LayoutGrid'], ['dashboard', 'Panel de control', 'LayoutDashboard'], ['weekly', 'Análisis semanal', 'LineChart']]},
-    ...(g ? [{id: 'evaluar', label: 'Evaluar', items: [['evaluador', 'Evaluación, cabida y mercado', 'Building2'], ['mora', 'Consultas a M.O.R.A', 'Bot'], ['moraAdmin', 'Administración M.O.R.A', 'Settings']]}] : []),
+    ...(g ? [{id: 'evaluar', label: 'Evaluar', items: [['evaluador', 'Evaluación, cabida y mercado', 'Building2'], ['mercadoEstudio', 'Estudio de mercado', 'LineChart'], ['mora', 'Consultas a M.O.R.A', 'Bot'], ['moraAdmin', 'Administración M.O.R.A', 'Settings']]}] : []),
     {id: 'vender', label: 'Vender', items: [['kanban', 'Leads (Kanban)', 'KanbanSquare'], ['newLead', 'Nuevo lead', 'UserPlus'], ['social', 'Bandeja WhatsApp y redes', 'MessageCircle'], ['inventory', 'Inventario', 'Building2'], ...(g ? [['precios', 'Estrategia de precios', 'LineChart']] : []), ['quotes', 'Cotizaciones', 'FileText'], ...(g ? [['comisiones', 'Comisiones', 'DollarSign']] : [])]},
     ...(g ? [{id: 'promocionar', label: 'Promocionar', items: [['mkHome', 'Hoy con G.R.E.T.A', 'Home'], ['mkTrends', 'Tendencias', 'LineChart'], ['mkPlan', 'Plan semanal', 'LayoutGrid'], ['campaigns', 'Estudio creativo', 'Sparkles'], ['mkForms', 'Formularios', 'FileText'], ['mkPublish', 'Publicar', 'Send'], ['mkKpis', 'Pauta y KPIs', 'PiggyBank'], ['marketing', 'Ventas atribuidas', 'Megaphone'], ['mkBrand', 'Marca', 'Palette']]}] : []),
     {id: 'construir', label: 'Construir y finanzas', items: g ? [['contabilidad', 'Órdenes, tesorería y finanzas', 'Wallet']] : [['ordenesErp', 'Órdenes OC/OS', 'Wallet']]},

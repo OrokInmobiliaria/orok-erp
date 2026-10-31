@@ -13,7 +13,7 @@ export default function SideNav({role, active, onChange, onSearch}) {
       {navEtapas(role).map(s => <div key={s.id} className="side-sec" role="group" aria-labelledby={'side-' + s.id}>
         <div id={'side-' + s.id} className="side-h">{s.label}</div>
         {s.items.map(([id, label, icon]) => { const Icon = ICONS[icon] || LayoutDashboard;
-          return <button key={id} type="button" className="side-item" aria-current={active === id ? 'page' : undefined} onClick={() => onChange(id)}><Icon size={17} aria-hidden="true"/><span>{label}</span></button>; })}
+          return <button key={id} type="button" className="side-item" aria-current={active === id ? 'page' : undefined} title={label} onClick={() => onChange(id)}><Icon size={17} aria-hidden="true"/><span>{label}</span></button>; })}
       </div>)}
     </nav>
     <div className="side-foot"><AppearanceMenu/></div>

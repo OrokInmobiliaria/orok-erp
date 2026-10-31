@@ -33,6 +33,7 @@ const {PreciosEstrategia,PRECIOS_METHODS}=require('./business/preciosEstrategia'
 const {LolaAssistant,LOLA_ASSIST_METHODS}=require('./business/lolaAssistant');
 const {ClaraErp,CLARA_METHODS}=require('./business/claraErp');
 const {Greta,GRETA_METHODS,paraLola}=require('./business/greta');
+const {Mercado,MERCADO_METHODS}=require('./business/mercado');
 const {McpConnector,MCP_METHODS}=require('./business/mcpConnector'); // R44 · conector del ERP para Claude
 const {Resguardo,OPS_METHODS}=require('./business/resguardo'); // R45 · L.O.L.A Operaciones: resguardo externo cifrado // R42 · Marketing con G.R.E.T.A
 const {ProjectDrive}=require('./business/projectDrive');
@@ -64,6 +65,7 @@ function application({store,auth,cache,authCache,config,syncer,historialIA=null,
  lolaAssistant.projectDrive=projectDrive;
  const enrollment=new DeviceEnrollment(config);
  const greta=new Greta(store,config,{assistant:lolaAssistant,creative,ads,publications,pipelines,fetcher:creativeOptions.gretaFetcher});
+ const mercado=new Mercado(store,config,{assistant:lolaAssistant,fetcher:creativeOptions.gretaFetcher});
  greta.projectDrive=projectDrive;
  creative.onMedia=media=>projectDrive.archiveMedia(media,creative);
  const clara=new ClaraErp(store,config,{assistant:lolaAssistant,fetcher:creativeOptions.claraFetcher,mailer:creativeOptions.claraMailer||approvalMail});
@@ -394,6 +396,7 @@ function application({store,auth,cache,authCache,config,syncer,historialIA=null,
    if(MCP_METHODS.includes(name))return {value:await mcp.rpc(name,args,user)};
    if(OPS_METHODS.includes(name))return {value:await resguardo.rpc(name,args,user)};
    if(PRECIOS_METHODS.includes(name))return {value:await precios.rpc(name,args,user,()=>cache.read())};
+   if(MERCADO_METHODS.includes(name))return {value:await mercado.rpc(name,args,user,()=>cache.read())};
    if(GRETA_METHODS.includes(name)){const value=await greta.rpc(name,args,user,()=>cache.read());if(['gretaAsk','gretaTendencias','gretaIdea','gretaImagen','gretaKpisLectura'].includes(name)){try{value.drive=await projectDrive.archiveResult(name,args[0]||{},value,user,creative);}catch(e){value.drive={state:'error',reason:e.message};}}return {value};}
    if(CLARA_METHODS.includes(name))return {value:await clara.rpc(name,args,user,()=>cache.read(),{usuarios:async()=>((await auth.execute('info',[],cookie)).value?.users||[]).map(u=>({id:u.id,name:u.name,role:u.role}))})};
    if(['getCreativeSetup','saveCreativeSetup','getCreativeModels','getCreativeCampaigns','getCreativeCampaign','createCreativeCampaign','editCreativeCampaign','approveCreativeCampaign','archiveCreativeCampaign','requestCreativeProposal','getCreativeAudit','getCreativeBrand','saveCreativeBrand','getCreativeFactCandidates','getVariantReport','linkCreativeVariant','unlinkCreativeVariant','getBudgetRecommendations','createBudgetRecommendation','decideBudgetRecommendation','getDailyBriefConfig','saveDailyBriefConfig','previewDailyBrief','getVoiceConfig','saveVoiceConfig','getPublishConfig','savePublishConfig','getCycleConfig','saveCycleConfig','requestVoice','requestPublication','getPipelineJobs','cancelPipelineJob','exportLeads','exportLeadsToSheet','getLeadExportConfig','saveLeadExportConfig','getLeadExportHistory'].includes(name)){
