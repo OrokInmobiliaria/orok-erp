@@ -23,9 +23,17 @@ test('R73: semana, generación por red y día, aprobación',async()=>{
  const full=await P.semana(s.id);assert.ok(full.piezas.every(p=>p.estado==='aprobada'));
  await assert.rejects(()=>P.generar({semana_id:s.id,fecha:'2026-12-01',red:'instagram'},u,{}),/día/);
 });
-test('R74b: 7 piezas por red, distintas, con características y límite de hashtags por red',()=>{
+test('R74c: 7 piezas diarias replicadas en cada red con versión adaptada',async()=>{
  const {SPECS,SLOTS,POR_DIA,MAX_TAGS,limpiarPieza:lp}=require('../business/gretaPlan');
- assert.equal(POR_DIA,7);for(const r of ['instagram','facebook','tiktok']){assert.equal(SLOTS[r].length,7);assert.ok(SPECS[r].includes('9:16'));}
- const p=lp({hashtags:['#a1','#b2','#c3','#d4','#e5','#f6','#g7']},5,{semana_id:'s',fecha:'2026-11-02',red:'facebook',desde:4});
- assert.equal(p.hashtags.length,MAX_TAGS.facebook);assert.equal(p.orden,10);assert.equal(p.hora,SLOTS.facebook[9]?.hora||'19:00');
+ assert.equal(POR_DIA,7);assert.equal(SLOTS.length,7);for(const r of ['instagram','facebook','tiktok'])assert.ok(SPECS[r].includes('9:16'));
+ const p=lp({formato:'carrusel',hashtags:['#a1','#b2','#c3','#d4','#e5','#f6','#g7'],copy:'base',versiones:{facebook:{copy:'fb',hashtags:['#x1','#x2','#x3','#x4','#x5']}}},1,{semana_id:'s',fecha:'2026-11-02',red:'todas',desde:4});
+ assert.equal(p.orden,6);assert.equal(p.hora,SLOTS[5].hora);
+ assert.equal(p.versiones.facebook.copy,'fb');assert.equal(p.versiones.facebook.hashtags.length,MAX_TAGS.facebook);
+ assert.equal(p.versiones.instagram.copy,'base');assert.equal(p.versiones.instagram.hashtags.length,MAX_TAGS.instagram);
+ assert.equal(p.versiones.tiktok.formato,'modo foto');assert.ok(p.versiones.tiktok.medidas);
+ const dir=require('fs').mkdtempSync(require('path').join(require('os').tmpdir(),'gp'));const store=fakeStore();
+ const greta={store,dir,skill:()=>({texto:'r',version:'x'}),ai:async()=>({texto:JSON.stringify({piezas:[1,2,3,4].map(i=>({titulo:'T'+i,formato:'reel',versiones:{tiktok:{copy:'tt'}}}))})})};
+ const {GretaPlan:GP}=require('../business/gretaPlan');const P=new GP(greta),u={name:'G'};const s=await P.crearSemana({inicio:'2026-11-02'},u);
+ const r=await P.generar({semana_id:s.id,fecha:'2026-11-03'},u,{});assert.equal(r.piezas.length,7);assert.ok(r.piezas.every(x=>x.red==='todas'&&x.versiones.tiktok.copy==='tt'));
+ const e=await P.pieza({id:r.piezas[0].id,cambios:{versiones:{instagram:{copy:'nuevo',hashtags:['#uno','#dos']}}}},u);assert.equal(e.versiones.instagram.copy,'nuevo');assert.deepEqual(e.versiones.instagram.hashtags,['#uno','#dos']);assert.equal(e.versiones.tiktok.copy,'tt');
 });

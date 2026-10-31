@@ -475,12 +475,16 @@ function AnalisisPlan({analisis, onDone}) {
 }
 function PiezaPlan({p, onChange, onClose}) {
   const [busy, setBusy] = useState(false), [err, setErr] = useState(''), [copy, setCopy] = useState(p.copy), [tags, setTags] = useState((p.hashtags || []).join(' ')), [hora, setHora] = useState(p.hora);
+  const [red, setRed] = useState('instagram'), [vers, setVers] = useState(() => Object.fromEntries(Object.entries(p.versiones || {}).map(([k, v]) => [k, {copy: v.copy, hora: v.hora, cta: v.cta, hashtags: (v.hashtags || []).join(' ')}])));
+  const multi = !!p.versiones, setV = (k, val) => setVers(o => ({...o, [red]: {...o[red], [k]: val}}));
+  const cambios = () => multi ? {versiones: Object.fromEntries(Object.entries(vers).map(([k, v]) => [k, {...v, hashtags: v.hashtags.split(/\s+/)}]))} : {copy, hashtags: tags.split(/\s+/), hora};
   const act = async body => {setBusy(true); setErr(''); try {onChange(await db.gretaPlanPieza({id: p.id, ...body}));} catch (e) {setErr(e.message);} finally {setBusy(false);}};
   const [et, col] = ESTADO_PLAN[p.estado] || ESTADO_PLAN.borrador;
-  const todo = ['GANCHO (0-2 s): ' + p.gancho?.texto_pantalla + ' / ' + p.gancho?.primera_frase, 'VISUAL: ' + p.gancho?.visual, ...(p.guion || []).map(e => `[${e.seg}] ${e.visual} | Texto: ${e.texto_pantalla} | Motion: ${e.motion} | Voz: ${e.voz}`), 'MOTION: ' + p.motion_graphics, 'VOZ EN OFF (' + (p.voz_en_off?.estilo || '') + '): ' + p.voz_en_off?.texto, 'MÚSICA: ' + [p.musica?.estilo, p.musica?.bpm && p.musica.bpm + ' BPM', p.musica?.sugerencia, p.musica?.nota].filter(Boolean).join(' · '), 'COPY: ' + copy, 'CTA: ' + p.cta, tags].join('\n');
+  const versTxt = multi ? REDES_PLAN.map(([k, l]) => { const v = p.versiones[k] || {}, e = vers[k] || {}; return `\n— ${l.toUpperCase()} · ${v.formato} · ${v.medidas}${v.duracion_seg ? ' · ' + v.duracion_seg + ' s' : ''} · ${e.hora}\nCOPY: ${e.copy}\nCTA: ${e.cta}\n${e.hashtags}${v.audio ? '\nAUDIO: ' + v.audio : ''}${v.notas ? '\nADAPTACIÓN: ' + v.notas : ''}`; }).join('\n') : '';
+  const todo = ['GANCHO (0-2 s): ' + p.gancho?.texto_pantalla + ' / ' + p.gancho?.primera_frase, 'VISUAL: ' + p.gancho?.visual, ...(p.guion || []).map(e => `[${e.seg}] ${e.visual} | Texto: ${e.texto_pantalla} | Motion: ${e.motion} | Voz: ${e.voz}`), 'MOTION: ' + p.motion_graphics, 'VOZ EN OFF (' + (p.voz_en_off?.estilo || '') + '): ' + p.voz_en_off?.texto, 'MÚSICA: ' + [p.musica?.estilo, p.musica?.bpm && p.musica.bpm + ' BPM', p.musica?.sugerencia, p.musica?.nota].filter(Boolean).join(' · '), ...(multi ? [versTxt] : ['COPY: ' + copy, 'CTA: ' + p.cta, tags])].join('\n');
   return <div role="dialog" aria-label={'Pieza ' + p.titulo} style={{position: 'fixed', inset: 0, background: 'rgba(30,25,20,.35)', zIndex: 2000, display: 'grid', placeItems: 'center', padding: 16}} onClick={e => {if (e.target === e.currentTarget) onClose();}}>
     <div className="orok-card" style={{width: 'min(760px,100%)', maxHeight: '90dvh', overflow: 'auto', padding: 20, display: 'grid', gap: 10, background: '#fff'}}>
-      <div style={{display: 'flex', justifyContent: 'space-between', gap: 8}}><div><small style={{color: '#78716c'}}>{p.red} · {p.fecha} · {p.formato} · {p.pilar} · {p.produccion === 'equipo' ? 'Graba el equipo' : 'Lo arma el ERP'}</small><h3 style={{margin: '4px 0'}}>{p.titulo}</h3><b style={{color: col}}>{et}</b></div><button className="orok-btn" onClick={onClose} aria-label="Cerrar"><X size={16}/></button></div>
+      <div style={{display: 'flex', justifyContent: 'space-between', gap: 8}}><div><small style={{color: '#78716c'}}>{multi ? 'Instagram · Facebook · TikTok' : p.red} · {p.fecha} · {p.formato} · {p.pilar} · {p.produccion === 'equipo' ? 'Graba el equipo' : 'Lo arma el ERP'}</small><h3 style={{margin: '4px 0'}}>{p.titulo}</h3><b style={{color: col}}>{et}</b></div><button className="orok-btn" onClick={onClose} aria-label="Cerrar"><X size={16}/></button></div>
       <div style={{background: '#fdf4ee', borderRadius: 12, padding: 12}}><b>Gancho 0-2 s</b><div style={{fontSize: 18, fontWeight: 800, color: '#85442A'}}>{p.gancho?.texto_pantalla}</div><div>🎙 {p.gancho?.primera_frase}</div><div style={{color: '#57534e'}}>🎬 {p.gancho?.visual}</div></div>
       {!!p.guion?.length && <div style={{overflowX: 'auto'}}><table style={{width: '100%', fontSize: 12, borderCollapse: 'collapse'}}><thead><tr>{['Seg', 'Visual', 'Texto en pantalla', 'Motion', 'Voz'].map(h => <th key={h} style={{textAlign: 'left', borderBottom: '1px solid #e7dfd8', padding: 4}}>{h}</th>)}</tr></thead><tbody>{p.guion.map((e, i) => <tr key={i}>{[e.seg, e.visual, e.texto_pantalla, e.motion, e.voz].map((v, j) => <td key={j} style={{verticalAlign: 'top', padding: 4, borderBottom: '1px solid #f1ebe6'}}>{v}</td>)}</tr>)}</tbody></table></div>}
       {p.medidas && <div><b>Formato y medidas:</b> {p.medidas}</div>}
@@ -488,13 +492,24 @@ function PiezaPlan({p, onChange, onClose}) {
       <div><b>Voz en off</b> ({p.voz_en_off?.estilo}): {p.voz_en_off?.texto}</div>
       <div><b>Música:</b> {[p.musica?.estilo, p.musica?.bpm && p.musica.bpm + ' BPM', p.musica?.sugerencia, p.musica?.nota].filter(Boolean).join(' · ')}</div>
       {p.recursos && <div><b>Recursos:</b> {p.recursos}</div>}{p.marca && <div><b>Marca:</b> {p.marca}</div>}
+      {multi ? <div style={{border: '1px solid #e7dfd8', borderRadius: 12, padding: 10, display: 'grid', gap: 8}}>
+        <div role="tablist" style={{display: 'flex', gap: 6}}>{REDES_PLAN.map(([k, l]) => <button key={k} role="tab" aria-selected={red === k} className={'orok-btn' + (red === k ? ' orok-btn-primary' : '')} onClick={() => setRed(k)}>{l}</button>)}</div>
+        {(() => { const v = p.versiones[red] || {}, e = vers[red] || {}; return <>
+          <small style={{color: '#57534e'}}><b>{v.formato}</b> · {v.medidas}{v.duracion_seg ? ' · ' + v.duracion_seg + ' s' : ''}{v.audio ? ' · Audio: ' + v.audio : ''}</small>
+          {v.notas && <small style={{color: '#57534e'}}>Adaptación: {v.notas}</small>}
+          <label>Hora<input className="orok-input" type="time" value={e.hora || ''} onChange={x => setV('hora', x.target.value)}/></label>
+          <label>Copy para {red}<textarea className="orok-input" rows={5} value={e.copy || ''} onChange={x => setV('copy', x.target.value)}/></label>
+          <label>CTA<input className="orok-input" value={e.cta || ''} onChange={x => setV('cta', x.target.value)}/></label>
+          <label>Hashtags<textarea className="orok-input" rows={2} value={e.hashtags || ''} onChange={x => setV('hashtags', x.target.value)}/></label>
+        </>; })()}
+      </div> : <>
       <label>Hora<input className="orok-input" type="time" value={hora} onChange={e => setHora(e.target.value)}/></label>
       <label>Copy (texto de la publicación)<textarea className="orok-input" rows={5} value={copy} onChange={e => setCopy(e.target.value)}/></label>
       <div><b>CTA:</b> {p.cta}</div>
-      <label>Hashtags<textarea className="orok-input" rows={2} value={tags} onChange={e => setTags(e.target.value)}/></label>
+      <label>Hashtags<textarea className="orok-input" rows={2} value={tags} onChange={e => setTags(e.target.value)}/></label></>}
       <div style={{display: 'flex', gap: 8, flexWrap: 'wrap'}}>
-        <button className="orok-btn" disabled={busy} onClick={() => act({cambios: {copy, hashtags: tags.split(/\s+/), hora}})}>Guardar cambios</button>
-        <button className="orok-btn orok-btn-primary" disabled={busy} onClick={() => act({estado: 'aprobada', cambios: {copy, hashtags: tags.split(/\s+/), hora}})}>Aprobar</button>
+        <button className="orok-btn" disabled={busy} onClick={() => act({cambios: cambios()})}>Guardar cambios</button>
+        <button className="orok-btn orok-btn-primary" disabled={busy} onClick={() => act({estado: 'aprobada', cambios: cambios()})}>Aprobar</button>
         <button className="orok-btn" disabled={busy} onClick={() => act({estado: 'rechazada'})}>Rechazar</button>
         <Copiar value={todo}/>
       </div>{err && <p role="alert" style={{color: '#b42318'}}>{err}</p>}
@@ -506,15 +521,15 @@ export function GretaPlanSemanal() {
   const cargar = async id => {try {const l = await db.gretaPlanSemanas(); setLista(l); const sid = id || sem?.id || l.semanas?.[0]?.id; if (sid) setSem(await db.gretaPlanSemana({id: sid}));} catch (e) {setErr(e.message);}};
   useEffect(() => {cargar();}, []);
   const crear = async () => {setErr(''); try {const s = await db.gretaPlanSemanaCrear({inicio}); await cargar(s.id);} catch (e) {setErr(e.message);}};
-  const generar = async (dias = [0, 1, 2, 3, 4, 5, 6], redes = REDES_PLAN.map(r => r[0]), rehacer = false) => {
-    if (!sem) return; setErr(''); const tareas = dias.flatMap(d => redes.map(r => [sumarPlan(sem.inicio, d), r])); let i = 0, fallos = [];
-    for (const [fecha, red] of tareas) {setProg({i, n: tareas.length, txt: red + ' · ' + fecha}); try {await db.gretaPlanGenerar({semana_id: sem.id, fecha, red, rehacer});} catch (e) {fallos.push(red + ' ' + fecha + ': ' + e.message);} i++; setSem(await db.gretaPlanSemana({id: sem.id}));}
+  const generar = async (dias = [0, 1, 2, 3, 4, 5, 6], rehacer = false) => {
+    if (!sem) return; setErr(''); const tareas = dias.map(d => sumarPlan(sem.inicio, d)); let i = 0, fallos = [];
+    for (const fecha of tareas) {setProg({i, n: tareas.length, txt: fecha}); try {await db.gretaPlanGenerar({semana_id: sem.id, fecha, rehacer});} catch (e) {fallos.push(fecha + ': ' + e.message);} i++; setSem(await db.gretaPlanSemana({id: sem.id}));}
     setProg(null); if (fallos.length) setErr('Algunas no se generaron (puedes reintentar): ' + fallos.slice(0, 3).join(' | '));
   };
   const aprobarDia = async fecha => {try {await db.gretaPlanAprobar({semana_id: sem.id, fecha}); setSem(await db.gretaPlanSemana({id: sem.id}));} catch (e) {setErr(e.message);}};
   const piezas = sem?.piezas || [], cuenta = k => piezas.filter(p => p.estado === k).length;
   return <div style={{display: 'grid', gap: 16}}>
-    <div className="orok-card" style={{padding: 16}}><h2 style={{margin: 0}}>Plan semanal de contenido</h2><p style={{margin: '6px 0 0', color: '#57534e'}}>G.R.E.T.A analiza tus perfiles y lo que funciona en edificios boutique, y prepara 7 publicaciones diarias distintas por red (Instagram, Facebook y TikTok, cada una con sus medidas, duración y estilo propios) con gancho, guion, motion graphics, voz en off, música, copy y hashtags. Nada se publica sin aprobación.</p></div>
+    <div className="orok-card" style={{padding: 16}}><h2 style={{margin: 0}}>Plan semanal de contenido</h2><p style={{margin: '6px 0 0', color: '#57534e'}}>G.R.E.T.A analiza tus perfiles y lo que funciona en edificios boutique, y prepara 7 publicaciones diarias (videos e imágenes) que se publican en Instagram, Facebook y TikTok, con una versión adaptada a cada red (medidas, duración, horario, copy y hashtags), con gancho, guion, motion graphics, voz en off, música, copy y hashtags. Nada se publica sin aprobación.</p></div>
     <MarcaPlan marca={lista?.marca} onSaved={() => cargar()}/>
     <AnalisisPlan analisis={lista?.analisis} onDone={a => setLista(l => ({...l, analisis: a}))}/>
     <section className="orok-card" style={{padding: 16, display: 'grid', gap: 10}}>
@@ -523,20 +538,21 @@ export function GretaPlanSemanal() {
         <label>Semana que empieza el lunes<input className="orok-input" type="date" value={inicio} onChange={e => setInicio(lunesPlan(e.target.value))}/></label>
         <button className="orok-btn" onClick={crear}>Crear o abrir semana</button>
         {lista?.semanas?.length > 0 && <select className="orok-input" value={sem?.id || ''} onChange={e => cargar(e.target.value)} style={{width: 'auto'}}>{lista.semanas.map(s => <option key={s.id} value={s.id}>{s.inicio} al {s.fin}</option>)}</select>}
-        {sem && <button className="orok-btn orok-btn-primary" disabled={!!prog} onClick={() => generar()}>{prog ? `Generando ${prog.i + 1}/${prog.n} · ${prog.txt}` : piezas.length ? 'Completar lo que falta' : 'Generar semana completa (147 piezas)'}</button>}
+        {sem && <button className="orok-btn orok-btn-primary" disabled={!!prog} onClick={() => generar()}>{prog ? `Generando ${prog.i + 1}/${prog.n} · ${prog.txt}` : piezas.length ? 'Completar lo que falta' : 'Generar semana completa (49 piezas)'}</button>}
       </div>
-      {sem && <small style={{color: '#57534e'}}>{piezas.length} piezas · {cuenta('aprobada')} aprobadas · {cuenta('borrador')} por revisar · {cuenta('rechazada')} rechazadas. Generar la semana toma unos minutos (21 pasos).</small>}
+      {sem && <small style={{color: '#57534e'}}>{piezas.length} piezas · {cuenta('aprobada')} aprobadas · {cuenta('borrador')} por revisar · {cuenta('rechazada')} rechazadas. Generar la semana toma unos minutos (7 pasos, uno por día).</small>}
       {err && <p role="alert" style={{color: '#b42318', margin: 0}}>{err}</p>}
-      {sem && <div style={{overflowX: 'auto'}}><table style={{width: '100%', borderCollapse: 'separate', borderSpacing: 6, minWidth: 760}}><thead><tr><th></th>{REDES_PLAN.map(([k, l]) => <th key={k} style={{textAlign: 'left'}}>{l}</th>)}</tr></thead><tbody>
-        {DIAS_PLAN.map((d, i) => {const fecha = sumarPlan(sem.inicio, i); return <tr key={fecha}>
-          <td style={{verticalAlign: 'top', whiteSpace: 'nowrap'}}><b>{d}</b><br/><small>{fecha.slice(5)}</small><br/>{piezas.some(p => p.fecha === fecha && p.estado === 'borrador') && <button className="orok-btn" style={{fontSize: 11, padding: '4px 8px', marginTop: 4}} onClick={() => aprobarDia(fecha)}>Aprobar día</button>}</td>
-          {REDES_PLAN.map(([k]) => {const ps = piezas.filter(p => p.fecha === fecha && p.red === k && p.estado !== 'rechazada'); return <td key={k} style={{verticalAlign: 'top', background: '#fbf8f5', borderRadius: 12, padding: 6, minWidth: 220}}>
-            {ps.map(p => {const [et, col] = ESTADO_PLAN[p.estado] || ESTADO_PLAN.borrador; return <button key={p.id} onClick={() => setAbierta(p)} style={{display: 'block', width: '100%', textAlign: 'left', border: '1px solid #e7dfd8', borderLeft: '4px solid ' + col, borderRadius: 10, background: '#fff', padding: '6px 8px', marginBottom: 6, cursor: 'pointer', font: 'inherit', fontSize: 12}}><b>{p.hora}</b> · {p.formato} <span style={{color: col}}>· {et}</span><div style={{fontWeight: 600}}>{p.titulo}</div><div style={{color: '#85442A'}}>“{p.gancho?.texto_pantalla}”</div></button>;})}
-            {!ps.length && <button className="orok-btn" style={{fontSize: 11}} disabled={!!prog} onClick={() => generar([i], [k])}>Generar 7</button>}
-            {ps.length > 0 && ps.every(p => p.estado === 'borrador') && <button className="orok-btn" style={{fontSize: 11}} disabled={!!prog} onClick={() => generar([i], [k], true)}>Rehacer</button>}
-          </td>;})}
-        </tr>;})}
-      </tbody></table></div>}
+      {sem && <div style={{display: 'grid', gap: 8}}>
+        {DIAS_PLAN.map((d, i) => {const fecha = sumarPlan(sem.inicio, i), ps = piezas.filter(p => p.fecha === fecha && p.estado !== 'rechazada').sort((a, b) => (a.hora || '').localeCompare(b.hora || '')); return <div key={fecha} style={{display: 'grid', gridTemplateColumns: '84px 1fr', gap: 8, background: '#fbf8f5', borderRadius: 12, padding: 8}}>
+          <div><b>{d}</b><br/><small>{fecha.slice(5)}</small><br/>
+            {!ps.length && <button className="orok-btn" style={{fontSize: 11, padding: '4px 8px', marginTop: 4}} disabled={!!prog} onClick={() => generar([i])}>Generar 7</button>}
+            {ps.length > 0 && ps.every(p => p.estado === 'borrador') && <button className="orok-btn" style={{fontSize: 11, padding: '4px 8px', marginTop: 4}} disabled={!!prog} onClick={() => generar([i], true)}>Rehacer</button>}
+            {ps.some(p => p.estado === 'borrador') && <button className="orok-btn" style={{fontSize: 11, padding: '4px 8px', marginTop: 4}} onClick={() => aprobarDia(fecha)}>Aprobar día</button>}</div>
+          <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 6}}>
+            {ps.map(p => {const [et, col] = ESTADO_PLAN[p.estado] || ESTADO_PLAN.borrador; return <button key={p.id} onClick={() => setAbierta(p)} style={{textAlign: 'left', border: '1px solid #e7dfd8', borderLeft: '4px solid ' + col, borderRadius: 10, background: '#fff', padding: '6px 8px', cursor: 'pointer', font: 'inherit', fontSize: 12}}><b>{p.hora}</b> · {p.formato} <span style={{color: col}}>· {et}</span><div style={{fontWeight: 600}}>{p.titulo}</div><div style={{color: '#85442A'}}>“{p.gancho?.texto_pantalla}”</div><small style={{color: '#78716c'}}>{p.versiones ? 'IG · FB · TikTok' : p.red}</small></button>;})}
+            {!ps.length && <small style={{color: '#78716c', alignSelf: 'center'}}>Sin piezas aún.</small>}
+          </div></div>;})}
+      </div>}
       <small style={{color: '#78716c'}}>Las piezas aprobadas se programan en <b>Publicar</b> cuando sus cuentas estén conectadas. Las marcadas «Graba el equipo» necesitan tomas reales; las demás se arman con fotos y renders del proyecto.</small>
     </section>
     {abierta && <PiezaPlan key={abierta.id + abierta.revision} p={abierta} onClose={() => setAbierta(null)} onChange={p => {setAbierta(p); setSem(s => ({...s, piezas: s.piezas.map(x => x.id === p.id ? p : x)}));}}/>}
