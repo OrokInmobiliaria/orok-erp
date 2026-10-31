@@ -475,6 +475,7 @@ function AnalisisPlan({analisis, onDone}) {
 }
 function PiezaPlan({p, onChange, onClose}) {
   const [busy, setBusy] = useState(false), [err, setErr] = useState(''), [copy, setCopy] = useState(p.copy), [tags, setTags] = useState((p.hashtags || []).join(' ')), [hora, setHora] = useState(p.hora);
+  const [motivo, setMotivo] = useState('');
   const [red, setRed] = useState('instagram'), [vers, setVers] = useState(() => Object.fromEntries(Object.entries(p.versiones || {}).map(([k, v]) => [k, {copy: v.copy, hora: v.hora, cta: v.cta, hashtags: (v.hashtags || []).join(' ')}])));
   const multi = !!p.versiones, setV = (k, val) => setVers(o => ({...o, [red]: {...o[red], [k]: val}}));
   const cambios = () => multi ? {versiones: Object.fromEntries(Object.entries(vers).map(([k, v]) => [k, {...v, hashtags: v.hashtags.split(/\s+/)}]))} : {copy, hashtags: tags.split(/\s+/), hora};
@@ -507,10 +508,11 @@ function PiezaPlan({p, onChange, onClose}) {
       <label>Copy (texto de la publicación)<textarea className="orok-input" rows={5} value={copy} onChange={e => setCopy(e.target.value)}/></label>
       <div><b>CTA:</b> {p.cta}</div>
       <label>Hashtags<textarea className="orok-input" rows={2} value={tags} onChange={e => setTags(e.target.value)}/></label></>}
+      <label>¿Qué debe aprender G.R.E.T.A? <small style={{color: '#78716c'}}>(opcional · por ejemplo «no usar la palabra lujo», «en TikTok hablar de obra»; Gerencia la aprueba en Lecciones de la IA)</small><input className="orok-input" value={motivo} onChange={e => setMotivo(e.target.value)} placeholder="Motivo del cambio o del rechazo"/></label>
       <div style={{display: 'flex', gap: 8, flexWrap: 'wrap'}}>
-        <button className="orok-btn" disabled={busy} onClick={() => act({cambios: cambios()})}>Guardar cambios</button>
+        <button className="orok-btn" disabled={busy} onClick={() => act({cambios: cambios(), motivo: motivo.trim() || undefined})}>Guardar cambios</button>
         <button className="orok-btn orok-btn-primary" disabled={busy} onClick={() => act({estado: 'aprobada', cambios: cambios()})}>Aprobar</button>
-        <button className="orok-btn" disabled={busy} onClick={() => act({estado: 'rechazada'})}>Rechazar</button>
+        <button className="orok-btn" disabled={busy} onClick={() => act({estado: 'rechazada', motivo: motivo.trim() || undefined})}>Rechazar</button>
         <Copiar value={todo}/>
       </div>{err && <p role="alert" style={{color: '#b42318'}}>{err}</p>}
     </div></div>;

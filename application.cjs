@@ -34,6 +34,7 @@ const {LolaAssistant,LOLA_ASSIST_METHODS}=require('./business/lolaAssistant');
 const {ClaraErp,CLARA_METHODS}=require('./business/claraErp');
 const {Greta,GRETA_METHODS,paraLola}=require('./business/greta');
 const {Mercado,MERCADO_METHODS}=require('./business/mercado');
+const {Lecciones,LECCIONES_METHODS}=require('./business/lecciones');
 const {McpConnector,MCP_METHODS}=require('./business/mcpConnector'); // R44 · conector del ERP para Claude
 const {Resguardo,OPS_METHODS}=require('./business/resguardo'); // R45 · L.O.L.A Operaciones: resguardo externo cifrado // R42 · Marketing con G.R.E.T.A
 const {ProjectDrive}=require('./business/projectDrive');
@@ -66,9 +67,10 @@ function application({store,auth,cache,authCache,config,syncer,historialIA=null,
  const enrollment=new DeviceEnrollment(config);
  const greta=new Greta(store,config,{assistant:lolaAssistant,creative,ads,publications,pipelines,fetcher:creativeOptions.gretaFetcher});
  const mercado=new Mercado(store,config,{assistant:lolaAssistant,fetcher:creativeOptions.gretaFetcher});
+ const lecciones=new Lecciones(store);lolaAssistant.lecciones=lecciones;greta.lecciones=lecciones; // R75
  greta.projectDrive=projectDrive;
  creative.onMedia=media=>projectDrive.archiveMedia(media,creative);
- const clara=new ClaraErp(store,config,{assistant:lolaAssistant,fetcher:creativeOptions.claraFetcher,mailer:creativeOptions.claraMailer||approvalMail});
+ const clara=new ClaraErp(store,config,{assistant:lolaAssistant,fetcher:creativeOptions.claraFetcher,mailer:creativeOptions.claraMailer||approvalMail}); clara.lecciones=lecciones; // R75
  // R48 · Aprobación de precios: mismos correos del directorio de Aprobaciones (D.I.A.V.A) y el mismo correo del servidor.
  precios.mailer=creativeOptions.claraMailer||approvalMail;precios.directorio=async()=>{const users=auth.snapshot?((await auth.snapshot()).users||[]):[],dir=await clara.list('aprobadores');return users.map(u=>({name:u.name,role:u.role,email:dir.find(d=>d.user_id===u.id&&!d.eliminado)?.email||''}));};
  clara.projectDrive=projectDrive;
@@ -396,6 +398,7 @@ function application({store,auth,cache,authCache,config,syncer,historialIA=null,
    if(MCP_METHODS.includes(name))return {value:await mcp.rpc(name,args,user)};
    if(OPS_METHODS.includes(name))return {value:await resguardo.rpc(name,args,user)};
    if(PRECIOS_METHODS.includes(name))return {value:await precios.rpc(name,args,user,()=>cache.read())};
+   if(LECCIONES_METHODS.includes(name))return {value:await lecciones.rpc(name,args,user)};
    if(MERCADO_METHODS.includes(name))return {value:await mercado.rpc(name,args,user,()=>cache.read())};
    if(GRETA_METHODS.includes(name)){const value=await greta.rpc(name,args,user,()=>cache.read());if(['gretaAsk','gretaTendencias','gretaIdea','gretaImagen','gretaKpisLectura'].includes(name)){try{value.drive=await projectDrive.archiveResult(name,args[0]||{},value,user,creative);}catch(e){value.drive={state:'error',reason:e.message};}}return {value};}
    if(CLARA_METHODS.includes(name))return {value:await clara.rpc(name,args,user,()=>cache.read(),{usuarios:async()=>((await auth.execute('info',[],cookie)).value?.users||[]).map(u=>({id:u.id,name:u.name,role:u.role}))})};
