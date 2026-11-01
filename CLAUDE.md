@@ -39,6 +39,7 @@ Estas reglas las fijó Martín Montezuma (Gerencia ÖRÖK). Cualquier IA que pro
 - Aporte: el terreno propio es aporte en especie (no sale dinero); el aporte en efectivo se compara con el capital propio disponible. El banco puede exigir demostrar gastos (sin terreno) antes de desembolsar; el desembolso es el mes en que se cumplen preventa y gastos. Las cuotas iniciales pueden estar retenidas por el banco hasta el desembolso (escenario elegible).
 - TIR: si el flujo cambia de signo varias veces se usa TIR modificada a la tasa de descuento.
 - Gráficos: colores claros y distinguibles (sin líneas o puntos marrón oscuro o negros juntos); puntos con borde blanco.
+- Fases y precio: preventa en planos (descuento alto) → demolición → venta con descuento medio (construcción) → casco habitable → descuento bajo (acabados) → levantamiento de observaciones → precio regular → entrega → independización. Criterios: escalera descendente, regular vs obra nueva en venta (P25–P75), preventa vs lanzamientos, precio más bajo ≥ equilibrio, descuento de preventa vs costo del dinero, preventa del banco antes de la obra y cupos para que queden unidades al precio regular.
 - Estudio de mercado: solo obra nueva (sin segundo uso ni remodelados); alturas elegidas con casillas.
 - Calendario: inicio oficial (mes 0) y hito de aprobación bancaria; la duración del proyecto va del arranque a la entrega e independización.
 - Los datos propios de un proyecto (p. ej. HR/PU de Infinity 224) son datos, no fórmulas: nunca se copian a otro proyecto.
