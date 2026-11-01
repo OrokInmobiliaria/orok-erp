@@ -26,3 +26,7 @@ test('R87: arbitrios durante la obra editables, evidencia y cristal en Evaluador
  assert.match(s,/TRIBUTOS MUNICIPALES \(R87/);assert.match(s,/p\.arbFuente/);
  for(const f of ['evaluador-src/evaluador.html','contabilidad-src/clara-contabilidad.html'])assert.match(fs.readFileSync(path.join(__dirname,'..',f),'utf8'),/R87 · Cristal 2\.0/);
 });
+
+test('R96: predial y costo del banco se editan desde Supuestos',()=>{
+ assert.match(s,/fld\('p\.predAniosUnidades'/);assert.match(s,/id="i-p-predDesdeInicio" data-k="p\.predDesdeInicio"/);assert.match(s,/id="i-p-interesModo" data-k="p\.interesModo"/);
+});
