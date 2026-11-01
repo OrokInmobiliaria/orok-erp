@@ -1439,15 +1439,17 @@ if(CRM)setTimeout(crmBoot,0);else(async()=>{try{const s=window.claude&&await win
 /* ---------- Estudio de mercado (departamentos · vivienda multifamiliar) ---------- */
 const AMEN=[['piscina','Piscina',/piscina/i],['parrilla','Parrilla',/parrill|bbq|barbacoa|grill/i],['gimnasio','Gimnasio',/gimnasio|\bgym\b|fitness/i],['sum','SUM',/\bsum\b|sal[oó]n de usos|sala de eventos|[aá]rea de eventos/i],['coworking','Coworking',/co-?working/i],['juegos','Zona de niños',/juegos|kids|niñ/i],['terraza','Terraza o rooftop',/rooftop|sky ?bar|terraza|lounge/i],['pet','Pet friendly',/\bpet\b|mascota/i],['lavanderia','Lavandería',/lavander/i],['cine','Cine',/\bcine\b/i],['verdes','Áreas verdes',/[áa]reas verdes|jard[ií]n/i],['ascensor','Ascensor',/ascensor/i]];
 const AMENL=Object.fromEntries(AMEN.map(a=>[a[0],a[1]]));
-const MEST=[['lanzamiento','Lanzamiento'],['venta','En venta'],['vendido','Últimas ventas'],['usado','Usados']];
+const MEST=[['lanzamiento','Lanzamiento'],['venta','En venta'],['vendido','Últimas ventas'],['usado','2do uso / remodelado']];
 const MESTL=Object.fromEntries(MEST);
+// R89 · Los departamentos de segundo uso o remodelados NO entran al estudio (ni al gráfico, ni a la mediana, ni al precio sugerido).
+const MEST_MODELO=MEST.filter(([k])=>k!=='usado');const mEsUsado=c=>c.estado==='usado'||(!c.estadoManual&&c.estado!=='vendido'&&M_USADO_RX.test([c.etapa,c.nombre,c.descripcion,c.detalle].filter(Boolean).join(' ')));const M_USADO_RX=/remodelad|refaccionad|reformad|reacondicionad|segundo uso|2do\.? uso|de segunda|reventa|usad[oa]\b/i;
 const MCOL={lanzamiento:'var(--d3)',venta:'var(--d1)',vendido:'var(--d4)',usado:'var(--d5)'};
 const mNum=v=>{if(v==null||v==='')return null;if(typeof v==='number')return isFinite(v)?v:null;const s=String(v).replace(/[^\d.,-]/g,'');if(!s)return null;const t=/,\d{3}(\D|$)/.test(s)||(s.includes(',')&&s.includes('.'))?s.replace(/,/g,''):s.replace(',','.');const n=parseFloat(t);return isFinite(n)?n:null};
 const mRange=v=>{if(v==null||v==='')return [null,null];if(typeof v==='number')return [v,v];const p=String(v).split(/\s*(?:–|—|-|a|hasta)\s*/i).map(mNum).filter(x=>x!=null);return p.length?[p[0],p[p.length-1]]:[null,null]};
 function mEstado(t,tipo){t=String(t||'').toLowerCase();
   if(/vendid|cerrad|escritur|transacci|[uú]ltima venta/.test(t))return 'vendido';
   if(/lanzamiento|en planos|pre-?venta|preventa/.test(t))return 'lanzamiento';
-  if(/usad|reventa|segunda|antig[uü]edad|a[nñ]os/.test(t))return 'usado';
+  if(/usad|reventa|segunda|segundo uso|2do\.? uso|remodelad|refaccionad|reformad|antig[uü]edad|a[nñ]os/.test(t))return 'usado';
   if(/construcci|estreno|entrega inmediata|inmediata|en venta|venta/.test(t))return 'venta';
   return tipo==='aviso'?'usado':'venta'}
 function mAmen(list){const txt=Array.isArray(list)?list.join(', '):String(list||'');return AMEN.filter(a=>a[2].test(txt)).map(a=>a[0])}
@@ -1460,7 +1462,8 @@ function mNorm(r,fuente){
   const [amin,amax]=g('area_min')!=null?[mNum(g('area_min')),mNum(g('area_max'))??mNum(g('area_min'))]:mRange(g('area','area_m2','m2'));
   const [dmin,dmax]=g('dorm_min')!=null?[mNum(g('dorm_min')),mNum(g('dorm_max'))??mNum(g('dorm_min'))]:mRange(g('dorm','dormitorios'));
   const etapa=String(g('etapa','estado_texto')||g('estado')||'');
-  const est=['lanzamiento','venta','vendido','usado'].includes(g('estado'))?g('estado'):mEstado(etapa,tipo);
+  let est=['lanzamiento','venta','vendido','usado'].includes(g('estado'))?g('estado'):mEstado(etapa,tipo);
+  if(est!=='vendido'&&M_USADO_RX.test([etapa,g('descripcion','detalle','observaciones'),g('nombre','proyecto','titulo')].filter(Boolean).join(' ')))est='usado'; // R89
   const pm2x=mNum(g('pm2','precio_m2'));
   if(precio==null&&pm2x&&amin)precio=pm2x*amin;
   return {id:'m'+Math.random().toString(36).slice(2,9),incl:true,fuente:String(fuente||g('fuente')||'Manual').slice(0,80),url:String(g('url')||'').slice(0,300),
@@ -1606,14 +1609,15 @@ async function mGeocode(){
 function mercadoModel(){
   const mk=S.mercado,neg=(+mk.descNeg||0)/100;
   const all=mk.comps.map(c=>({...c,pm2:mPm2(c)}));
-  const ok=all.filter(c=>mComparableIncluded(c)&&c.pm2>=1500&&c.pm2<=30000);
-  const use=ok.filter(c=>mk.inclUsados||c.estado!=='usado');
+  const usados=all.filter(mEsUsado);
+  const ok=all.filter(c=>!mEsUsado(c)&&mComparableIncluded(c)&&c.pm2>=1500&&c.pm2<=30000); // R89 · sin segundo uso ni remodelados
+  const use=ok;
   const adj=c=>c.estado==='vendido'?c.pm2:c.pm2*(1-neg);
   const est=Object.fromEntries(MEST.map(([k])=>[k,mStats(ok.filter(c=>c.estado===k).map(c=>c.pm2))]));
   const grp=(f,keys)=>keys.map(([k,l])=>{const s=mStats(use.filter(c=>f(c)===k).map(c=>c.pm2));return {k,l,...s}});
   const dormK=c=>c.dmin!=null&&c.dmin===c.dmax?(c.dmin>=4?'4':String(c.dmin)):null;
   const byDorm=grp(dormK,[['1','1 dormitorio'],['2','2 dormitorios'],['3','3 dormitorios'],['4','4 o más']]);
-  const useAlt=all.filter(c=>c.incl!==false&&c.pm2>=1500&&c.pm2<=30000&&(mk.inclUsados||c.estado!=='usado')&&(c.scopeOverride===true||['dentro','pendiente','altura'].includes(mScopeKind(c)))); // R88 · se ven todas las alturas aunque estén desmarcadas
+  const useAlt=all.filter(c=>c.incl!==false&&c.pm2>=1500&&c.pm2<=30000&&!mEsUsado(c)&&(c.scopeOverride===true||['dentro','pendiente','altura'].includes(mScopeKind(c)))); // R88 · se ven todas las alturas aunque estén desmarcadas
   const byAlt=[['a','Hasta 5 pisos'],['b','6 a 8 pisos'],['c','9 a 12 pisos'],['d','13 pisos o más'],['x','Sin dato de altura']].map(([k,l])=>({k,l,...mStats(useAlt.filter(c=>(mAltKey(c)||'x')===k).map(c=>c.pm2))}));
   const conInfo=use.filter(c=>c.amen&&c.amen.length);
   const prem=AMEN.map(([k,l])=>{if(k==='ascensor')return {k,l,nW:conInfo.filter(c=>c.amen.includes(k)).length,nWO:conInfo.filter(c=>!c.amen.includes(k)).length,medW:null,medWO:null,prem:null,share:0,info:1};const w=conInfo.filter(c=>c.amen.includes(k)).map(c=>c.pm2),wo=conInfo.filter(c=>!c.amen.includes(k)).map(c=>c.pm2);const a=mStats(w),b=mStats(wo);
@@ -1636,20 +1640,20 @@ function mercadoModel(){
   const pctl=v=>{const a=use.map(adj);return a.length&&v?a.filter(x=>x<=v).length/a.length:null};
   const sim=v=>{if(!v)return null;const m=compute(S,{precioM2:v});return {neta:m.neta,mSv:m.mSv,tirQ:m.tirQ,peak:m.peak}};
   const meta=(+mk.margenMeta||15)/100;let pMeta=null;{let a=S.p.precioM2*.5,b=S.p.precioM2*2;if(compute(S,{precioM2:b}).mSv>=meta){for(let k=0;k<32;k++){const m=(a+b)/2;if(compute(S,{precioM2:m}).mSv>=meta)b=m;else a=m}pMeta=b}}
-  return {all,ok,use,est,byDorm,byAlt,prem,slope,base,lo,hi,ajustes,tot,rec,simRec:sim(rec?Math.round(rec/10)*10:null),pMeta,pctlMeta:pctl(pMeta),pctlAct:pctl(S.p.precioM2),pctlRec:pctl(rec),eq:breakEven(S),meta,recLo:lo?lo*(1+tot):null,recHi:hi?hi*(1+tot):null,ourArea,medArea,neg,
+  return {all,ok,use,usados,est,byDorm,byAlt,prem,slope,base,lo,hi,ajustes,tot,rec,simRec:sim(rec?Math.round(rec/10)*10:null),pMeta,pctlMeta:pctl(pMeta),pctlAct:pctl(S.p.precioM2),pctlRec:pctl(rec),eq:breakEven(S),meta,recLo:lo?lo*(1+tot):null,recHi:hi?hi*(1+tot):null,ourArea,medArea,neg,
     gap:rec?S.p.precioM2/rec-1:null,sinVendidos:!ok.some(c=>c.estado==='vendido')};
 }
 function mercadoResumen(){try{const R=mercadoModel(),r=x=>x==null?null:Math.round(x);return {distrito:S.mercado.distrito,fecha:limaDate(),comparables:R.use.length,
-  por_estado:Object.fromEntries(MEST.map(([k])=>[k,{n:R.est[k].n,mediana_m2:r(R.est[k].med),p25_m2:r(R.est[k].p25),p75_m2:r(R.est[k].p75)}])),
+  por_estado:Object.fromEntries(MEST_MODELO.map(([k])=>[k,{n:R.est[k].n,mediana_m2:r(R.est[k].med),p25_m2:r(R.est[k].p25),p75_m2:r(R.est[k].p75)}])),
   precio_sugerido_m2:r(R.rec),rango_m2:[r(R.recLo),r(R.recHi)],precio_actual_m2:r(S.p.precioM2),brecha_pct:R.gap==null?null:+(R.gap*100).toFixed(1),descuento_negociacion_pct:S.mercado.descNeg,
   ajustes:R.ajustes.map(a=>({motivo:a.l,pct:+(a.v*100).toFixed(1)})),fuentes:S.mercado.fuentes.slice(-8)}}catch(e){return null}}
 function mStrip(R){
   const vals=R.ok.map(c=>c.pm2);if(!vals.length)return '<p class="mut">Sin comparables con precio y área.</p>';
-  const lo=Math.min(...vals,S.p.precioM2,R.rec||Infinity)*0.94,hi=Math.max(...vals,S.p.precioM2,R.rec||0)*1.04,W=720,L=118,Rr=16,rowH=34,H=MEST.length*rowH+44,x=v=>L+(v-lo)/(hi-lo)*(W-L-Rr);
+  const lo=Math.min(...vals,S.p.precioM2,R.rec||Infinity)*0.94,hi=Math.max(...vals,S.p.precioM2,R.rec||0)*1.04,W=720,L=118,Rr=16,rowH=34,H=MEST_MODELO.length*rowH+44,x=v=>L+(v-lo)/(hi-lo)*(W-L-Rr);
   const ticks=[];const step=hi-lo>6000?2000:1000;for(let t=Math.ceil(lo/step)*step;t<=hi;t+=step)ticks.push(t);
   let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Precio por m² por etapa">`;
   ticks.forEach(t=>{s+=`<line x1="${x(t)}" x2="${x(t)}" y1="8" y2="${H-26}" stroke="var(--line)"/><text x="${x(t)}" y="${H-10}" text-anchor="middle">${nf(t/1000,0)}k</text>`});
-  MEST.forEach(([k,l],i)=>{const y=14+i*rowH+rowH/2,st=R.est[k];s+=`<text x="4" y="${y+4}" style="font-size:11px;fill:var(--ink)">${l}</text>`;
+  MEST_MODELO.forEach(([k,l],i)=>{const y=14+i*rowH+rowH/2,st=R.est[k];s+=`<text x="4" y="${y+4}" style="font-size:11px;fill:var(--ink)">${l}</text>`;
     if(st.n>1)s+=`<rect x="${x(st.p25)}" y="${y-8}" width="${Math.max(2,x(st.p75)-x(st.p25))}" height="16" rx="6" fill="${MCOL[k]}" opacity=".18"/><line x1="${x(st.med)}" x2="${x(st.med)}" y1="${y-10}" y2="${y+10}" stroke="${MCOL[k]}" stroke-width="3"/>`;
     R.ok.filter(c=>c.estado===k).forEach((c,j)=>{s+=`<circle cx="${x(c.pm2)}" cy="${y+((j%3)-1)*4}" r="4.2" fill="${MCOL[k]}" opacity="${c.incl===false?.25:.85}"><title>${esc(c.nombre)} · ${S_(c.pm2)} por m²</title></circle>`})});
   const mark=(v,lab,col,dy)=>v?`<line x1="${x(v)}" x2="${x(v)}" y1="6" y2="${H-26}" stroke="${col}" stroke-width="2" stroke-dasharray="5 4"/><text x="${x(v)+4}" y="${dy}" style="font-size:10.5px;fill:${col};font-weight:600">${lab} ${nf(v,0)}</text>`:'';
@@ -1673,7 +1677,7 @@ V.mercado=()=>{
   const tHead=`<tr><th></th><th class="n">Avisos</th><th class="n">Mediana S/ por m²</th><th class="n">Promedio</th><th class="n">P25</th><th class="n">P75</th><th class="n">Mín.</th><th class="n">Máx.</th></tr>`;
   const tHead2=t=>`<tr><th>${t}</th><th class="n">Avisos</th><th class="n">Mediana S/ por m²</th><th class="n">P25</th><th class="n">P75</th></tr>`;
   const cell2=s=>s.n?`<td class="n">${s.n}</td><td class="n">${S_(s.med)}</td><td class="n">${S_(s.p25)}</td><td class="n">${S_(s.p75)}</td>`:`<td class="n">0</td><td colspan="3" class="mut">Sin datos</td>`;
-  const leyenda=MEST.map(([k,l])=>`<span class="row" style="gap:4px"><i style="width:10px;height:10px;border-radius:50%;background:${MCOL[k]};display:inline-block"></i>${l}</span>`).join('');
+  const leyenda=MEST_MODELO.map(([k,l])=>`<span class="row" style="gap:4px"><i style="width:10px;height:10px;border-radius:50%;background:${MCOL[k]};display:inline-block"></i>${l}</span>`).join('');
   const scopeLabel={pendiente:'Distancia pendiente de calcular',radio:`Fuera del radio de ${nf(mk.cuadras||7,0)} cuadras`,altura:'Fuera del filtro de altura',distrito:`Fuera de ${esc(mk.distrito)}`};
   const row=(c,i)=>{const pm=mPm2(c),used=mComparableIncluded(c),kind=mScopeKind(c),q=c.distCuadras!=null?Number(c.distCuadras):(c.distM!=null?Number(c.distM)/100:null);return `<tr class="${used?'':'sub'}" data-scope="${kind}"><td><input type="checkbox" data-k="mercado.comps.${i}.incl" ${used?'checked':''} aria-label="Incluir ${esc(c.nombre)}"></td>
     <td style="white-space:normal;min-width:200px">${c.url?`<a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.nombre)}</a>`:esc(c.nombre)}<br><small class="mut">${esc(c.desarrollador)}${c.direccion?' · '+esc(c.direccion):''}</small></td>
@@ -1691,7 +1695,7 @@ V.mercado=()=>{
   return `<div class="sect-h"><h2>Estudio de mercado</h2><p>Departamentos (vivienda multifamiliar) del distrito: precios por m² de proyectos en lanzamiento, en venta, últimas ventas y usados, con sus características. Base para fijar el precio de lanzamiento.</p></div>
   <div class="panel"><h3>Fuentes</h3>
    <div class="fields" style="margin-bottom:12px">${fld('mercado.distrito','Distrito analizado',1)}${fld('mercado.tc','Tipo de cambio SUNAT - venta (S/ por US$)',1)}${fld('mercado.descNeg','Descuento de negociación sobre precios de aviso (%)',1)}
-   <div class="f"><label for="i-mercado-inclUsados">Usados en el precio sugerido</label><label style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink);min-height:36px"><input type="checkbox" id="i-mercado-inclUsados" data-k="mercado.inclUsados" ${mk.inclUsados?'checked':''}>Incluir usados</label></div></div>
+   <div class="f"><label>Segundo uso y remodelados</label><div class="mut" style="font-size:12.5px;min-height:36px;display:flex;align-items:center">Siempre fuera del estudio (solo obra nueva)</div></div></div>
    <p class="note"><span role="status" data-rate-status>${rateError||mRateNote()} · consulta automática al ingresar</span> · <a href="https://e-consulta.sunat.gob.pe/cl-at-ittipcam/tcS01Alias" target="_blank" rel="noopener noreferrer">Consultar fuente SUNAT</a></p>
    <div class="scope-box"><div><b>Punto de partida</b><br>${esc(S.p.direccion)}<br><small class="mut">La distancia se mide en línea recta; 1 cuadra equivale a 100 m.</small></div>
     <div class="f"><label for="mScope">Alcance geográfico</label><select id="mScope" data-k="mercado.alcance"><option value="radio"${mk.alcance!=='distrito'?' selected':''}>Radio desde el proyecto</option><option value="distrito"${mk.alcance==='distrito'?' selected':''}>Todo el distrito</option></select></div>
@@ -1716,7 +1720,7 @@ V.mercado=()=>{
    <div><label>Mediana en lanzamiento</label><output>${S_(R.est.lanzamiento.med)}</output><small>${R.est.lanzamiento.n} proyectos</small></div>
    <div><label>Mediana en venta</label><output>${S_(R.est.venta.med)}</output><small>${R.est.venta.n} avisos · usados ${S_(R.est.usado.med)}</small></div></div>
   <div class="panel"><h3>Precio por m² según etapa</h3>${mStrip(R)}<div class="row" style="font-size:12px;gap:14px;margin-top:6px">${leyenda}<span class="mut">Banda: P25 a P75 · línea gruesa: mediana</span></div>
-   <div class="tw" style="margin-top:12px"><table><thead>${tHead}</thead><tbody>${MEST.map(([k,l])=>`<tr><td>${l}</td>${cell(R.est[k])}</tr>`).join('')}</tbody></table></div>
+   <div class="tw" style="margin-top:12px"><table><thead>${tHead}</thead><tbody>${MEST_MODELO.map(([k,l])=>`<tr><td>${l}</td>${cell(R.est[k])}</tr>`).join('')}</tbody></table></div>${R.usados.length?`<p class="note"><b>${R.usados.length} avisos de segundo uso o remodelados quedan fuera del estudio</b> (no entran al gráfico, la mediana ni el precio sugerido): ${R.usados.slice(0,8).map(c=>esc(c.nombre)).join(', ')}${R.usados.length>8?'…':''}. Si alguno está mal clasificado, cambia su etapa en la lista de avisos.</p>`:''}
    ${R.sinVendidos?'<p class="note">Sin datos de <b>últimas ventas</b>: los portales muestran precios de lista. Agrega cierres reales desde un Excel (reportes de cierre, tasaciones, SUNARP) con Estado = vendido; pesan 1.5 veces en el precio sugerido.</p>':''}</div>
   <div class="grid2"><div class="panel"><h3>Por tipología</h3><div class="tw"><table><thead>${tHead2('Dormitorios')}</thead><tbody>${R.byDorm.map(g=>`<tr><td>${g.l}</td>${cell2(g)}</tr>`).join('')}</tbody></table></div><p class="note">Solo avisos con tipología única; los proyectos con rango (1 a 3 dorm.) entran en las demás vistas.</p></div>
    <div class="panel"><div class="row" style="justify-content:space-between;align-items:end;flex-wrap:wrap;gap:8px"><h3 style="margin:0">Por altura del edificio</h3><div class="row" style="gap:6px"><button class="btn x" data-act="m-alt-proyecto" title="Deja marcadas solo las alturas parecidas a tu proyecto">Solo como mi proyecto (${nf(+S.mercado.objetivo?.pisos||0,0)} pisos)</button><button class="btn x" data-act="m-alt-todas">Marcar todas</button></div></div><div class="tw"><table><thead><tr><th style="width:36px" title="Incluir en el estudio">Usar</th>${tHead2('Edificio').replace(/^<tr>|<\/tr>$/g,'')}</tr></thead><tbody>${R.byAlt.map(g=>{const on=(S.mercado.alturas||{})[g.k]!==false;return `<tr${on?'':' class="mut"'} style="${on?'':'opacity:.55'}"><td style="text-align:center"><input type="checkbox" data-k="mercado.alturas.${g.k}" id="i-mercado-alturas-${g.k}" ${on?'checked':''} aria-label="Incluir ${esc(g.l)}"></td><td>${g.l}${on?'':' <span class="chip w">fuera del cálculo</span>'}</td>${cell2(g)}</tr>`}).join('')}</tbody></table></div><p class="note">Marca solo los tipos de edificio comparables con tu proyecto. Por ejemplo, los edificios de 13 pisos o más tienen costos fijos más diluidos y pueden dar descuentos mayores, lo que baja el precio de referencia; desmárcalos si tu proyecto es de otro concepto. Las cifras de cada fila se ven aunque esté desmarcada, para que compares. Los avisos excluidos quedan debajo de la línea de exclusión y puedes incluirlos uno por uno.</p></div>
@@ -2017,6 +2021,7 @@ document.addEventListener('change',e=>{
   if(el.type==='number'){v=parseFloat(v);if(isNaN(v))v=0}
   if(/^mercado\.comps\.\d+\.distCuadras$/.test(k)){const c=S.mercado.comps[Number(k.split('.')[2])];if(c){mDistManual(c,el.value);save();const id=el.id;render();const n=document.getElementById(id);if(n)n.focus({preventScroll:true})}return}
   if(cabFijo(k))return;
+  if(/^mercado\.comps\.\d+\.estado$/.test(k)){const c=S.mercado.comps[+k.split('.')[2]];if(c)c.estadoManual=true} // R89 · la etapa elegida a mano manda
   setP(k,v);if(/^cab\.oficial\.filas\./.test(k)&&S.cab.oficial&&S.cab.oficial.activo){if(k.endsWith('.nivel'))S.cab.oficial.filas[+k.split('.')[3]].nivel=String(v).trim();else S.cab.oficial.filas[+k.split('.')[3]][k.split('.')[4]]=ofNum(v);cabOficialAplicar(S)}if(/^mercado\.comps\.\d+\.incl$/.test(k)){const i=Number(k.split('.')[2]);if(S.mercado.comps[i])S.mercado.comps[i].scopeOverride=true}if(k.startsWith('estr.')&&k!=='estr.estado')S.estr.estado='propuesta';save();
   const id=el.id;render();const n=document.getElementById(id);if(n&&n.type!=='checkbox')n.focus({preventScroll:true});
 });
