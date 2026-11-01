@@ -28,6 +28,8 @@ async function crmRpc(name,...args){
   if(!r.ok)throw Error(j&&j.error||('El CRM respondió '+r.status));
   return j?j.value:null;
 }
+// R100 · aviso: el panel de M.O.R.A en el CRM muestra la última versión guardada; los cambios locales no llegan hasta «Guardar en el CRM».
+document.addEventListener('change',e=>{if(!e.target.closest||!e.target.closest('main, #app, body'))return;if(e.target.closest('#crmBar'))return;if(typeof S!=='undefined'&&S._crm&&S._crm.id)setTimeout(()=>crmMsg('Hay cambios sin guardar en el CRM. Pulsa «Guardar en el CRM» para actualizar utilidad y TIR en el panel de M.O.R.A.',true),50)});
 function crmMsg(t,bad){const el=document.getElementById('crmBarMsg');if(el){el.textContent=t||'';el.style.color=bad?'var(--bad,#b42318)':''}}
 function crmNormalize(){
   for(const k in DEF)if(S[k]===undefined)S[k]=JSON.parse(JSON.stringify(DEF[k]));

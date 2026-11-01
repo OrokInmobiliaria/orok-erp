@@ -14,8 +14,12 @@ function Summary({ev}) {
   const items = [['Unidades', s.unidades_total], ['Vendidas', s.vendidas], ['Separadas', s.separadas], ['Disponibles', s.disponibles], ['Avance comercial', (s.avance_ventas_pct ?? 0) + '%']];
   return <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(120px,1fr))', gap: 10, marginTop: 10}}>
     {items.map(([l, v]) => <div key={l} className="orok-card" style={{padding: 10}}><div style={{fontSize: 11, textTransform: 'uppercase', letterSpacing: '.06em', opacity: .7}}>{l}</div><div style={{fontSize: 20, fontWeight: 700}}>{v ?? '—'}</div></div>)}
-    {ev?.kpis && [['Utilidad neta línea base', money(ev.kpis.utilidad_neta)], ['TIR accionista', (ev.kpis.tir_accionista_pct ?? ev.kpis.tir_accionista_anual ?? '—') + '%']].map(([l, v]) =>
-      <div key={l} className="orok-card" style={{padding: 10}}><div style={{fontSize: 11, textTransform: 'uppercase', letterSpacing: '.06em', opacity: .7}}>{l}</div><div style={{fontSize: 20, fontWeight: 700}}>{v}</div></div>)}
+    {(ev?.current || ev?.kpis) && (() => { // R100 · se muestra la última versión guardada; la línea base queda como referencia
+      const k = ev.current || ev.kpis, b = ev.kpis, tir = x => x ? (x.tir_accionista_pct ?? x.tir_accionista_anual ?? '—') + '%' : '—';
+      const fecha = ev.updated_at ? new Date(ev.updated_at).toLocaleDateString('es-PE') : '';
+      return [['Utilidad neta', money(k.utilidad_neta), b && ev.current ? 'Línea base ' + money(b.utilidad_neta) : ''], ['TIR accionista', tir(k), b && ev.current ? 'Línea base ' + tir(b) : '']].map(([l, v, sub]) =>
+        <div key={l} className="orok-card" style={{padding: 10}}><div style={{fontSize: 11, textTransform: 'uppercase', letterSpacing: '.06em', opacity: .7}}>{l}</div><div style={{fontSize: 20, fontWeight: 700}}>{v}</div><div style={{fontSize: 11, opacity: .7}}>{sub}{sub && ' · '}rev. {ev.revision}{fecha && ' · ' + fecha}</div></div>);
+    })()}
   </div>;
 }
 

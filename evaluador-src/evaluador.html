@@ -11,7 +11,7 @@
   --solid:#fdf9f6; --solid-sunk:#f6eee8;
   --accent:var(--orok-brand); --accent-soft:color-mix(in srgb,var(--orok-brand) 12%,transparent); --warn:#a8641a; --warn-soft:#f8e8d3; --neg:#b42318; --neg-soft:#fbe2dc; --ok:#2f7d4a;
   --side:var(--orok-dark); --side-fg:#fff; --side-muted:#8a817c; --side-hi:rgba(133,68,42,.1);
-  --d1:var(--orok-brand); --d2:#2a78d6; --d3:var(--orok-accent); --d4:#19a397; --d5:#6c5ce7;
+  --d1:#e07a3a; --d2:#2a78d6; --d3:#d9a21b; --d4:#19a397; --d5:#7c6ce7; /* R100 · paleta de gráficos clara y distinguible (sin marrones oscuros ni negro) */
   --orb-1:var(--orok-accent); --orb-2:#b5654a; --orb-3:#f2c38f; --orb-4:#d98aa0; --orb-op:.78;
   --glass-grad:linear-gradient(135deg,rgba(255,255,255,.8),rgba(255,255,255,.56));
   --glass-strong:linear-gradient(135deg,rgba(255,255,255,.86),rgba(255,255,255,.7));
@@ -460,7 +460,7 @@ const DEF = {
       igv:18, baseGravada:50, prorrata:100, ir:29.5, detraccion:4, detracOn:true, alcabala:3,
       contingencia:2.5, ggPct:17.15, utilPct:10.19, libreCostoPct:100,
       mesLanz:6, velocidad:0.8, inicial:10, inicioObra:12, durObra:14, indep:3,
-      bancoOn:true, financiaPct:60, preventaMin:30, tea:11, tasaDesc:12 },
+      bancoOn:true, financiaPct:60, preventaMin:30, perfilPromotor:'nuevo', preventaNuevoPct:45, preventaNuevoUnd:5, desembolsoHip:'minuta', minutaMeses:0, tea:11, tasaDesc:12 },
   units:[
     {id:'101',tipo:'Loft Garden',piso:1,tech:40.29,libre:18.91,aj:0},
     {id:'201',tipo:'Flat 3D',piso:2,tech:80.37,libre:11.30,aj:0},
@@ -616,6 +616,16 @@ function irr(cf){
   for(let k=0;k<200;k++){const m=(lo+hi)/2,fm=npv(m);if(flo*fm<=0){hi=m;fhi=fm}else{lo=m;flo=fm}}
   return (lo+hi)/2;
 }
+// R100 · TIR robusta: si el flujo cambia de signo varias veces y tiene más de una TIR (o ninguna en el rango), se usa la TIR modificada
+// (financiamiento y reinversión a la tasa de descuento), que es la única con sentido económico en ese caso.
+function irrSafe(cf,rM){
+  const npv=r=>cf.reduce((a,v,i)=>a+v/Math.pow(1+r,i),0);if(!cf.some(v=>v<0)||!cf.some(v=>v>0))return null;
+  const roots=[];let prev=-0.049,fp=npv(prev);for(let r=-0.048;r<=0.6;r+=0.001){const f=npv(r);if(fp*f<=0){let lo=prev,hi=r,flo=fp;for(let k=0;k<100;k++){const m=(lo+hi)/2,fm=npv(m);if(flo*fm<=0)hi=m;else{lo=m;flo=fm}}roots.push((lo+hi)/2)}prev=r;fp=f}
+  let sc=0,sg=0;for(const v of cf){const g=Math.sign(v);if(g&&sg&&g!==sg)sc++;if(g)sg=g}
+  if(roots.length===1&&sc<=1)return roots[0];
+  const n=cf.length-1;let pv=0,fv=0;cf.forEach((v,i)=>{if(v<0)pv+=v/Math.pow(1+rM,i);else fv+=v*Math.pow(1+rM,n-i)});
+  return pv<0&&fv>0?Math.pow(fv/-pv,1/n)-1:(roots[0]??null);
+}
 const npvM=(cf,anual)=>{const r=Math.pow(1+anual,1/12)-1;return cf.reduce((a,v,i)=>a+v/Math.pow(1+r,i),0)};
 
 function saleSpeed(p){
@@ -704,8 +714,17 @@ function compute(s,ov){
   if(plan){for(const x of plan){const t=Math.min(H,x.t);sold[t]+=1;valT[t]+=x.v+vEst/nU}}
   else{for(let t=lanz;t<=H&&c<nU-1e-9;t++){const a=Math.min(vel,nU-c);sold[t]=a;c+=a}for(let t=0;t<=H;t++)valT[t]=sold[t]*avg}
   c=0;for(let t=0;t<=H;t++){c+=sold[t];soldCum[t]=c/nU}
-  const ini=p.inicial/100;let pend=0;
-  for(let t=0;t<=H;t++){const v=valT[t];if(!v)continue;if(t<ent){cobro[t]+=v*ini;pend+=v*(1-ini)}else{cobro[t]+=v*ini;cobro[Math.min(H,t+1)]+=v*(1-ini)}}
+  // R100 · Condición de preventa del banco según el perfil del promotor: «nuevo» (primer proyecto: N dptos. o X% del valor de venta,
+  // lo que ocurra primero) o «con experiencia» (X% de preventa). mPre = mes en que se firma la última minuta que cumple la condición.
+  const perfil=p.perfilPromotor==='nuevo'?'nuevo':'experiencia',prePct=perfil==='nuevo'?(+p.preventaNuevoPct||0):(+p.preventaMin||0),preUnd=perfil==='nuevo'?(+p.preventaNuevoUnd||0):0;
+  const minLag=Math.max(0,Math.round(+p.minutaMeses||0)),valTot=sum(valT)||1;let mPre=-1;{let vc=0;for(let t=0;t<=H;t++){vc+=valT[t];const tt=Math.min(H,t+minLag);if(vc/valTot>=prePct/100-1e-9||(preUnd>0&&soldCum[t]*nU>=preUnd-1e-9)){mPre=tt;break}}}
+  const preTxt=perfil==='nuevo'?`${Math.round(preUnd)} dptos. o ${+prePct.toFixed(2)}% del valor de venta`:`${+prePct.toFixed(2)}% de preventa`;
+  // R100 · Saldo hipotecario (100% − inicial): «minuta» = el banco lo desembolsa 48 h después de la firma de la minuta, una vez cumplida
+  // la preventa (las minutas anteriores se liberan al firmarse la última de la preventa); «entrega» = recién con la entrega e independización.
+  const ini=p.inicial/100,hipMinuta=(p.desembolsoHip||'minuta')==='minuta'&&mPre>=0;let pend=0;
+  for(let t=0;t<=H;t++){const v=valT[t];if(!v)continue;cobro[t]+=v*ini;
+    if(hipMinuta){cobro[Math.min(H,Math.max(t+minLag,mPre))]+=v*(1-ini)}
+    else if(t<ent)pend+=v*(1-ini);else cobro[Math.min(H,t+1)]+=v*(1-ini)}
   for(let k=0;k<ind;k++)cobro[Math.min(H,indStart+k)]+=pend/ind;
   const sumCobro=sum(cobro)||1;
   const weights=(pago)=>{const a=new Array(H+1).fill(0);const P=String(pago==null?'':pago).trim().toLowerCase();
@@ -761,7 +780,7 @@ function compute(s,ov){
       const it=bank*rM;R.intr[t]=it;
       cash+=cobro[t]-det[t]+detRel[t]-E[t]-pay-it-(t===H?irPay:0);
       if(bank>0&&t>=ent&&cash>0){const a=Math.min(bank,cash);bank-=a;cash-=a;R.amort[t]=a}
-      const elig=p.bancoOn&&t>=Math.max(io,mesBanco)&&t<ent&&soldCum[t]>=p.preventaMin/100-1e-9;
+      const elig=p.bancoOn&&mPre>=0&&t>=Math.max(io,mesBanco,mPre)&&t<ent;
       if(elig&&bankStart===null)bankStart=t;
       if(cash<0&&elig){const d=Math.min(-cash,constrM[t],bankLim-drawn);if(d>0){bank+=d;drawn+=d;cash+=d;R.draw[t]=d}}
       if(cash<0){R.aporte[t]=-cash;cash=0}
@@ -784,13 +803,13 @@ function compute(s,ov){
   for(let t=0;t<=H;t++){econ.push(cobro[t]-det[t]+detRel[t]-(E[t]-Efin[t])-F.igvPay[t]-(t===H?irF:0));eq.push(F.dist[t]-F.aporte[t])}
   let cum=0,peak=0;for(let t=0;t<=H;t++){cum+=F.aporte[t]-F.dist[t];peak=Math.max(peak,cum)}
   let cumE=0,peakE=0,payback=null;for(let t=0;t<=H;t++){cumE+=econ[t];peakE=Math.min(peakE,cumE);if(payback===null&&t>0&&cumE>=0&&peakE<0)payback=t}
-  const ie=irr(econ),iq=irr(eq);
+  const rDm=Math.pow(1+(+p.tasaDesc||0)/100,1/12)-1,ie=irrSafe(econ,rDm),iq=irrSafe(eq,rDm);
   const groups={};CATS.forEach(k=>groups[k]={sub:0,igv:0,tot:0});
   L.forEach(o=>{const g=groups[o.cat]||(groups[o.cat]={sub:0,igv:0,tot:0});g.sub+=o.sub;g.igv+=o.igv;g.tot+=o.tot});
   groups['Financieros'].tot+=intTot2;groups['Financieros'].sub+=intTot2;
   const igvComprasTot=sum(L.map(o=>o.igv));
   return {p,units,nU,techV,libreV,areaTech,igvEf,vDept:vDeptR,vEst,valT,plan,ventas,ventasSin,igvVentas,io,mesBanco,dur,ent,ind,indStart,postStart,postDur,designStart,designEnd,lanz,finVentas,H,anios,pred,predPlan:predPlanR,constrSub,cd,curve,areaConstr,areaTotal,areaTech,libreV,libreF,ggTot,utilTot,cdM2,costoM2Calc,ggF:gdet.F,ggP:gdet.P,
-    sold,soldCum,cobro,det,detRel,L,E,Efin,byCat,igvD,igvC,constrM,constrTot,bankLim,F,intTot:intTot2,egresos:egresosF,uai:uaiF,ir:irF,neta,econ,eq,peak,peakE:-peakE,payback,
+    sold,soldCum,cobro,mPre,preTxt,perfil,hipMinuta,det,detRel,L,E,Efin,byCat,igvD,igvC,constrM,constrTot,bankLim,F,intTot:intTot2,egresos:egresosF,uai:uaiF,ir:irF,neta,econ,eq,peak,peakE:-peakE,payback,
     tirE:ie==null?null:Math.pow(1+ie,12)-1,tirQ:iq==null?null:Math.pow(1+iq,12)-1,vanE:npvM(econ,p.tasaDesc/100),vanQ:npvM(eq,p.tasaDesc/100),
     groups,igvComprasTot,igvPagado:sum(F.igvPay),creditoFinal:F.credit[H],terr,
     mSv:uaiF/ventas,mSc:uaiF/egresosF,mN:neta/ventas,roe:F?neta/Math.max(1,peak):0,tit:terr/ventas};
@@ -1097,7 +1116,7 @@ V.supuestos=()=>`<div class="sect-h"><h2>Supuestos del modelo</h2><p>Parámetros
   <div class="panel"><h3>Comerciales</h3><div class="fields">${fld('p.velocidad','Velocidad de venta (und/mes)')}${fld('p.inicial','Cuota inicial (%)')}${fld('p.descProm','Descuento promedio (%)')}${fld('p.tc','Tipo de cambio SUNAT · venta (automático)')}</div><p class="note" data-rate-status>${rateError||mRateNote()}</p></div>
   ${salesControls()}
   <div class="panel"><h3>Obra</h3><div class="fields">${fld('p.supervisionM2','Supervisión (S/ por m²)')}${fld('p.contingencia','Contingencia vecinos (% construcción)')}${fld('p.utilPct','Utilidad contratista (% sobre el subtotal, como el presupuesto de obra)')}</div></div>
-  <div class="panel"><h3>Financieros</h3><div class="fields">${fld('p.financiaPct','Financiamiento banco (% de construcción)')}${fld('p.preventaMin','Preventa mínima para desembolso (%)')}${fld('p.tea','TEA línea promotor (%)')}${fld('p.tasaDesc','Tasa de descuento / COK anual (%)')}</div>
+  <div class="panel"><h3>Financieros</h3><div class="fields">${fld('p.financiaPct','Financiamiento banco (% de construcción)')}<div class="f"><label for="i-p-perfilPromotor">Perfil del promotor ante el banco</label><select id="i-p-perfilPromotor" data-k="p.perfilPromotor"><option value="nuevo"${(S.p.perfilPromotor||'experiencia')==='nuevo'?' selected':''}>Nuevo (primer proyecto)</option><option value="experiencia"${(S.p.perfilPromotor||'experiencia')==='experiencia'?' selected':''}>Con experiencia</option></select></div>${(S.p.perfilPromotor||'experiencia')==='nuevo'?fld('p.preventaNuevoUnd','Preventa exigida: n.º de departamentos')+fld('p.preventaNuevoPct','…o % del valor de venta (lo que se cumpla primero)'):fld('p.preventaMin','Preventa exigida (% de ventas)')}<div class="f"><label for="i-p-desembolsoHip">Desembolso del crédito hipotecario de los compradores</label><select id="i-p-desembolsoHip" data-k="p.desembolsoHip"><option value="minuta"${(S.p.desembolsoHip||'minuta')==='minuta'?' selected':''}>48 h después de la minuta</option><option value="entrega"${(S.p.desembolsoHip||'minuta')==='entrega'?' selected':''}>Recién con la entrega</option></select></div>${fld('p.minutaMeses','Meses entre la venta y la firma de la minuta')}${fld('p.tea','TEA línea promotor (%)')}${fld('p.tasaDesc','Tasa de descuento / COK anual (%)')}</div>
   <div class="f" style="margin-top:10px"><label for="i-p-interesModo">Costo del banco</label><select id="i-p-interesModo" data-k="p.interesModo"><option value="linea"${(S.p.interesModo||'linea')==='linea'?' selected':''}>Como la hoja: línea «Gastos financieros (banco)» en Gastos financieros</option><option value="flujo"${S.p.interesModo==='flujo'?' selected':''}>Intereses mes a mes según el saldo (TEA)</option></select></div><div class="row" style="margin-top:10px"><label class="row"><input type="checkbox" data-k="p.bancoOn" id="i-p-bancoOn" ${S.p.bancoOn?'checked':''}> Usar financiamiento bancario (crédito promotor)</label></div>
   <p class="note">Convenciones de pago en las tablas de costos: un número es el mes (0 = inicio), "a-b" reparte en partes iguales, "2:20,4:80" son hitos con porcentaje, y las palabras clave son proyecto, diseño, obra, curva, ventas, cobros, entrega, independizacion, posventa, banco y cierre.</p></div>`;
 
@@ -1300,7 +1319,7 @@ V.calendario=()=>{
   const bs=M.F.bankStart;if(bs!=null)phases.push(['Línea bancaria activa',bs,Math.max(bs,M.F.amort.findLastIndex(v=>v>0)),'']);
   const header=Array.from({length:H+1},(_,t)=>`<th scope="col" class="n" style="padding:5px 3px;font-size:10px">M${t}<br><span style="font-weight:400;white-space:nowrap">${ml(t)}</span></th>`).join('');
   const bars=phases.map(([name,start,end,color])=>`<tr><th scope="row" class="stick">${esc(name)}</th><td class="n mut" style="white-space:nowrap">${ml(start)} → ${ml(end)}</td>${Array.from({length:H+1},(_,t)=>`<td class="c">${t>=start&&t<=end?`<span class="on ${color}" title="${esc(name)} · ${ml(t)}"></span>`:''}</td>`).join('')}</tr>`).join('');
-  const hitos=[['Compra del terreno',0],['Lanzamiento comercial',M.lanz],['Aprobación de la línea de crédito / participación bancaria',M.mesBanco],['Inicio de obra',M.io],[`Preventa mínima ${S.p.preventaMin}% alcanzada`,M.soldCum.findIndex(v=>v>=S.p.preventaMin/100-1e-9)],['Fin de obra y entrega',M.ent],['Última venta',M.finVentas],['Cierre del proyecto',H]];
+  const hitos=[['Compra del terreno',0],['Lanzamiento comercial',M.lanz],['Aprobación de la línea de crédito / participación bancaria',M.mesBanco],['Inicio de obra',M.io],[`Preventa exigida por el banco (${M.preTxt}) y desembolso`,M.mPre],['Fin de obra y entrega',M.ent],['Última venta',M.finVentas],['Cierre del proyecto',H]];
   return `<div class="sect-h"><h2>Calendario del proyecto</h2><p>Programa las fases e hitos aquí: ${M.H+1} meses desde ${ml(0)} hasta ${ml(H)}.</p></div>
   <div class="panel"><h3>Vista general · fases e hitos</h3><p class="note">Este calendario refleja los ajustes de abajo. Las barras muestran la duración de cada fase y los rombos señalan los hitos.</p><div class="tw gantt"><table aria-label="Calendario visual de fases e hitos"><thead><tr><th scope="col" class="stick">Fase / hito</th><th scope="col">Periodo / fecha</th>${header}</tr></thead><tbody>${bars}
   ${[...hitos,...(S.p.hitos||[]).map(x=>[x.nombre,x.mes])].filter(([,t])=>t>=0).map(([name,t])=>`<tr><th scope="row" class="stick">◇ ${esc(name)}</th><td class="n mut">${ml(t)}</td>${Array.from({length:H+1},(_,j)=>`<td class="c" style="text-align:center;color:var(--accent)">${j===Number(t)?`<span title="${esc(name)} · ${ml(t)}">◆</span>`:''}</td>`).join('')}</tr>`).join('')}
@@ -1316,11 +1335,11 @@ function cfChart(){
   const mx=Math.max(...a,...cum,1),mn=Math.min(...a,...cum,-1);const y=v=>pt+(Hh-pt-pb)*(mx-v)/(mx-mn);const bw=(W-pl-pr)/n;
   const step=Math.pow(10,Math.floor(Math.log10((mx-mn)/4)));const st=Math.ceil((mx-mn)/4/step)*step;const ticks=[];for(let v=Math.ceil(mn/st)*st;v<=mx;v+=st)ticks.push(v);
   const grid=ticks.map(v=>`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" ${v===0?'stroke-width="1.5" stroke="var(--muted)"':''}/><text x="${pl-6}" y="${y(v)+3}" text-anchor="end">${nf(v/1000)}k</text>`).join('');
-  const bars=a.map((v,i)=>`<rect x="${pl+bw*i+bw*0.15}" y="${Math.min(y(v),y(0))}" width="${bw*0.7}" height="${Math.abs(y(v)-y(0))}" fill="${v>=0?'var(--accent)':'var(--warn)'}" opacity=".75"><title>${ml(i)}: ${S_(v)}</title></rect>`).join('');
+  const bars=a.map((v,i)=>`<rect x="${pl+bw*i+bw*0.15}" y="${Math.min(y(v),y(0))}" width="${bw*0.7}" height="${Math.abs(y(v)-y(0))}" fill="${v>=0?'var(--d4)':'var(--d1)'}" opacity=".75"><title>${ml(i)}: ${S_(v)}</title></rect>`).join('');
   const line=cum.map((v,i)=>`${pl+bw*(i+0.5)},${y(v)}`).join(' ');
   const xl=a.map((_,i)=>i%3===0?`<text x="${pl+bw*(i+0.5)}" y="${Hh-8}" text-anchor="middle">${ml(i)}</text>`:'').join('');
-  return `<svg class="chart" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Flujo de caja económico mensual y acumulado">${grid}${bars}<polyline fill="none" stroke="var(--ink)" stroke-width="1.8" points="${line}"/><circle cx="${pl+bw*(n-0.5)}" cy="${y(cum[n-1])}" r="3.5" fill="var(--ink)"/>${xl}</svg>
-  <div class="row" style="font-size:12px;gap:14px"><span class="row" style="gap:4px"><i style="width:10px;height:10px;background:var(--accent);display:inline-block;border-radius:2px"></i>flujo positivo</span><span class="row" style="gap:4px"><i style="width:10px;height:10px;background:var(--warn);display:inline-block;border-radius:2px"></i>flujo negativo</span><span class="row" style="gap:4px"><i style="width:14px;height:2px;background:var(--ink);display:inline-block"></i>acumulado</span></div>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Flujo de caja económico mensual y acumulado">${grid}${bars}<polyline fill="none" stroke="var(--d2)" stroke-width="2.4" points="${line}"/><circle cx="${pl+bw*(n-0.5)}" cy="${y(cum[n-1])}" r="3.5" fill="var(--d2)"/>${xl}</svg>
+  <div class="row" style="font-size:12px;gap:14px"><span class="row" style="gap:4px"><i style="width:10px;height:10px;background:var(--d4);display:inline-block;border-radius:2px"></i>flujo positivo</span><span class="row" style="gap:4px"><i style="width:10px;height:10px;background:var(--d1);display:inline-block;border-radius:2px"></i>flujo negativo</span><span class="row" style="gap:4px"><i style="width:14px;height:2px;background:var(--d2);display:inline-block"></i>acumulado</span></div>`;
 }
 V.flujo=()=>{
   const H=M.H,F=M.F;const T=Array.from({length:H+1},(_,t)=>t);
@@ -1357,7 +1376,7 @@ V.banca=()=>{
   const F=M.F;const ap=sum(F.aporte),dr=F.drawn;const used=M.egresos+M.igvPagado;const ventasFund=Math.max(0,used-ap-dr);
   const tm=Array.from({length:M.H+1},(_,t)=>t).filter(t=>F.draw[t]||F.amort[t]||F.intr[t]>0.5);
   const scen=[[0,'Sin banco'],[40,'Banco 40%'],[60,'Banco 60%'],[80,'Banco 80%']].map(([f,l])=>{const r=compute(S,{financiaPct:f,bancoOn:f>0});return [l,r]});
-  return `<div class="sect-h"><h2>Estructura bancaria</h2><p>Crédito promotor: el banco financia hasta ${S.p.financiaPct}% de la construcción una vez alcanzada una preventa de ${S.p.preventaMin}%, con cobranzas en cuenta recaudadora para amortizar.</p></div>
+  return `<div class="sect-h"><h2>Estructura bancaria</h2><p>Crédito promotor: el banco financia hasta ${S.p.financiaPct}% de la construcción una vez alcanzada la preventa (${M.preTxt}${M.mPre>=0?', prevista en '+ml(M.mPre):''}). ${M.hipMinuta?'El saldo de los compradores (crédito hipotecario) se desembolsa 48 h después de cada minuta, una vez cumplida la preventa.':'El saldo de los compradores llega con la entrega e independización.'}</p></div>
   <div class="big"><div><label>Línea aprobada</label><output>${S_(M.bankLim)}</output><small>${S.p.financiaPct}% de ${S_(M.constrTot)}</small></div><div><label>Desembolsado</label><output>${S_(dr)}</output><small>${pc(dr/(M.bankLim||1))} de la línea</small></div>
   <div><label>Intereses</label><output>${S_(M.intTot)}</output><small>TEA ${S.p.tea}%</small></div><div><label>Primer desembolso</label><output>${F.bankStart==null?'—':ml(F.bankStart)}</output><small>${F.bankStart==null?'condición no alcanzada en obra':'mes '+F.bankStart}</small></div></div>
   <div class="grid2"><div class="panel"><h3>Fuentes de fondeo de los egresos</h3><div class="tw"><table><thead><tr><th>Fuente</th><th class="n">Monto</th><th class="n">%</th></tr></thead><tbody>
@@ -1392,8 +1411,8 @@ function insights(){
   out.push(M.tit<=0.2?['ok',`Incidencia del terreno sobre ventas de ${pc(M.tit)}: dentro del rango sano (≤20%).`]:['w',`Incidencia del terreno sobre ventas de ${pc(M.tit)}: alta; el terreno pesa demasiado frente al valor vendible.`]);
   CATS.forEach(c=>{const p=g[c].tot/eg*100;const [lo,hi]=BENCH[c];if(p>hi)out.push(['w',`${c} representa ${nf(p,2)}% de los egresos, sobre el rango de ${lo}–${hi}%.`])});
   const be=breakEven(S);out.push([be<S.p.precioM2*0.85?'ok':'w',`Precio de equilibrio: ${S_(be)} por m², ${pc(1-be/S.p.precioM2)} por debajo del precio actual. Es tu colchón ante una caída de precios.`]);
-  const pm=M.soldCum.findIndex(v=>v>=S.p.preventaMin/100-1e-9);
-  if(S.p.bancoOn){if(pm<0||pm>=M.ent)out.push(['b',`La preventa del ${S.p.preventaMin}% no se alcanza durante la obra: el banco no desembolsa y toda la obra se fondea con aportes.`]);else if(pm>M.io)out.push(['w',`La preventa del ${S.p.preventaMin}% llega en ${ml(pm)}, ${pm-M.io} meses después del inicio de obra; esos meses se cubren con aportes.`]);else out.push(['ok',`La preventa del ${S.p.preventaMin}% se alcanza en ${ml(pm)}, antes del inicio de obra.`])}
+  const pm=M.mPre;
+  if(S.p.bancoOn){if(pm<0||pm>=M.ent)out.push(['b',`La preventa que pide el banco (${M.preTxt}) no se alcanza durante la obra: el banco no desembolsa y toda la obra se fondea con aportes.`]);else if(pm>M.io)out.push(['w',`La preventa que pide el banco (${M.preTxt}) llega en ${ml(pm)}, ${pm-M.io} meses después del inicio de obra; esos meses se cubren con aportes. Vender antes o postergar el inicio de obra reduce el aporte.`]);else out.push(['ok',`La preventa que pide el banco (${M.preTxt}) se alcanza en ${ml(pm)}, antes del inicio de obra.`])}
   if(M.finVentas>M.ent)out.push(['w',`Al ritmo de ${S.p.velocidad} und/mes las ventas terminan en ${ml(M.finVentas)}, ${M.finVentas-M.ent} meses después de la entrega. Subir la velocidad o lanzar antes reduce el aporte.`]);
   if(M.creditoFinal>1)out.push(['w',`Queda un saldo a favor de IGV de ${S_(M.creditoFinal)} sin aplicar; ya está considerado como costo.`]);
   out.push((M.tirQ||0)>=S.p.tasaDesc/100?['ok',`La TIR del accionista (${pc(M.tirQ)}) supera el costo de oportunidad de ${S.p.tasaDesc}%.`]:['b',`La TIR del accionista (${M.tirQ==null?'—':pc(M.tirQ)}) no supera el costo de oportunidad de ${S.p.tasaDesc}%.`]);
@@ -1428,7 +1447,7 @@ function erpPayload(){
     proyecto:{id:slug,nombre:S.p.nombre,direccion:S.p.direccion,uso:S.p.uso,inicio:S.p.inicio,area_terreno_m2:S.p.areaTerreno,area_techada_m2:r(M.areaTech),area_vendible_m2:r(M.techV),estado:'en_evaluacion'},
     inventario:[...M.units.map(u=>({codigo:u.id,tipo:'departamento',tipologia:u.tipo,piso:u.piso,area_techada_m2:u.tech,area_libre_m2:u.libre,precio_lista:r(u.lista),precio_neto:r(u.neto),moneda:'PEN',estado:'disponible'})),
       ...Array.from({length:S.p.nEstac},(_,i)=>({codigo:'E-'+(i+1),tipo:'estacionamiento',precio_lista:S.p.precioEstac,precio_neto:r(S.p.precioEstac*(1-S.p.descProm/100)),moneda:'PEN',estado:'disponible'}))],
-    plan_comercial:{lanzamiento:ml(M.lanz),fin_ventas:ml(M.finVentas),velocidad_meta_und_mes:S.p.velocidad,cuota_inicial_pct:S.p.inicial,descuento_promedio_pct:S.p.descProm,preventa_minima_banco_pct:S.p.preventaMin,
+    plan_comercial:{lanzamiento:ml(M.lanz),fin_ventas:ml(M.finVentas),velocidad_meta_und_mes:S.p.velocidad,cuota_inicial_pct:S.p.inicial,descuento_promedio_pct:S.p.descProm,preventa_banco:M.preTxt,mes_preventa_banco:M.mPre>=0?ml(M.mPre):'no se alcanza',saldo_compradores:M.hipMinuta?'48 h tras la minuta':'con la entrega',
       metas_mensuales:M.sold.map((v,t)=>({mes:ml(t),unidades:r(v),avance_pct:r(M.soldCum[t]*100)})).filter(x=>x.unidades>0)},
     presupuesto_comercial_mensual:M.byCat.Marketing.map((v,t)=>({mes:ml(t),marketing:r(v),ventas:r(M.byCat.Ventas[t])})).filter(x=>x.marketing||x.ventas),
     obra:{inicio:ml(M.io),duracion_meses:M.dur,entrega:ml(M.ent),presupuesto_con_igv:r(M.constrTot),curva_avance_pct:M.curve.map(v=>r(v*100))},
@@ -1575,7 +1594,7 @@ function gauge(v,min,max,target,label,fmt){
   const pt=(a,rr)=>[cx+rr*Math.cos(a),cy-rr*Math.sin(a)];const arc=(a0,a1,rr)=>{const [x0,y0]=pt(a0,rr),[x1,y1]=pt(a1,rr);return `M${x0.toFixed(1)},${y0.toFixed(1)} A${rr},${rr} 0 0 1 ${x1.toFixed(1)},${y1.toFixed(1)}`};
   const a=t(v),good=v>=target;const [tx,ty]=pt(t(target),r+10),[tx2,ty2]=pt(t(target),r-14);
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${label}: ${fmt(v)}"><path d="${arc(Math.PI,0,r)}" stroke="var(--sunk)" stroke-width="16" fill="none" stroke-linecap="round"/>
-  <path class="gfill" d="${arc(Math.PI,a,r)}" stroke="${good?'var(--d1)':'var(--d4)'}" stroke-width="16" fill="none" stroke-linecap="round" pathLength="100"/>
+  <path class="gfill" d="${arc(Math.PI,a,r)}" stroke="${good?'var(--d4)':'var(--d1)'}" stroke-width="16" fill="none" stroke-linecap="round" pathLength="100"/>
   <line x1="${tx}" y1="${ty}" x2="${tx2}" y2="${ty2}" stroke="var(--ink)" stroke-width="2"/><text x="${tx}" y="${ty-4}" text-anchor="middle">meta ${fmt(target)}</text>
   <text x="${cx}" y="${cy-14}" text-anchor="middle" style="font-family:var(--f-display);font-size:26px;font-weight:700;fill:var(--ink)">${fmt(v)}</text>
   <text x="${cx}" y="${cy+4}" text-anchor="middle">${label}</text><text x="${cx-r}" y="${cy+14}" text-anchor="middle">${fmt(min)}</text><text x="${cx+r}" y="${cy+14}" text-anchor="middle">${fmt(max)}</text></svg>`;
@@ -1622,11 +1641,11 @@ V.inversores=()=>{
   const tipos={};M.units.forEach(u=>{const t=u.tipo.replace(/ azotea/i,'');(tipos[t]=tipos[t]||[]).push(u)});
   const invT=S.inv.map(x=>({...x,ret:x.monto*x.tasa/100*x.plazo/12}));const invTot=sum(invT.map(x=>+x.monto));
   const bar=(l,val,mx,txt)=>`<div class="hb"><span>${l}</span><div class="bar"><span class="grow-x" style="width:${Math.min(100,val/mx*100)}%;background:var(--d2)"></span></div><b>${txt}</b></div>`;
-  const pm=M.soldCum.findIndex(x=>x>=S.p.preventaMin/100-1e-9);
+  const pm=M.mPre;
   const risks=[
     ['Comercial',`El proyecto necesita vender ${nf(S.p.velocidad,1)} unidades por mes. Con ventas 25% más lentas, la utilidad neta pasa a ${S_(torn.find(r=>r.n==='Velocidad de venta').lo)}.`,'Preventa escalonada con precios por tramos, seguimiento semanal del embudo en el CRM y lectura semanal de M.O.R.A.'],
     ['Costos',`Un alza de 10% en el costo de construcción lleva la utilidad neta a ${S_(torn.find(r=>r.n==='Costo de construcción').lo)}.`,'Contrato a suma alzada por partidas críticas, contingencia separada y control de obra contra la línea base.'],
-    ['Financiero',`El banco desembolsa al alcanzar ${S.p.preventaMin}% de preventa${pm>=0?` (previsto en ${ml(pm)})`:''}. Si se retrasa, la obra se cubre con capital.`,'Tramos de deuda privada como respaldo y reserva de liquidez hasta el primer desembolso.'],
+    ['Financiero',`El banco desembolsa al alcanzar la preventa (${M.preTxt})${pm>=0?` (previsto en ${ml(pm)})`:''}. Si se retrasa, la obra se cubre con capital.`,'Tramos de deuda privada como respaldo y reserva de liquidez hasta el primer desembolso.'],
     ['Precio de equilibrio',`El proyecto no pierde dinero mientras el precio se mantenga sobre ${S_(be)} por m², ${pc(1-be/S.p.precioM2)} por debajo del precio de lista.`,'Margen de seguridad amplio frente a caídas de precio del mercado.']];
   return `<div class="inv-head"><div><span class="eyebrow">Oportunidad de inversión · ${esc(S.p.uso)}</span><h2>${esc(S.p.nombre)}</h2><p>${esc(S.p.direccion)} · ${M.nU} departamentos y ${S.p.nEstac} estacionamientos · ${nf(M.areaTech,0)} m² construidos · ${M.H+1} meses de ciclo</p></div>
   <div class="row"><button class="btn pri" data-act="exec-pdf">Exportar resumen ejecutivo (PDF)</button><button class="btn" data-act="present">${document.body.classList.contains('present')?'Salir del modo presentación':'Modo presentación'}</button></div><span id="pdfMsg" class="mut" style="font-size:12px;flex-basis:100%;text-align:right" aria-live="polite"></span></div>
@@ -1667,7 +1686,7 @@ function countUp(){if(window.matchMedia('(prefers-reduced-motion: reduce)').matc
     const step=t=>{const k=Math.min(1,(t-t0)/d),e=1-Math.pow(1-k,3);o.textContent=fmt(v*e);if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)})}
 async function invNarrate(){
   if(!sampleFn||invNarrBusy)return;invNarrBusy=true;render();
-  const data={proyecto:S.p.nombre,ubicacion:S.p.direccion,uso:S.p.uso,indicadores:kpiSnap(M),precio_equilibrio_m2:Math.round(breakEven(S)),preventa_banco_pct:S.p.preventaMin,financia_banco_pct:S.p.financiaPct,unidades:M.nU};
+  const data={proyecto:S.p.nombre,ubicacion:S.p.direccion,uso:S.p.uso,indicadores:kpiSnap(M),precio_equilibrio_m2:Math.round(breakEven(S)),preventa_banco:M.preTxt,financia_banco_pct:S.p.financiaPct,unidades:M.nU};
   try{const {text}=await sampleFn(`Eres M.O.R.A, la agente del Evaluador Inmobiliario de ÖRÖK. Redacta la tesis de inversión de este proyecto para inversionistas, en español, en 3 párrafos breves (máximo 170 palabras): la oportunidad, los números clave (TIR del inversionista, múltiplo del capital, margen, capital requerido y plazo) y por qué el riesgo está acotado (precio de equilibrio, crédito promotor con preventa). Usa SOLO estas cifras, en S/ con separador de miles; no prometas rentabilidad. Sin títulos ni listas.\n\nDATOS: ${JSON.stringify(data)}`,{modelTier:'default',cache:{gcTime:600000},onText:({text})=>{const el=document.getElementById('invNarr');if(el)el.innerHTML=md(text)}});invNarr=text}
   catch(e){if(e&&e.code&&e.code!=='cancelled')invNarr=null}
   finally{invNarrBusy=false;render()}
@@ -1736,10 +1755,10 @@ function buildExecPDF(jsPDF){
   rows.forEach(r=>{draw(C.line);doc.line(L,y,R,y);y+=4.6;r.forEach((t,i)=>txt(t,cx[i],y,{s:8,b:i===0&&r===rows[rows.length-1]?1:0}));y+=1.4});y+=2;
   y=para('La deuda privada paga una tasa fija con capital e interés al vencimiento, documentada con contrato y garantía. El capital participa de las utilidades del proyecto: asume más riesgo y tiene mayor retorno esperado.',L,y+2,CW,7.8,1.35,C.mut)+3;
   y=h('Riesgos y mitigación',y);
-  const tl=I.torn.find(r=>r.n==='Velocidad de venta'),tc=I.torn.find(r=>r.n==='Costo de construcción');const pm=M.soldCum.findIndex(x=>x>=S.p.preventaMin/100-1e-9);
+  const tl=I.torn.find(r=>r.n==='Velocidad de venta'),tc=I.torn.find(r=>r.n==='Costo de construcción');const pm=M.mPre;
   [['Comercial',`Con ventas 25% más lentas la utilidad neta sería ${money(tl.lo)}.`,'Precios escalonados por avance, seguimiento semanal del embudo comercial en el CRM.'],
    ['Costos',`Un alza de 10% en construcción llevaría la utilidad a ${money(tc.lo)}.`,'Contratos a suma alzada en partidas críticas, contingencia separada y control contra la línea base.'],
-   ['Financiero',`El banco desembolsa con ${S.p.preventaMin}% de preventa${pm>=0?', prevista en '+ml(pm):''}.`,'Deuda privada como respaldo y reserva de liquidez hasta el primer desembolso.']].forEach(([t,r,m])=>{txt(t,L,y+3,{b:1,s:8.5});const y1=para(r,L+28,y+3,CW-28,8,1.3);const y2=para(m,L+28,y1+0.5,CW-28,8,1.3,C.acc);y=y2+1.5});
+   ['Financiero',`El banco desembolsa con la preventa (${M.preTxt})${pm>=0?', prevista en '+ml(pm):''}.`,'Deuda privada como respaldo y reserva de liquidez hasta el primer desembolso.']].forEach(([t,r,m])=>{txt(t,L,y+3,{b:1,s:8.5});const y1=para(r,L+28,y+3,CW-28,8,1.3);const y2=para(m,L+28,y1+0.5,CW-28,8,1.3,C.acc);y=y2+1.5});
   y=h('Hitos',y+1);const ms=[['Compra del terreno',0],['Lanzamiento',M.lanz],['Inicio de obra',M.io],['Entrega',M.ent],['Independización',M.ent+M.ind-1],['Cierre',M.H]];const mw=CW/(ms.length-1);
   draw(C.line);doc.setLineWidth(0.6);doc.line(L,y+2,R,y+2);ms.forEach(([t,m],i)=>{const x=L+i*mw;fill(C.acc);doc.circle(x,y+2,1.6,'F');txt(ml(m),x,y+8,{b:1,s:7.5,a:i===0?'left':i===ms.length-1?'right':'center'});txt(t,x,y+11.6,{s:7,c:C.mut,a:i===0?'left':i===ms.length-1?'right':'center'})});y+=18;
   y=h('Glosario para el inversionista',y);
@@ -1918,7 +1937,7 @@ const MEST=[['lanzamiento','Lanzamiento'],['venta','En venta'],['vendido','Últi
 const MESTL=Object.fromEntries(MEST);
 // R89 · Los departamentos de segundo uso o remodelados NO entran al estudio (ni al gráfico, ni a la mediana, ni al precio sugerido).
 const MEST_MODELO=MEST.filter(([k])=>k!=='usado');const mEsUsado=c=>c.estado==='usado'||(!c.estadoManual&&c.estado!=='vendido'&&M_USADO_RX.test([c.etapa,c.nombre,c.descripcion,c.detalle].filter(Boolean).join(' ')));const M_USADO_RX=/remodelad|refaccionad|reformad|reacondicionad|segundo uso|2do\.? uso|de segunda|reventa|usad[oa]\b/i;
-const MCOL={lanzamiento:'var(--d3)',venta:'var(--d1)',vendido:'var(--d4)',usado:'var(--d5)'};
+const MCOL={lanzamiento:'var(--d3)',venta:'var(--d2)',vendido:'var(--d4)',usado:'var(--muted)'};
 const mNum=v=>{if(v==null||v==='')return null;if(typeof v==='number')return isFinite(v)?v:null;const s=String(v).replace(/[^\d.,-]/g,'');if(!s)return null;const t=/,\d{3}(\D|$)/.test(s)||(s.includes(',')&&s.includes('.'))?s.replace(/,/g,''):s.replace(',','.');const n=parseFloat(t);return isFinite(n)?n:null};
 const mRange=v=>{if(v==null||v==='')return [null,null];if(typeof v==='number')return [v,v];const p=String(v).split(/\s*(?:–|—|-|a|hasta)\s*/i).map(mNum).filter(x=>x!=null);return p.length?[p[0],p[p.length-1]]:[null,null]};
 function mEstado(t,tipo){t=String(t||'').toLowerCase();
@@ -2130,9 +2149,9 @@ function mStrip(R){
   ticks.forEach(t=>{s+=`<line x1="${x(t)}" x2="${x(t)}" y1="8" y2="${H-26}" stroke="var(--line)"/><text x="${x(t)}" y="${H-10}" text-anchor="middle">${nf(t/1000,0)}k</text>`});
   MEST_MODELO.forEach(([k,l],i)=>{const y=14+i*rowH+rowH/2,st=R.est[k];s+=`<text x="4" y="${y+4}" style="font-size:11px;fill:var(--ink)">${l}</text>`;
     if(st.n>1)s+=`<rect x="${x(st.p25)}" y="${y-8}" width="${Math.max(2,x(st.p75)-x(st.p25))}" height="16" rx="6" fill="${MCOL[k]}" opacity=".18"/><line x1="${x(st.med)}" x2="${x(st.med)}" y1="${y-10}" y2="${y+10}" stroke="${MCOL[k]}" stroke-width="3"/>`;
-    R.ok.filter(c=>c.estado===k).forEach((c,j)=>{s+=`<circle cx="${x(c.pm2)}" cy="${y+((j%3)-1)*4}" r="4.2" fill="${MCOL[k]}" opacity="${c.incl===false?.25:.85}"><title>${esc(c.nombre)} · ${S_(c.pm2)} por m²</title></circle>`})});
+    R.ok.filter(c=>c.estado===k).forEach((c,j)=>{s+=`<circle cx="${x(c.pm2)}" cy="${y+((j%3)-1)*4}" r="4.6" fill="${MCOL[k]}" stroke="#fff" stroke-width="1.2" opacity="${c.incl===false?.25:.9}"><title>${esc(c.nombre)} · ${S_(c.pm2)} por m²</title></circle>`})});
   const mark=(v,lab,col,dy)=>v?`<line x1="${x(v)}" x2="${x(v)}" y1="6" y2="${H-26}" stroke="${col}" stroke-width="2" stroke-dasharray="5 4"/><text x="${x(v)+4}" y="${dy}" style="font-size:10.5px;fill:${col};font-weight:600">${lab} ${nf(v,0)}</text>`:'';
-  s+=mark(S.p.precioM2,'Actual','var(--ink)',H-30)+mark(R.rec,'Sugerido','var(--ok)',12);
+  s+=mark(S.p.precioM2,'Actual','var(--d5)',H-30)+mark(R.rec,'Sugerido','var(--ok)',12);
   return s+'</svg>';
 }
 function mScatter(R){
@@ -2143,7 +2162,7 @@ function mScatter(R){
   for(let k=0;k<=4;k++){const v=y0+(y1-y0)*k/4;s+=`<line x1="${L}" x2="${W-10}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+3}" text-anchor="end">${nf(v/1000,1)}k</text>`}
   for(let k=0;k<=4;k++){const v=x0+(x1-x0)*k/4;s+=`<text x="${x(v)}" y="${H-10}" text-anchor="middle">${nf(v,0)} m²</text>`}
   if(R.slope!=null){const mx=sum(ax)/ax.length,my=sum(ay)/ay.length;s+=`<line x1="${x(x0)}" y1="${y(my+R.slope*(x0-mx))}" x2="${x(x1)}" y2="${y(my+R.slope*(x1-mx))}" stroke="var(--muted)" stroke-dasharray="4 4"/>`}
-  pts.forEach(c=>{s+=`<circle cx="${x(c.area)}" cy="${y(c.pm2)}" r="4.5" fill="${MCOL[c.estado]}" opacity=".85"><title>${esc(c.nombre)} · ${nf(c.area,0)} m² · ${S_(c.pm2)} por m²</title></circle>`});
+  pts.forEach(c=>{s+=`<circle cx="${x(c.area)}" cy="${y(c.pm2)}" r="5" fill="${MCOL[c.estado]}" stroke="#fff" stroke-width="1.2" opacity=".9"><title>${esc(c.nombre)} · ${nf(c.area,0)} m² · ${S_(c.pm2)} por m²</title></circle>`});
   return s+'</svg>';
 }
 V.mercado=()=>{
@@ -2390,6 +2409,7 @@ async function exportXLSX(tabs,etiqueta){
 /* ---------- render ---------- */
 function render(){
   // R95 · Gastos financieros como la hoja: se agrega «Gastos financieros (banco)» 0.45% sobre el 50% de las ventas si no existe; intereses del banco por esa línea (no se duplican en el flujo).
+  if(S.p.desembolsoHip==null){S.p.desembolsoHip='minuta';S.p.minutaMeses=0;S.p.perfilPromotor=/infinity/i.test(S.p.nombre||'')?'nuevo':'experiencia';if(S.p.preventaNuevoPct==null)S.p.preventaNuevoPct=45;if(S.p.preventaNuevoUnd==null)S.p.preventaNuevoUnd=5;try{save()}catch(_){}} // R100
   if(!S.p._finBanco){if(!(S.fin||[]).some(x=>/gastos financieros \(banco\)/i.test(x.n)))(S.fin=S.fin||[]).push({n:'Gastos financieros (banco)',d:'pctVentas',pu:0.45,bp:50,igv:true,pago:'obra'});if(S.p.interesModo==null)S.p.interesModo='linea';S.p._finBanco=true;try{save()}catch(_){}}
   // R93 · La utilidad del contratista pasa de «% del CD» a «% sobre el subtotal» (como el presupuesto de obra). Se convierte una vez sin cambiar montos.
   if(!S.p._utilVenta){const g=(+S.p.ggPct||0)/100,u=(+S.p.utilPct||0)/100;S.p.utilPct=Math.round(u/(1+g+u)*10000)/100;S.p._utilVenta=true;try{save()}catch(_){}}
