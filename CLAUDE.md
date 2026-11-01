@@ -28,7 +28,7 @@ Estas reglas las fijó Martín Montezuma (Gerencia ÖRÖK). Cualquier IA que pro
 - Escrituras al store: `store.db.runTransaction(tx => tx.set/delete)`.
 
 ## Evaluador inmobiliario: conceptos base (valen para TODOS los proyectos)
-- Costo de construcción: costo por m² × área total (techada + libre), como el presupuesto de obra. Sin cargos extra.
+- Costo de construcción: costo por m² × área total (techada + libre), como el presupuesto de obra. Sin cargos extra. El área total (techada común + techada vendible + libre vendible) se muestra arriba en Costos de construcción. El área libre puede costearse a un % del m² techado (100% por defecto = presupuesto original; sin muros ni techo suele ser ≤ 40%).
 - Costo directo = partidas (S/ por m² × área total). GG = total del detalle de «Gastos generales» (fijos + % sobre el presupuesto); utilidad = % sobre el subtotal: subtotal = (CD + GG) / (1 − utilidad). El costo total por m² se deriva.
 - Partidas: cada una tiene su S/ por m²; cambiar su S/ por m² o su incidencia cambia esa partida y el total, no las demás.
 - Área libre (balcones, terrazas) es vendible y siempre entra al precio (precio general o diferenciado por unidad).

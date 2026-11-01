@@ -30,7 +30,7 @@ const DEF = {
       costoM2:2288.36, supervisionM2:65, comunTechada:269.79, nEstac:4, precioEstac:56000,
       precioM2:6590.34, factorLibre:1, descProm:0,
       igv:18, baseGravada:50, prorrata:100, ir:29.5, detraccion:4, detracOn:true, alcabala:3,
-      contingencia:2.5, ggPct:17.15, utilPct:10.19,
+      contingencia:2.5, ggPct:17.15, utilPct:10.19, libreCostoPct:100,
       mesLanz:6, velocidad:0.8, inicial:10, inicioObra:12, durObra:14, indep:3,
       bancoOn:true, financiaPct:60, preventaMin:30, tea:11, tasaDesc:12 },
   units:[
@@ -261,7 +261,9 @@ function compute(s,ov){
   const H=Math.max(indStart+ind+3,finVentas+3,postStart+postDur,designEnd,lastMilestone,mesBanco);
   const anios=Math.ceil((ent+ind)/12);
   const pred=calcPredial(+p.autovaluo,+p.uit);
-  const areaConstr=areaTech+libreV; // R93 · el costo por m² se aplica al área total (techada + libre), como en el presupuesto de obra; sin cargos extra
+  // R93 · el costo por m² se aplica al área total (techada + libre), como en el presupuesto de obra; sin cargos extra.
+  // R98 · el área libre (balcones, terrazas: sin muros ni techo) puede costearse a un % del m² techado (100% = presupuesto original).
+  const libreF=Math.max(0,Math.min(100,p.libreCostoPct==null||p.libreCostoPct===''?100:+p.libreCostoPct))/100,areaTotal=areaTech+libreV,areaConstr=areaTech+libreV*libreF;
   let cdM2=cdM2De(s);if(ov&&ov.costoM2!=null&&+s.p.costoM2>0)cdM2*=(+ov.costoM2)/(+s.p.costoM2); // escenarios de costo ±%
   const gdet=ggDet(s,dur),uPct=Math.min(.9,(+p.utilPct||0)/100),cdBase=cdM2*areaConstr,subBase=(cdBase+gdet.F)/Math.max(.05,1-uPct-gdet.P);
   const ggTot=gdet.F+gdet.P*subBase,utilTot=uPct*subBase,costoM2Calc=areaConstr?subBase/areaConstr:0;p.costoM2=costoM2Calc;
@@ -359,7 +361,7 @@ function compute(s,ov){
   L.forEach(o=>{const g=groups[o.cat]||(groups[o.cat]={sub:0,igv:0,tot:0});g.sub+=o.sub;g.igv+=o.igv;g.tot+=o.tot});
   groups['Financieros'].tot+=intTot2;groups['Financieros'].sub+=intTot2;
   const igvComprasTot=sum(L.map(o=>o.igv));
-  return {p,units,nU,techV,libreV,areaTech,igvEf,vDept:vDeptR,vEst,valT,plan,ventas,ventasSin,igvVentas,io,mesBanco,dur,ent,ind,indStart,postStart,postDur,designStart,designEnd,lanz,finVentas,H,anios,pred,predPlan:predPlanR,constrSub,cd,curve,areaConstr,ggTot,utilTot,cdM2,costoM2Calc,ggF:gdet.F,ggP:gdet.P,
+  return {p,units,nU,techV,libreV,areaTech,igvEf,vDept:vDeptR,vEst,valT,plan,ventas,ventasSin,igvVentas,io,mesBanco,dur,ent,ind,indStart,postStart,postDur,designStart,designEnd,lanz,finVentas,H,anios,pred,predPlan:predPlanR,constrSub,cd,curve,areaConstr,areaTotal,areaTech,libreV,libreF,ggTot,utilTot,cdM2,costoM2Calc,ggF:gdet.F,ggP:gdet.P,
     sold,soldCum,cobro,det,detRel,L,E,Efin,byCat,igvD,igvC,constrM,constrTot,bankLim,F,intTot:intTot2,egresos:egresosF,uai:uaiF,ir:irF,neta,econ,eq,peak,peakE:-peakE,payback,
     tirE:ie==null?null:Math.pow(1+ie,12)-1,tirQ:iq==null?null:Math.pow(1+iq,12)-1,vanE:npvM(econ,p.tasaDesc/100),vanQ:npvM(eq,p.tasaDesc/100),
     groups,igvComprasTot,igvPagado:sum(F.igvPay),creditoFinal:F.credit[H],terr,
@@ -704,11 +706,14 @@ V.construccion=()=>{
   const tw=sum(S.part.map(x=>+x.pct))||1;const m2=M.areaConstr;const gg=M.ggTot,ut=M.utilTot;
   // R91 · Las partidas parten del costo por m² de Datos generales (misma base que se edita); lo adicional (área libre construida, usos con otro costo) va en su propia fila.
   const baseM2=M.cdM2,extraCD=Math.max(0,M.cd-baseM2*m2);
+  const comT=+S.p.comunTechada||0,vivT=M.areaTech-comT,eq=M.libreF<1,uM=eq?'m² equivalente':'m²';
+  let alt='';if(M.libreV>0){const pa=M.libreF<1?100:40,cS=JSON.parse(JSON.stringify(S));cS.p.libreCostoPct=pa;const mA=compute(cS),tA=mA.constrSub*(1+S.p.igv/100),tH=M.constrSub*(1+S.p.igv/100);
+    alt=`Con el área libre al ${pa}%: total construcción ${S_(tA)} (${tA<tH?'−':'+'}${S_(Math.abs(tA-tH))}) · utilidad neta del proyecto ${S_(mA.neta)} frente a ${S_(M.neta)}.`;}
   const rows=S.part.map((x,i)=>{const pm=baseM2*x.pct/tw,v=pm*m2;return `<tr><td>${inp(`part.${i}.n`,x.n,'w','text')}</td><td><input type="number" step="any" min="0" max="99.99" class="s" id="i-part-${i}-pct" data-k="part.${i}.pct" aria-label="Incidencia de ${esc(x.n)}" value="${Number((+x.pct).toFixed(3))}"></td><td class="n">${S_(v)}</td><td class="n"><input type="number" min="0" step="any" aria-label="Costo por m² de ${esc(x.n)}" data-part-cost="${i}" value="${Number(pm.toFixed(2))}"></td><td class="n">US$ ${nf(pm/S.p.tc,2)}</td><td><div class="bar"><span style="width:${(x.pct/tw*100/30*100).toFixed(1)}%;max-width:100%"></span></div></td></tr>`}).join('');
   return `<div class="sect-h"><h2>Costos de construcción</h2><p>Presupuesto por partidas derivado del costo/m² de la cabida. Las incidencias provienen del presupuesto de obra de la hoja original.</p></div>
-  <div class="big"><div><label>Costo directo</label><output>${S_(M.cd)}</output><small>${S_(M.cd/m2,2)} por m²</small></div><div><label>Gastos generales</label><output>${S_(gg)}</output><small>del detalle de Gastos generales · ${pc(gg/M.cd)} del CD</small></div>
-  <div><label>Utilidad contratista</label><output>${S_(ut)}</output><small>${nf(S.p.utilPct,2)}% del subtotal</small></div><div><label>Total con IGV</label><output>${S_(M.constrSub*(1+S.p.igv/100))}</output><small>${S_(M.constrSub/m2,2)} por m² sin IGV</small></div></div>
-  <div class="panel"><div class="fields">${fld('p.costoM2','Costo total por m² sin IGV (incluye GG del detalle y utilidad)')}</div><h3>Partidas del costo directo</h3><div class="tw"><table><thead><tr><th>Partida</th><th>Incidencia %</th><th class="n">Monto</th><th class="n">S/ por m²</th><th class="n">US$ por m²</th><th>Peso</th></tr></thead><tbody>${rows}
+  <div class="big"><div><label>Área de construcción</label><output>${nf(M.areaTotal,2)} m²</output><small>común techada ${nf(comT,2)} + vivienda techada ${nf(vivT,2)} + libre vendible ${nf(M.libreV,2)}${eq?` · libre al ${nf(M.libreF*100,0)}% → ${nf(m2,2)} m² equivalentes`:''}</small></div><div><label>Costo directo</label><output>${S_(M.cd)}</output><small>${S_(M.cd/m2,2)} por ${uM}</small></div><div><label>Gastos generales</label><output>${S_(gg)}</output><small>del detalle de Gastos generales · ${pc(gg/M.cd)} del CD</small></div>
+  <div><label>Utilidad contratista</label><output>${S_(ut)}</output><small>${nf(S.p.utilPct,2)}% del subtotal</small></div><div><label>Total con IGV</label><output>${S_(M.constrSub*(1+S.p.igv/100))}</output><small>${S_(M.constrSub/m2,2)} por ${uM} sin IGV${eq?` · ${S_(M.constrSub/M.areaTotal,2)} por m² total`:''}</small></div></div>
+  <div class="panel"><div class="fields">${fld('p.costoM2',eq?'Costo total por m² techado sin IGV (incluye GG del detalle y utilidad)':'Costo total por m² sin IGV (incluye GG del detalle y utilidad)')}${fld('p.libreCostoPct','Costo del área libre (% del m² techado · 100 = igual que el presupuesto original; sin muros ni techo suele ser ≤ 40%)')}</div>${alt?`<p class="note" style="margin-top:0">${alt}</p>`:''}<h3>Partidas del costo directo</h3><div class="tw"><table><thead><tr><th>Partida</th><th>Incidencia %</th><th class="n">Monto</th><th class="n">S/ por m²</th><th class="n">US$ por m²</th><th>Peso</th></tr></thead><tbody>${rows}
   ${extraCD>0.5?`<tr><td>Adicional: usos con otro costo (comercial / oficinas) <small class="mut">· se edita en Datos generales</small></td><td></td><td class="n">${S_(extraCD)}</td><td class="n">${S_(extraCD/m2,2)}</td><td class="n">US$ ${nf(extraCD/m2/S.p.tc,2)}</td><td></td></tr>`:''}
   <tr class="tot"><td>Costo directo</td><td class="n">${nf(tw,2)}%</td><td class="n">${S_(M.cd)}</td><td class="n">${S_(M.cd/m2,2)}</td><td class="n">US$ ${nf(M.cd/m2/S.p.tc,2)}</td><td></td></tr>
   <tr class="sub"><td>Gastos generales</td><td></td><td class="n">${S_(gg)}</td><td class="n">${S_(gg/m2,2)}</td><td></td><td></td></tr>
