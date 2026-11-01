@@ -57,10 +57,10 @@ function Curva({curva, meta}) {
     <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Recaudación acumulada: línea base contra real" style={{width: '100%', height: 'auto', maxHeight: 260}}>
       <line x1={pad} x2={W - pad} y1={y(0)} y2={y(0)} stroke="currentColor" opacity=".25"/>
       <path d={line('base')} fill="none" stroke="#94a3b8" strokeWidth="2" strokeDasharray="5 4"/>
-      <path d={line('real')} fill="none" stroke="#85442A" strokeWidth="2.5"/>
-      {curva.map((c, i) => <circle key={i} cx={x(i)} cy={y(c.real)} r="3.5" fill="#85442A"><title>{`${c.unidad} · ${c.fecha} · real ${S(c.real)} · base ${S(c.base)}`}</title></circle>)}
+      <path d={line('real')} fill="none" stroke="#e07a3a" strokeWidth="2.5"/>
+      {curva.map((c, i) => <circle key={i} cx={x(i)} cy={y(c.real)} r="4" fill="#e07a3a" stroke="#fff" strokeWidth="1.5"><title>{`${c.unidad} · ${c.fecha} · real ${S(c.real)} · base ${S(c.base)}`}</title></circle>)}
     </svg>
-    <figcaption style={{fontSize: 12, display: 'flex', gap: 16, flexWrap: 'wrap'}}><span><b style={{color: '#85442A'}}>━</b> Real acumulado</span><span><b style={{color: '#94a3b8'}}>┅</b> Línea base (lista Etapa 1) de las mismas unidades</span><span>Meta del proyecto: {S(meta)}</span></figcaption>
+    <figcaption style={{fontSize: 12, display: 'flex', gap: 16, flexWrap: 'wrap'}}><span><b style={{color: '#e07a3a'}}>━</b> Real acumulado</span><span><b style={{color: '#94a3b8'}}>┅</b> Línea base (lista Etapa 1) de las mismas unidades</span><span>Meta del proyecto: {S(meta)}</span></figcaption>
   </figure>;
 }
 

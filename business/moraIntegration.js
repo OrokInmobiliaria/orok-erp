@@ -185,7 +185,7 @@ class MoraIntegration {
     const out = [];
     for (const e of rows.slice(0, 50)) {
       const scope = await this.scopeFor(user, e.id);
-      out.push({ id: e.id, project: e.project, summary: this.summaryFrom(d, e), scope, revision: e.revision, updated_at: e.updated_at, ...(scope === 'completo' ? { kpis: e.analysis?.baseline?.kpis || null, baseline: e.analysis?.baseline?.nombre || null } : {}) });
+      out.push({ id: e.id, project: e.project, summary: this.summaryFrom(d, e), scope, revision: e.revision, updated_at: e.updated_at, ...(scope === 'completo' ? { kpis: e.analysis?.baseline?.kpis || null, current: e.analysis?.current?.kpis || null, baseline: e.analysis?.baseline?.nombre || null } : {}) });
     }
     return out;
   }
