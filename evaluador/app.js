@@ -192,8 +192,11 @@ function editPartCost(s,i,kind,value){
   if(!Number.isFinite(v)||v<0||!s.part[i]||(kind==='pct'&&v>100))throw Error('Ingresa un costo positivo o una incidencia entre 0 y 100.');
   const tw=sum(s.part.map(x=>+x.pct))||1,cd=Number(s.p.costoM2)/factor;
   const costs=s.part.map(x=>cd*(+x.pct||0)/tw);
-  if(kind==='cost'){costs[i]=v;const total=sum(costs);if(total<=0)throw Error('El costo directo debe ser mayor que cero.');s.p.costoM2=total*factor;s.part.forEach((x,j)=>x.pct=100*costs[j]/total)}
-  else{const other=sum(costs.filter((_,j)=>j!==i));s.part.forEach((x,j)=>x.pct=j===i?v:other>0?(100-v)*costs[j]/other:(100-v)/(s.part.length-1))}
+  // R91 · Cada partida tiene su propio S/ por m². Cambiar el S/ por m² o la incidencia de una partida cambia el costo de ESA partida
+  // (las demás conservan su S/ por m²); el costo total por m² y las incidencias se recalculan.
+  if(kind==='pct'){if(v>=100)throw Error('La incidencia debe ser menor a 100%.');const other=sum(costs.filter((_,j)=>j!==i));if(other<=0)throw Error('Agrega costo a otras partidas primero.');costs[i]=v/(100-v)*other}
+  else costs[i]=v;
+  const total=sum(costs);if(total<=0)throw Error('El costo directo debe ser mayor que cero.');s.p.costoM2=Math.round(total*factor*100)/100;s.part.forEach((x,j)=>x.pct=100*costs[j]/total)
 }
 function monthOffset(start,date){if(!/^\d{4}-\d{2}$/.test(date))throw Error('Selecciona un mes válido.');const [y,m]=date.split('-').map(Number),[sy,sm]=start.split('-').map(Number);const n=(y-sy)*12+m-sm;if(m<1||m>12||n<0||n>600)throw Error('La fecha debe estar dentro de los 50 años posteriores al inicio.');return n}
 function editSchedule(s,key,value){
@@ -675,11 +678,14 @@ V.venta=()=>{
 
 V.construccion=()=>{
   const tw=sum(S.part.map(x=>+x.pct))||1;const m2=M.areaTech;const gg=M.cd*S.p.ggPct/100,ut=M.cd*S.p.utilPct/100;
-  const rows=S.part.map((x,i)=>{const v=M.cd*x.pct/tw;return `<tr><td>${inp(`part.${i}.n`,x.n,'w','text')}</td><td>${inp(`part.${i}.pct`,x.pct,'xs')}</td><td class="n">${S_(v)}</td><td class="n"><input type="number" min="0" step="any" aria-label="Costo por m² de ${esc(x.n)}" data-part-cost="${i}" value="${Number((v/m2).toFixed(6))}"></td><td class="n">US$ ${nf(v/m2/S.p.tc,2)}</td><td><div class="bar"><span style="width:${(x.pct/tw*100/30*100).toFixed(1)}%;max-width:100%"></span></div></td></tr>`}).join('');
+  // R91 · Las partidas parten del costo por m² de Datos generales (misma base que se edita); lo adicional (área libre construida, usos con otro costo) va en su propia fila.
+  const fac=1+(+S.p.ggPct||0)/100+(+S.p.utilPct||0)/100,baseM2=(+S.p.costoM2||0)/fac,extraCD=Math.max(0,M.cd-baseM2*m2);
+  const rows=S.part.map((x,i)=>{const pm=baseM2*x.pct/tw,v=pm*m2;return `<tr><td>${inp(`part.${i}.n`,x.n,'w','text')}</td><td><input type="number" step="any" min="0" max="99.99" class="s" id="i-part-${i}-pct" data-k="part.${i}.pct" aria-label="Incidencia de ${esc(x.n)}" value="${Number((+x.pct).toFixed(3))}"></td><td class="n">${S_(v)}</td><td class="n"><input type="number" min="0" step="any" aria-label="Costo por m² de ${esc(x.n)}" data-part-cost="${i}" value="${Number(pm.toFixed(2))}"></td><td class="n">US$ ${nf(pm/S.p.tc,2)}</td><td><div class="bar"><span style="width:${(x.pct/tw*100/30*100).toFixed(1)}%;max-width:100%"></span></div></td></tr>`}).join('');
   return `<div class="sect-h"><h2>Costos de construcción</h2><p>Presupuesto por partidas derivado del costo/m² de la cabida. Las incidencias provienen del presupuesto de obra de la hoja original.</p></div>
   <div class="big"><div><label>Costo directo</label><output>${S_(M.cd)}</output><small>${S_(M.cd/m2,2)} por m²</small></div><div><label>Gastos generales</label><output>${S_(gg)}</output><small>${nf(S.p.ggPct,2)}% del CD</small></div>
   <div><label>Utilidad contratista</label><output>${S_(ut)}</output><small>${nf(S.p.utilPct,2)}% del CD</small></div><div><label>Total con IGV</label><output>${S_(M.constrSub*(1+S.p.igv/100))}</output><small>${S_(M.constrSub/m2,2)} por m² sin IGV</small></div></div>
   <div class="panel"><div class="fields">${fld('p.costoM2','Costo total por m² sin IGV (incluye GG y utilidad)')}</div><h3>Partidas del costo directo</h3><div class="tw"><table><thead><tr><th>Partida</th><th>Incidencia %</th><th class="n">Monto</th><th class="n">S/ por m²</th><th class="n">US$ por m²</th><th>Peso</th></tr></thead><tbody>${rows}
+  ${extraCD>0.5?`<tr><td>Adicional: área libre construida (balcones, terrazas) y usos con otro costo <small class="mut">· se edita en Datos generales</small></td><td></td><td class="n">${S_(extraCD)}</td><td class="n">${S_(extraCD/m2,2)}</td><td class="n">US$ ${nf(extraCD/m2/S.p.tc,2)}</td><td></td></tr>`:''}
   <tr class="tot"><td>Costo directo</td><td class="n">${nf(tw,2)}%</td><td class="n">${S_(M.cd)}</td><td class="n">${S_(M.cd/m2,2)}</td><td class="n">US$ ${nf(M.cd/m2/S.p.tc,2)}</td><td></td></tr>
   <tr class="sub"><td>Gastos generales</td><td></td><td class="n">${S_(gg)}</td><td class="n">${S_(gg/m2,2)}</td><td></td><td></td></tr>
   <tr class="sub"><td>Utilidad</td><td></td><td class="n">${S_(ut)}</td><td class="n">${S_(ut/m2,2)}</td><td></td><td></td></tr>
