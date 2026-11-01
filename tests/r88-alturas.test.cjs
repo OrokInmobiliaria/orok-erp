@@ -14,4 +14,5 @@ test('R89: segundo uso y remodelados fuera del estudio',()=>{
  const src=s.slice(s.indexOf('const MEST=['),s.indexOf('const MCOL='));const f=new Function(src+';return mEsUsado')();
  assert.ok(f({estado:'usado'}));assert.ok(f({estado:'venta',nombre:'Depa remodelado en Maranga'}));assert.ok(!f({estado:'venta',nombre:'Edificio nuevo'}));assert.ok(!f({estado:'venta',nombre:'Depa remodelado',estadoManual:true}));
 });
-test('R90: cabecera separa duración del proyecto y horizonte del flujo',()=>{const s=fs.readFileSync(path.join(__dirname,'..','evaluador-src','evaluador.html'),'utf8');assert.match(s,/proyecto \$\{durProy\} meses \(arranque → independización\)/);});
+test('R90: cabecera separa duración del proyecto y horizonte del flujo',()=>{const s=fs.readFileSync(path.join(__dirname,'..','evaluador-src','evaluador.html'),'utf8');assert.match(s,/proyecto \$\{durProy\} meses \(del arranque y la cabida a la entrega e independización\)/);});
+test('R92: hito de aprobación bancaria en el calendario',()=>{const s=fs.readFileSync(path.join(__dirname,'..','evaluador-src','evaluador.html'),'utf8');assert.match(s,/const mesBanco=/);assert.match(s,/t>=Math\.max\(io,mesBanco\)/);assert.match(s,/data-calendar="mesBanco"/);assert.match(s,/else if\(key==='mesBanco'\)p\.mesBanco=n/);assert.match(s,/Inicio oficial del proyecto \(mes 0\)/);});

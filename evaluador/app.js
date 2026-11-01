@@ -213,6 +213,7 @@ function editSchedule(s,key,value){
  else if(key==='inicioIndep'||key==='inicioPosventa'){if(n<m.ent)throw Error('Esta fase debe empezar desde la entrega de obra.');p[key]=n}
  else if(['indep','durPosventa'].includes(key)){if(n<1)throw Error('La duración mínima es un mes.');p[key]=n}
  else if(key==='mesLanz')p.mesLanz=n;
+ else if(key==='mesBanco')p.mesBanco=n; // R92
  else if(key.startsWith('hito.')){const i=Number(key.split('.')[1]);if(!p.hitos?.[i])throw Error('Hito no disponible.');p.hitos[i].mes=n}
  else throw Error('Control de calendario no reconocido.');
  const next=compute({...s,p});if(Math.max(next.designEnd,next.ent,next.indStart+next.ind-1,next.postStart+next.postDur-1)>600)throw Error('La fase excede el horizonte de 600 meses.');
@@ -238,12 +239,13 @@ function compute(s,ov){
   const vDeptR=plan?sum(plan.map(x=>x.v)):vDept;
   const ventas=vDeptR+vEst, ventasSin=ventas/(1+igvEf), igvVentas=ventas-ventasSin;
   const io=+p.inicioObra, dur=Math.max(1,Math.round(+p.durObra)), ent=io+dur, ind=Math.max(1,Math.round(+p.indep));
+  const mesBanco=p.mesBanco!==''&&p.mesBanco!=null&&Number.isFinite(+p.mesBanco)?Math.max(0,Math.round(+p.mesBanco)):io; // R92 · hito: aprobación de la línea de crédito / participación bancaria
   const lanz=+p.mesLanz, vel=Math.max(0.05,+p.velocidad);
   const finVentas=plan&&plan.length?Math.max(...plan.map(x=>x.t)):lanz+Math.ceil(nU/vel-1e-9)-1;
   const indStart=Math.max(ent,Number(p.inicioIndep??ent)),postStart=Math.max(ent,Number(p.inicioPosventa??ent)),postDur=Math.max(1,Math.round(Number(p.durPosventa)||12));
   const designStart=Math.max(0,Number(p.disenoInicio)||0),designEnd=Math.max(designStart,Number(p.disenoFin??(io-1)));
   const lastMilestone=Math.max(0,...(p.hitos||[]).map(x=>Number(x.mes)||0));
-  const H=Math.max(indStart+ind+3,finVentas+3,postStart+postDur,designEnd,lastMilestone);
+  const H=Math.max(indStart+ind+3,finVentas+3,postStart+postDur,designEnd,lastMilestone,mesBanco);
   const anios=Math.ceil((ent+ind)/12);
   const pred=calcPredial(+p.autovaluo,+p.uit);
   const constrSub=areaTech*p.costoM2+sum(s.units.map(u=>(+u.tech||0)*(usoCostoM2(p,u)-p.costoM2)))+libreV*(+p.costoLibreM2||0); // R81 · costo del área libre construida (balcones, terrazas)
@@ -270,7 +272,7 @@ function compute(s,ov){
     if(P==='independizacion'||P==='independización'){even(indStart,indStart+ind-1);return a}
     if(P==='posventa'){even(postStart,postStart+postDur-1);return a}
     if(P==='cierre'){a[H]=1;return a}
-    if(P==='banco'){a[Math.min(H,io)]=1;return a}
+    if(P==='banco'){a[Math.min(H,mesBanco)]=1;return a}
     if(P==='cobros'){cobro.forEach((v,i)=>a[i]=v/sumCobro);return a}
     if(P.includes(':')){P.split(',').forEach(x=>{const [m,pc]=x.split(':').map(Number);if(!isNaN(m))a[Math.min(H,Math.max(0,Math.round(m)))]+=(+pc||0)});const t=sum(a);if(t>0)for(let i=0;i<=H;i++)a[i]/=t;else a[0]=1;return a}
     if(/^\d+\s*-\s*\d+$/.test(P)){const [x,y]=P.split('-').map(Number);even(x,y);return a}
@@ -308,7 +310,7 @@ function compute(s,ov){
       const it=bank*rM;R.intr[t]=it;
       cash+=cobro[t]-det[t]+detRel[t]-E[t]-pay-it-(t===H?irPay:0);
       if(bank>0&&t>=ent&&cash>0){const a=Math.min(bank,cash);bank-=a;cash-=a;R.amort[t]=a}
-      const elig=p.bancoOn&&t>=io&&t<ent&&soldCum[t]>=p.preventaMin/100-1e-9;
+      const elig=p.bancoOn&&t>=Math.max(io,mesBanco)&&t<ent&&soldCum[t]>=p.preventaMin/100-1e-9;
       if(elig&&bankStart===null)bankStart=t;
       if(cash<0&&elig){const d=Math.min(-cash,constrM[t],bankLim-drawn);if(d>0){bank+=d;drawn+=d;cash+=d;R.draw[t]=d}}
       if(cash<0){R.aporte[t]=-cash;cash=0}
@@ -336,7 +338,7 @@ function compute(s,ov){
   L.forEach(o=>{const g=groups[o.cat]||(groups[o.cat]={sub:0,igv:0,tot:0});g.sub+=o.sub;g.igv+=o.igv;g.tot+=o.tot});
   groups['Financieros'].tot+=intTot2;groups['Financieros'].sub+=intTot2;
   const igvComprasTot=sum(L.map(o=>o.igv));
-  return {p,units,nU,techV,libreV,areaTech,igvEf,vDept:vDeptR,vEst,valT,plan,ventas,ventasSin,igvVentas,io,dur,ent,ind,indStart,postStart,postDur,designStart,designEnd,lanz,finVentas,H,anios,pred,predPlan:predPlanR,constrSub,cd,curve,
+  return {p,units,nU,techV,libreV,areaTech,igvEf,vDept:vDeptR,vEst,valT,plan,ventas,ventasSin,igvVentas,io,mesBanco,dur,ent,ind,indStart,postStart,postDur,designStart,designEnd,lanz,finVentas,H,anios,pred,predPlan:predPlanR,constrSub,cd,curve,
     sold,soldCum,cobro,det,detRel,L,E,Efin,byCat,igvD,igvC,constrM,constrTot,bankLim,F,intTot:intTot2,egresos:egresosF,uai:uaiF,ir:irF,neta,econ,eq,peak,peakE:-peakE,payback,
     tirE:ie==null?null:Math.pow(1+ie,12)-1,tirQ:iq==null?null:Math.pow(1+iq,12)-1,vanE:npvM(econ,p.tasaDesc/100),vanQ:npvM(eq,p.tasaDesc/100),
     groups,igvComprasTot,igvPagado:sum(F.igvPay),creditoFinal:F.credit[H],terr,
@@ -404,7 +406,7 @@ function renderTop(){
   $('#pname').textContent=S.p.nombre;
   // R90 · Duración real del proyecto (del arranque a la independización) separada del horizonte del flujo (que incluye posventa y cierre).
   const durProy=M.indStart+M.ind,porQue=M.H+1>durProy?(M.postStart+M.postDur>=M.H?'posventa':M.finVentas+3>=M.H?'cobranza de las últimas ventas':'cierre de cuentas'):'';
-  $('#pmeta').textContent=`${S.p.direccion} · ${nf(M.areaTech,2)} m² techados · ${M.nU} unidades · proyecto ${durProy} meses (arranque → independización)${M.H+1>durProy?` · flujo de ${M.H+1} meses con ${porQue}`:''}`;
+  $('#pmeta').textContent=`${S.p.direccion} · ${nf(M.areaTech,2)} m² techados · ${M.nU} unidades · proyecto ${durProy} meses (del arranque y la cabida a la entrega e independización)${M.H+1>durProy?` · flujo de ${M.H+1} meses con ${porQue}`:''}`;
   const k=[['Ventas totales',S_(M.ventas)],['Egresos totales',S_(M.egresos)],['Utilidad neta',S_(M.neta),M.neta>=0?'good':'bad'],
     ['Margen s/ ventas',pc(M.mSv),M.mSv>=0.15?'good':'bad'],['TIR accionista',M.tirQ==null?'—':pc(M.tirQ),(M.tirQ||0)>=S.p.tasaDesc/100?'good':'bad'],['Aporte máximo',S_(M.peak)]];
   $('#kpis').innerHTML=k.map(([l,v,c])=>`<div class="kpi"><label>${l}</label><output class="${c||''}">${v}</output></div>`).join('');
@@ -631,8 +633,9 @@ function scheduleControls(){
  ['Posventa','inicioPosventa',M.postStart,M.postDur,'durPosventa']];
  const date=(key,t,name)=>`<input type="month" data-calendar="${key}" aria-label="Inicio ${esc(name)}" value="${monthAt(t)}">`;
  const move=(key,t,d,name)=>`<div class="phase-track"><div class="phase-band" style="--start:${100*t/max}%;left:var(--start);width:${Math.max(.5,100*d/(max+1))}%"></div><input type="range" min="0" max="${max}" step="1" value="${t}" data-calendar="${key}" aria-label="Mover ${esc(name)}"><output>Mes ${t} · ${ml(t)}</output></div>`;
- return `<div class="panel calendar-editor"><div class="row"><label>Inicio del proyecto ${inp('p.inicio',S.p.inicio,'','month')}</label><p class="note">Mes 0 = ${ml(0)}. Cambiar esta fecha desplaza todo el calendario.</p></div><p class="note">Arrastra el control de cada fase o selecciona una fecha y duración. Al soltar se recalculan obra, ventas, cobranzas y financiamiento vinculados. Los pagos fijados a un mes concreto conservan ese mes.</p><div class="calendar-scale"><span>${ml(0)}</span><span>${ml(Math.floor(max/2))}</span><span>${ml(max)}</span></div>
+ return `<div class="panel calendar-editor"><div class="row"><label>Inicio oficial del proyecto (mes 0) ${inp('p.inicio',S.p.inicio,'','month')}</label><p class="note">Mes 0 = ${ml(0)}. Es el arranque oficial: cambiar esta fecha desplaza todo el calendario con sus fechas.</p></div><p class="note">Arrastra el control de cada fase o selecciona una fecha y duración. Al soltar se recalculan obra, ventas, cobranzas y financiamiento vinculados. Los pagos fijados a un mes concreto conservan ese mes.</p><div class="calendar-scale"><span>${ml(0)}</span><span>${ml(Math.floor(max/2))}</span><span>${ml(max)}</span></div>
  ${ph.map(([name,key,t,d,dur])=>`<section class="calendar-phase"><div class="phase-title"><strong>${name}</strong><span>${ml(t)} → ${ml(t+d-1)}</span></div>${move(key,t,d,name)}<div class="phase-controls"><label>Inicio ${date(key,t,name)}</label>${dur?`<label>Duración (meses)<input type="number" min="1" max="600" step="1" data-calendar="${dur}" aria-label="Duración ${esc(name)}" value="${d}"></label>`:`<span class="note">Fin calculado por velocidad: ${nf(M.p.velocidad,2)} unidades/mes.</span>`}</div></section>`).join('')}
+ <section class="calendar-phase" style="border-left:4px solid var(--d2)"><div class="phase-title"><strong>Aprobación de la línea de crédito / participación bancaria</strong><span>${ml(M.mesBanco)} · mes ${M.mesBanco} · ${M.mesBanco===M.io?'igual que el inicio de obra':M.mesBanco<M.io?(M.io-M.mesBanco)+' meses antes del inicio de obra':(M.mesBanco-M.io)+' meses después del inicio de obra'}</span></div>${move('mesBanco',M.mesBanco,1,'Aprobación bancaria')}<div class="phase-controls"><label>Fecha ${date('mesBanco',M.mesBanco,'Aprobación bancaria')}</label><label>Mes del proyecto<input type="number" min="0" max="600" step="1" data-calendar="mesBanco" aria-label="Mes de aprobación bancaria" value="${M.mesBanco}"></label></div><p class="note" style="margin:6px 0 0">Desde este hito el banco puede desembolsar (si además ya empezó la obra y se alcanzó la preventa de ${S.p.preventaMin}%). Las comisiones de estructuración y notariales de banca se pagan en este mes.</p></section>
  <h3>Hitos adicionales</h3><p class="note">Arrastra o elige el mes de cada compromiso. Estos hitos amplían el calendario cuando corresponde; no generan pagos por sí solos.</p>
  ${(S.p.hitos||[]).map((h,i)=>`<section class="calendar-phase"><div class="phase-title"><label>Nombre del hito ${inp('p.hitos.'+i+'.nombre',h.nombre,'','text')}</label><button data-act="del-hito" data-i="${i}">Quitar</button></div>${move('hito.'+i,h.mes,1,h.nombre)}<div class="phase-controls"><label>Fecha ${date('hito.'+i,h.mes,h.nombre)}</label><label>Mes del proyecto<input type="number" min="0" max="600" step="1" data-calendar="hito.${i}" aria-label="Mes del hito ${i+1}" value="${h.mes}"></label></div></section>`).join('')}
  <button class="btn" data-act="add-hito">Agregar hito</button><p role="status" id="scheduleMsg"></p></div>`;
@@ -833,7 +836,7 @@ V.calendario=()=>{
   const bs=M.F.bankStart;if(bs!=null)phases.push(['Línea bancaria activa',bs,Math.max(bs,M.F.amort.findLastIndex(v=>v>0)),'']);
   const header=Array.from({length:H+1},(_,t)=>`<th scope="col" class="n" style="padding:5px 3px;font-size:10px">M${t}<br><span style="font-weight:400;white-space:nowrap">${ml(t)}</span></th>`).join('');
   const bars=phases.map(([name,start,end,color])=>`<tr><th scope="row" class="stick">${esc(name)}</th><td class="n mut" style="white-space:nowrap">${ml(start)} → ${ml(end)}</td>${Array.from({length:H+1},(_,t)=>`<td class="c">${t>=start&&t<=end?`<span class="on ${color}" title="${esc(name)} · ${ml(t)}"></span>`:''}</td>`).join('')}</tr>`).join('');
-  const hitos=[['Compra del terreno',0],['Lanzamiento comercial',M.lanz],['Inicio de obra',M.io],[`Preventa mínima ${S.p.preventaMin}% alcanzada`,M.soldCum.findIndex(v=>v>=S.p.preventaMin/100-1e-9)],['Fin de obra y entrega',M.ent],['Última venta',M.finVentas],['Cierre del proyecto',H]];
+  const hitos=[['Compra del terreno',0],['Lanzamiento comercial',M.lanz],['Aprobación de la línea de crédito / participación bancaria',M.mesBanco],['Inicio de obra',M.io],[`Preventa mínima ${S.p.preventaMin}% alcanzada`,M.soldCum.findIndex(v=>v>=S.p.preventaMin/100-1e-9)],['Fin de obra y entrega',M.ent],['Última venta',M.finVentas],['Cierre del proyecto',H]];
   return `<div class="sect-h"><h2>Calendario del proyecto</h2><p>Programa las fases e hitos aquí: ${M.H+1} meses desde ${ml(0)} hasta ${ml(H)}.</p></div>
   <div class="panel"><h3>Vista general · fases e hitos</h3><p class="note">Este calendario refleja los ajustes de abajo. Las barras muestran la duración de cada fase y los rombos señalan los hitos.</p><div class="tw gantt"><table aria-label="Calendario visual de fases e hitos"><thead><tr><th scope="col" class="stick">Fase / hito</th><th scope="col">Periodo / fecha</th>${header}</tr></thead><tbody>${bars}
   ${[...hitos,...(S.p.hitos||[]).map(x=>[x.nombre,x.mes])].filter(([,t])=>t>=0).map(([name,t])=>`<tr><th scope="row" class="stick">◇ ${esc(name)}</th><td class="n mut">${ml(t)}</td>${Array.from({length:H+1},(_,j)=>`<td class="c" style="text-align:center;color:var(--accent)">${j===Number(t)?`<span title="${esc(name)} · ${ml(t)}">◆</span>`:''}</td>`).join('')}</tr>`).join('')}
