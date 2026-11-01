@@ -498,6 +498,15 @@ body::after{content:"";position:fixed;inset:-15%;z-index:-1;pointer-events:none;
 @media (prefers-reduced-motion:reduce){body::before,body::after,.panel,.hero>div,.panel:hover::after{animation:none!important}}
 @media (prefers-reduced-transparency:reduce){.panel::before,.kpis::before,.hero>div::before{display:none}.panel,.tw{background:var(--solid)!important}}
 @media print{body::after,.panel::before,.panel::after{display:none}.panel{animation:none!important}}
+/* ===== R103 · Cristal 3.0: fondo más oscuro y con más color; cristal más marcado (solo modo claro) ===== */
+@media not (prefers-color-scheme: dark){:root:not([data-theme="dark"]){--c3-base:color-mix(in srgb,var(--orok-brand) 32%,#efe4dc);--c3-deep:color-mix(in srgb,var(--orok-brand) 55%,#e9dcd2);--orb-op:1;
+ --glass-grad:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,0) 38%),linear-gradient(140deg,rgba(255,255,255,.66),rgba(255,255,255,.4));--glass-soft:rgba(255,255,255,.55);--glass-border:rgba(255,255,255,.9)}}
+:root[data-theme="light"]{--c3-base:color-mix(in srgb,var(--orok-brand) 32%,#efe4dc);--c3-deep:color-mix(in srgb,var(--orok-brand) 55%,#e9dcd2);--orb-op:1;
+ --glass-grad:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,0) 38%),linear-gradient(140deg,rgba(255,255,255,.66),rgba(255,255,255,.4));--glass-soft:rgba(255,255,255,.55);--glass-border:rgba(255,255,255,.9)}
+@media not (prefers-color-scheme: dark){:root:not([data-theme="dark"]) body{background:radial-gradient(120% 90% at 0% 0%,color-mix(in srgb,var(--orb-1) 55%,var(--c3-base)),transparent 60%),radial-gradient(120% 90% at 100% 100%,color-mix(in srgb,var(--orb-2) 60%,var(--c3-deep)),transparent 62%),linear-gradient(160deg,var(--c3-base),var(--c3-deep)) fixed}}
+:root[data-theme="light"] body{background:radial-gradient(120% 90% at 0% 0%,color-mix(in srgb,var(--orb-1) 55%,var(--c3-base)),transparent 60%),radial-gradient(120% 90% at 100% 100%,color-mix(in srgb,var(--orb-2) 60%,var(--c3-deep)),transparent 62%),linear-gradient(160deg,var(--c3-base),var(--c3-deep)) fixed}
+@media not (prefers-color-scheme: dark){:root:not([data-theme="dark"]) .panel,:root:not([data-theme="dark"]) .big div,:root:not([data-theme="dark"]) .kpis{box-shadow:inset 0 1.5px 0 #fff,inset 0 0 0 1px rgba(255,255,255,.25),inset 0 -18px 30px -22px color-mix(in srgb,var(--accent) 28%,transparent),0 30px 70px -28px rgba(20,8,4,.6),0 2px 6px -2px rgba(20,8,4,.18)}}
+@media (prefers-reduced-transparency:reduce){body{background:var(--bg)!important}}
 </style>
 <div class="app" id="app">
   <aside id="nav"></aside>
