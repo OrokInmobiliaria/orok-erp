@@ -9,3 +9,7 @@ test('R104: capas internas (tablas, encabezados, avisos, campos y tarjetas dentr
  assert.match(r('src/cristal3.css'),/\.orok-card \.orok-card/);
  for(const f of ['evaluador-src/evaluador.html','contabilidad-src/clara-contabilidad.html']){const s=r(f);assert.match(s,/R104 · Cristal en capas/);assert.doesNotMatch(s.slice(s.indexOf('R104 · Cristal en capas')),/th\{background:var\(--solid-sunk\)\}/)}
 });
+test('R106: +20% transparencia, realce al pasar el mouse y menú lateral en cristal',()=>{
+ const c=r('src/cristal3.css');assert.match(c,/R106/);assert.match(c,/\.side-nav\{background:linear-gradient\(180deg,rgba\(255,255,255,\.4\)/);assert.match(c,/\.side-item:hover/);
+ for(const f of ['evaluador-src/evaluador.html','contabilidad-src/clara-contabilidad.html'])assert.match(r(f),/R106 · \+20% transparencia/);
+});
