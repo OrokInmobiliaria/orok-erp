@@ -87,7 +87,7 @@ async function crmSales(){
   crmMsg('Leyendo ventas del CRM…');
   try{const o=await crmRpc('getMoraSalesFeed',S._crm.id);const v=o&&o.ventas||[];
     S.ventas=v.map(x=>{const e=String(x.etapa||'Separación');return {u:String(x.unidad||''),f:String(x.fecha||S.estr.corte).slice(0,7),precio:+(x.precio||0),estado:ETAPAS.includes(e)?e:(ETAPA_MAP[e.toLowerCase()]||'Separación'),canal:String(x.campana||'')}});
-    save();render();crmMsg(S.ventas.length+' ventas reales cargadas del CRM. Revisa Seguimiento.');
+    const ls=o&&o.precios&&Array.isArray(o.precios.listas)?o.precios.listas:[];if(ls.length)S.crmListas={fecha:new Date().toISOString().slice(0,10),etapa:o.precios.etapa_activa,por:Object.fromEntries(ls.filter(x=>+x.precio_vigente>0).map(x=>[String(x.unidad),{vigente:+x.precio_vigente,etapa:+x.precio_etapa||null,objetivo:+x.precio_objetivo||null}]))};save();render();crmMsg(S.ventas.length+' ventas reales cargadas del CRM'+(ls.length?' y '+ls.length+' precios de lista vigentes':'')+'. Revisa Seguimiento.');
   }catch(e){crmMsg(e.message,true)}
 }
 // R59 · «Crear carpetas en Drive»: guarda la evaluación en el CRM, que encarga la estructura (nombre del proyecto + 14 carpetas).

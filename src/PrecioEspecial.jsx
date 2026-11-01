@@ -12,7 +12,7 @@ export default function PrecioEspecial({unit, leadId, value, onChange, disabled}
   useEffect(load, [unit?.id, leadId]);
   const enviar = async () => {
     setBusy(true); setErr(''); setMsg('');
-    try { const r = await db.precioSolicitar({unit_id: unit.id, lead_id: leadId, precio_propuesto: Number(precio), motivo}); setMsg(`Solicitud enviada a Gerencia (${r.tipo} de ${S(Math.abs(r.diferencia))}).`); setPrecio(''); setMotivo(''); load(); }
+    try { const r = await db.precioSolicitar({unit_id: unit.id, lead_id: leadId, precio_propuesto: Number(precio), motivo}); setMsg(`Solicitud enviada a Gerencia (${r.tipo} de ${S(Math.abs(r.diferencia))}).${r.bajo_minimo ? ' Ojo: ese precio queda bajo el mínimo del proyecto; Gerencia lo verá marcado.' : ''}`); setPrecio(''); setMotivo(''); load(); }
     catch (e) { setErr(e.message); } finally { setBusy(false); }
   };
   if (!leadId) return <p style={{fontSize: 12, margin: '8px 0'}}>Selecciona el cliente para pedir un precio especial a Gerencia.</p>;

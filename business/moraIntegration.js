@@ -135,7 +135,7 @@ class MoraIntegration {
       .filter(m => m.actor_uid === job.actor_uid).sort((a, b) => String(b.sort_key).localeCompare(String(a.sort_key))).slice(0, 12).reverse()
       .map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', text: String(m.text || '').slice(0, 1200), at: m.at }));
     const evaluation = scope === 'completo' ? { project: ev.project, summary: ev.summary, analysis: ev.analysis, inputs: ev.inputs, engine_version: ev.engine_version } : { project: ev.project, summary: ev.summary };
-    return { ok: true, job_id: job.id, scope, evaluation, history, memory: { storage: 'erp', turns: history.length, scope } };
+    return { ok: true, job_id: job.id, scope, evaluation, criterios: scope === 'completo' ? CRITERIOS_MORA : CRITERIOS_MORA.filter(c => !/margen|mínimo|equilibrio|colchón/i.test(c)), history, memory: { storage: 'erp', turns: history.length, scope } };
   }
   // ---------- Permisos (mismo criterio que mora.context_for_job) ----------
   async scopeFor(user, evaluationId) {
@@ -486,5 +486,15 @@ class MoraIntegration {
     throw Error('Operación M.O.R.A no reconocida.');
   }
 }
+// R108 · Criterios que M.O.R.A debe usar al aconsejar (los mismos del Evaluador). Van en el contexto de cada consulta.
+const CRITERIOS_MORA = [
+  'Precio por fase de obra: preventa en planos (descuento alto) → tras la demolición (medio) → desde casco habitable (bajo) → precio regular desde el levantamiento de observaciones. Los descuentos de fase están en analysis.politica_precios.fases.',
+  'Condiciones de compra (inicial 10%, inicial fuerte, contado, bróker/primeras unidades): cada una se aplica solo a sus unidades esperadas y se combina con la fase: total = 1 − (1 − fase) × (1 − condición).',
+  'El piso para decidir precios es el precio mínimo por m² del margen objetivo (politica_precios.precio_min_m2), no el equilibrio (utilidad 0). Colchón = precio final − mínimo; a la utilidad neta llega ≈ 60% de cada sol (IGV e impuesto a la renta).',
+  'Tope de negociación por fase = descuento máximo sin bajar del mínimo. Nunca recomiendes un precio especial bajo el mínimo sin advertirlo; si hay poco colchón, sugiere limitar condiciones en esa fase, cupos por fase o subir de fase antes.',
+  'Las ventas reales salen solo del CRM; las ventas de ejemplo del Evaluador no cuentan. Las unidades sin venta real se proyectan desde el mes siguiente al corte.',
+  'Banco: el saldo hipotecario se desembolsa 48 h tras la minuta una vez cumplida la preventa exigida; el terreno propio es aporte en especie; la TIR con varios cambios de signo es TIR modificada.',
+  'La IA propone y explica; Gerencia decide precios, descuentos y aprobaciones. A vendedores y clientes no se les muestran márgenes ni el precio mínimo.'
+];
 const MORA_METHODS = ['getMoraExchangeRate', 'requestMoraMarket', 'getMoraMarket', 'geocodeMoraMarket', 'getMoraEvaluation', 'getMoraConfig', 'saveMoraConfig', 'saveMoraEvaluation', 'getMoraEvaluations', 'askMora', 'getMoraThread', 'getMoraProposals', 'decideMoraProposal', 'setMoraEditor', 'getMoraSalesFeed', 'getMoraWeekly'];
 module.exports = { MoraIntegration, MORA_METHODS, isoWeek };

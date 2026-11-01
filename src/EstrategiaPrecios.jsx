@@ -141,6 +141,16 @@ function Editor({config, revision, evaluaciones, calc, onSaved}) {
   </details>;
 }
 
+// R108 · Política de precios que llega del Evaluador al «Guardar en el CRM»: margen objetivo, precio mínimo y topes por fase.
+function PoliticaEvaluador({p}) {
+  return <div style={{border: '1px solid rgba(255,255,255,.75)', background: 'rgba(255,255,255,.18)', borderRadius: 12, padding: 10, marginBottom: 12}}>
+    <b style={{fontSize: 13}}>Política de precios del Evaluador</b>
+    <div style={{fontSize: 12, margin: '4px 0 8px'}}>Margen objetivo <b>{p.margen_objetivo_pct}%</b> · precio mínimo <b>{N(p.precio_min_m2)} S/ por m²</b> · equilibrio {N(p.precio_equilibrio_m2)} S/ por m² · regular {N(p.precio_regular_m2)} S/ por m². Ningún precio objetivo ni precio especial debería quedar bajo el mínimo.</div>
+    <table style={{width: '100%', fontSize: 12, borderCollapse: 'collapse'}}><thead><tr>{['Fase de venta', 'Desde', 'Descuento de fase', 'Lista S/ m²', 'Tope de negociación', 'Estado'].map(h => <th key={h} style={{textAlign: 'left', padding: 5}}>{h}</th>)}</tr></thead>
+      <tbody>{p.fases.map(f => <tr key={f.fase} style={{borderTop: '1px solid rgba(148,163,184,.3)'}}><td style={{padding: 5}}>{f.nombre}</td><td style={{padding: 5}}>{f.desde}</td><td style={{padding: 5}}>{f.descuento_fase_pct}%</td><td style={{padding: 5}}>{N(f.precio_lista_m2)}</td><td style={{padding: 5, fontWeight: 700}}>{f.tope_negociacion_pct}%</td><td style={{padding: 5, color: f.ok ? '#166534' : '#b42318', fontWeight: 600}}>{f.ok ? 'sobre el mínimo' : 'bajo el mínimo'}</td></tr>)}</tbody></table>
+    {p.condiciones.length > 0 && <div style={{fontSize: 12, marginTop: 6}}>Condiciones: {p.condiciones.map(c => `${c.nombre} hasta ${c.descuento_max_pct}% (${c.aplica_en})`).join(' · ')}.</div>}
+  </div>;
+}
 // Bandeja de Gerencia: solicitudes de precio especial de Ventas (rebajas o alzas), como la aprobación de OC/OS.
 function Solicitudes({onCambio}) {
   const [rows, setRows] = useState(null), [edit, setEdit] = useState({}), [busy, setBusy] = useState(''), [err, setErr] = useState('');
@@ -161,6 +171,7 @@ function Solicitudes({onCambio}) {
     {pend.map(r => { const e = edit[r.id] || {}; return <div key={r.id} style={{borderTop: '1px solid rgba(148,163,184,.35)', padding: '10px 0', display: 'grid', gap: 6}}>
       <div><b>Unidad {r.unidad}</b> · {r.cliente} ({r.lead_number || '—'}) · pide <b>{r.solicitante?.nombre}</b> · {new Date(r.creada).toLocaleString('es-PE', {timeZone: 'America/Lima'})}{r.estado === 'observada' ? ' · observada' : ''}</div>
       <div style={{fontSize: 13}}>Lista {S(r.precio_lista)} → propuesto <b>{S(r.precio_propuesto)}</b> <span style={{color: r.tipo === 'descuento' ? '#9a3412' : '#166534'}}>({r.variacion_pct > 0 ? '+' : ''}{r.variacion_pct} %, {r.tipo} de {S(Math.abs(r.diferencia))})</span></div>
+      {r.precio_minimo ? <div style={{fontSize: 13, color: r.bajo_minimo ? '#b42318' : '#166534', fontWeight: 600}}>{r.bajo_minimo ? `⚠ Bajo el precio mínimo del margen objetivo (${S(r.precio_minimo)})` : `Sobre el precio mínimo del margen objetivo (${S(r.precio_minimo)})`}</div> : null}
       <div style={{fontSize: 13}}>Motivo: {r.motivo}</div>
       <div data-responsive-grid="true" style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 8, alignItems: 'end'}}>
         <label style={{display: 'grid', gap: 4, fontSize: 12}}>Precio que apruebas (S/)<input className="orok-input" type="number" step="100" value={e.precio ?? r.precio_propuesto} onChange={x => setEdit({...edit, [r.id]: {...e, precio: Number(x.target.value)}})}/></label>
@@ -253,6 +264,7 @@ export default function EstrategiaPrecios() {
       <button className="orok-btn orok-btn-primary" disabled={busy} onClick={cambiarAErp}>Usar escalera hacia precio ERP</button></div>}
     <div className="orok-card" style={{padding: 16}}>
       <h3 style={{marginTop: 0}}>Estudio de mercado (Evaluador)</h3>
+      {c.mercado?.politica && <PoliticaEvaluador p={c.mercado.politica}/>}
       {c.diagnostico && <div style={{border: '1px solid rgba(133,68,42,.35)', borderRadius: 10, padding: 10, marginBottom: 12}}>
         <b style={{fontSize: 13}}>Lectura del mercado y recomendación</b>
         <ul style={{margin: '6px 0 0', paddingLeft: 18, fontSize: 13, display: 'grid', gap: 4}}>{c.diagnostico.recomendaciones.map((r, i) => <li key={i}>{r}</li>)}</ul>
@@ -289,7 +301,7 @@ export default function EstrategiaPrecios() {
           <td style={{padding: 6, whiteSpace: 'nowrap'}}>{libre ? <span style={{display: 'flex', gap: 4, alignItems: 'center'}}>
             <select className="orok-input" aria-label={'Modo de precio ' + u.unidad} value={ed.modo} onChange={e => editarManual(u.unidad, {modo: e.target.value, valor: e.target.value === 'auto' ? '' : ed.valor})} style={{maxWidth: 92, padding: '4px 6px', outline: cambiado ? '2px solid #d97706' : undefined}}><option value="auto">Auto</option><option value="pct">%</option><option value="precio">S/</option></select>
             {ed.modo !== 'auto' && <input className="orok-input" type="number" aria-label={(ed.modo === 'pct' ? 'Porcentaje ' : 'Precio ') + u.unidad} step={ed.modo === 'pct' ? 0.5 : 100} value={ed.valor} onChange={e => editarManual(u.unidad, {valor: e.target.value})} style={{maxWidth: ed.modo === 'pct' ? 70 : 110, padding: '4px 6px'}}/>}</span> : '—'}</td>
-          <td style={{padding: 6, fontWeight: 700}}>{S(u.precio_objetivo)}{u.origen === 'manual' && <div style={{fontSize: 10, fontWeight: 400, color: '#9a3412'}}>manual{u.manual?.modo === 'pct' ? ` ${u.manual.valor > 0 ? '+' : ''}${Math.round(u.manual.valor * 10000) / 100} %` : ''}</div>}{cambiado && <div style={{fontSize: 10, fontWeight: 400, color: '#d97706'}}>sin guardar</div>}</td>
+          <td style={{padding: 6, fontWeight: 700}}>{S(u.precio_objetivo)}{u.bajo_minimo && <div style={{fontSize: 10, fontWeight: 700, color: '#b42318'}} title={'Precio mínimo del margen objetivo: ' + S(u.precio_minimo)}>bajo el mínimo ({S(u.precio_minimo)})</div>}{u.origen === 'manual' && <div style={{fontSize: 10, fontWeight: 400, color: '#9a3412'}}>manual{u.manual?.modo === 'pct' ? ` ${u.manual.valor > 0 ? '+' : ''}${Math.round(u.manual.valor * 10000) / 100} %` : ''}</div>}{cambiado && <div style={{fontSize: 10, fontWeight: 400, color: '#d97706'}}>sin guardar</div>}</td>
           <td style={{padding: 6, color: u.diferencia_vs_actual > 0 ? '#9a3412' : '#166534'}}>{u.diferencia_vs_actual == null ? '—' : (u.diferencia_vs_actual > 0 ? '+' : '') + S(u.diferencia_vs_actual)}</td><td style={{padding: 6}}>{u.ratio_sugerido_m2 ? N(u.ratio_sugerido_m2) : '—'}</td>
           <td style={{padding: 6}} title={u.mercado ? `${u.mercado.criterio} · ${u.mercado.n} comparables · rango ${N(u.mercado.p25_m2)}–${N(u.mercado.p75_m2)}` : 'Sin estudio de mercado'}>{u.mercado ? <>{N(u.mercado.mediana_m2)}<div style={{fontSize: 10, opacity: .7}}>{u.mercado.criterio} · {u.mercado.n}</div></> : '—'}</td>
           <td style={{padding: 6, color: u.posicion_mercado === 'Sobre el mercado' ? '#9a3412' : u.posicion_mercado === 'Bajo el mercado' ? '#1d4ed8' : '#166534'}}>{u.posicion_mercado || '—'}</td></tr>; })}</tbody></table></div>
