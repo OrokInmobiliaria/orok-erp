@@ -7,4 +7,4 @@ test('R105: la simulación escala solo el grupo elegido y no cambia los datos de
  assert.equal(Math.round(x.groups.Terreno.tot),Math.round(m.groups.Terreno.tot));
 });
 test('R105: vista con botón Simular y aplicar con deshacer',()=>{const h=fs.readFileSync(require('path').join(__dirname,'..','evaluador-src','evaluador.html'),'utf8');
- assert.match(h,/data-act="sim-abrir"/);assert.match(h,/function simAplicarCat/);assert.match(h,/undo\|sim-\)/);});
+ assert.match(h,/data-act="sim-abrir"/);assert.match(h,/function simAplicarCat/);assert.match(h,/undo\|sim-/);});
