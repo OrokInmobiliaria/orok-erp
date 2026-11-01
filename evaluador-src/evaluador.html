@@ -1212,18 +1212,45 @@ function fasePrecioPanel(){
   <div class="tw"><table><thead><tr><th>Fase de venta</th><th>Periodo</th><th class="n">Descuento</th><th class="n">S/ por m² de lista</th><th class="n">Unidades</th><th class="n">Ingreso</th></tr></thead><tbody>${rows}<tr class="tot"><td colspan="4">Total departamentos</td><td class="n">${nf(M.nU,0)}</td><td class="n">${S_(M.vDeptPh)}</td></tr><tr class="sub"><td colspan="5">Estacionamientos (precio fijo) · total ventas ${S_(M.ventas)}</td><td class="n">${S_(M.vEst)}</td></tr></tbody></table></div>
   <h3 style="margin-top:12px">Criterios del precio</h3><ul class="lola" style="margin:0">${out.map(([c,t])=>`<li class="${c}"><i>${c==='ok'?'✓':c==='w'?'!':'×'}</i><span>${t}</span></li>`).join('')}</ul></div>`;
 }
+// R107 · Política de descuentos realista: cada condición se aplica solo a las unidades que la usarán, sobre el precio de su fase,
+// y se suma al descuento por fase para ver el descuento acumulado de cada departamento frente al precio de equilibrio.
+const POL_DEF=[{n:'Crédito hipotecario, inicial 10%',d:1,u:4,en:'cualquiera'},{n:'Crédito hipotecario, inicial fuerte',d:2,u:2,en:'cualquiera'},{n:'Compra al contado (40% o más)',d:3,u:2,en:'cualquiera'},{n:'Bróker / primeras 5 unidades',d:5,u:5,en:'preventa'}];
+function faseAgg(){const a=Object.fromEntries(['preventa','medio','bajo','regular'].map(k=>[k,{u:0,v:0}]));for(let t=0;t<=M.H;t++){if(!M.sold[t])continue;const k=M.faseDe(t);a[k].u+=M.sold[t];a[k].v+=M.valT[t]-M.sold[t]*M.vEst/M.nU}return a}
+function politicaPanel(){
+  const pol=S.p.politicaDesc||POL_DEF,ag=faseAgg(),avgAll=M.vDeptPh/M.nU,avgPre=ag.preventa.u?ag.preventa.v/ag.preventa.u:avgAll;
+  const r1=compute(S,{descProm:(+S.p.descProm||0)+1}),kU=(M.ventas-r1.ventas)?(M.neta-r1.neta)/(M.ventas-r1.ventas):0.6; // utilidad que se pierde por cada sol de descuento
+  let totV=0,totU=0;const rows=pol.map((x,i)=>{const pu=x.en==='preventa'?avgPre:avgAll,dv=(+x.d||0)/100*(+x.u||0)*pu;totV+=dv;totU+=+x.u||0;
+    return `<tr><td style="min-width:230px">${inp(`p.politicaDesc.${i}.n`,x.n,'w','text')}</td><td class="n">${inp(`p.politicaDesc.${i}.d`,x.d,'xs')}%</td><td class="n">${inp(`p.politicaDesc.${i}.u`,x.u,'xs')}</td><td><select data-k="p.politicaDesc.${i}.en" id="i-pol-${i}-en"><option value="cualquiera"${x.en!=='preventa'?' selected':''}>cualquier fase</option><option value="preventa"${x.en==='preventa'?' selected':''}>preventa en planos</option></select></td><td class="n">${S_(pu)}</td><td class="n neg">−${S_(dv)}</td><td class="n neg">−${S_(dv*kU)}</td><td><button class="btn x" data-act="pol-del" data-i="${i}" aria-label="Quitar">✕</button></td></tr>`}).join('');
+  const pct=totV/M.ventas*100;
+  // descuento acumulado por fase (peor caso: la condición más alta que puede tocar a esa fase)
+  const F=M.fases,be=breakEven(Object.assign({},S,{p:Object.assign({},S.p,{descProm:0})})),dF={preventa:F.dP,medio:F.dM,bajo:F.dB,regular:0},regM2=M.precioRegM2;
+  const maxC=k=>Math.max(0,...pol.filter(x=>(+x.u||0)>0&&(x.en!=='preventa'||k==='preventa')).map(x=>+x.d||0));
+  const acc=['preventa','medio','bajo','regular'].filter(k=>F.on||k==='regular').map(k=>{const c=maxC(k),tot=1-(1-dF[k]/100)*(1-c/100),pm2=regM2*(1-tot),ok=pm2>=be;
+    return `<tr><td>${({preventa:'Preventa en planos',medio:'Tras la demolición',bajo:'Desde casco habitable',regular:'Precio regular'})[k]}</td><td class="n">${nf(dF[k],1)}%</td><td class="n">${nf(c,1)}%</td><td class="n"><b>${nf(tot*100,1)}%</b></td><td class="n">${S_(pm2)}</td><td>${ok?`<span class="chip ok">sobre el equilibrio (+${pc(pm2/be-1)})</span>`:`<span class="chip b">bajo el equilibrio (${S_(be)})</span>`}</td></tr>`}).join('');
+  return `<div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0">Política de descuentos por condición de compra</h3><button class="btn" data-act="pol-add">+ Agregar condición</button></div>
+  <p class="note" style="margin-top:0">Cada condición se aplica solo a las unidades que esperas venderle así, sobre el precio de su fase. «Utilidad neta» ya descuenta IGV e impuesto a la renta.</p>
+  <div class="tw"><table><thead><tr><th>Condición</th><th class="n">Desc. máx.</th><th class="n">Unidades</th><th>Aplica en</th><th class="n">Precio prom. unidad</th><th class="n">Menos ventas</th><th class="n">Menos utilidad neta</th><th></th></tr></thead><tbody>${rows}
+  <tr class="tot"><td colspan="5">Total esperado (${nf(totU,0)} ventas con descuento de ${nf(M.nU,0)} unidades)</td><td class="n neg">−${S_(totV)}</td><td class="n neg">−${S_(totV*kU)}</td><td></td></tr></tbody></table></div>
+  <div class="row" style="gap:10px;margin-top:8px;align-items:center"><span class="note" style="margin:0">Equivale a <b>${nf(pct,2)}%</b> de descuento promedio sobre toda la venta (hoy el modelo usa ${nf(+S.p.descProm||0,2)}% en Supuestos).</span><button class="btn" data-act="pol-usar" data-v="${Math.round(pct*100)/100}">Usar ${nf(pct,2)}% como descuento promedio</button></div>
+  ${totU>M.nU?`<p class="note"><span class="chip w">ojo</span> Suman ${nf(totU,0)} ventas con descuento y hay ${nf(M.nU,0)} unidades: algunas condiciones se superponen (por ejemplo, una de las primeras 5 que además paga al contado).</p>`:''}
+  <h3 style="margin-top:14px">Descuento acumulado por unidad (fase + condición, peor caso)</h3>
+  <div class="tw"><table><thead><tr><th>Fase de venta</th><th class="n">Descuento de fase</th><th class="n">Condición más alta posible</th><th class="n">Descuento total</th><th class="n">Precio final por m²</th><th>Frente al equilibrio</th></tr></thead><tbody>${acc}</tbody></table></div>
+  <p class="note">Los descuentos se combinan: 10% de preventa y 5% de bróker dan 14.5%, no 15%. Si alguna fase queda bajo el equilibrio, limita esa condición en esa fase o baja el descuento de la fase.</p></div>`;
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act^="pol-"]');if(!b)return;snap();if(!S.p.politicaDesc)S.p.politicaDesc=JSON.parse(JSON.stringify(POL_DEF));const a=b.dataset.act;
+  if(a==='pol-add')S.p.politicaDesc.push({n:'Nueva condición',d:1,u:1,en:'cualquiera'});
+  else if(a==='pol-del')S.p.politicaDesc.splice(+b.dataset.i,1);
+  else if(a==='pol-usar')S.p.descProm=+b.dataset.v;
+  save();render()});
 V.venta=()=>{
   const tc=S.p.tc;const rows=M.units.map((u,i)=>{const m2=u.tech+u.libre*fLib(S.units[i]||u,S.p);return `<tr><td>${esc(u.id)}</td><td>${esc(u.tipo)}</td><td class="n">${u.piso}</td><td class="n">${nf(u.tech,2)}</td><td class="n">${nf(u.libre,2)}</td><td>${inp(`units.${i}.aj`,u.aj||0,'xs')}</td>
   <td class="n">${S_(u.lista)}</td><td class="n">US$ ${nf(u.lista/tc)}</td><td class="n">${S_(u.lista/(u.tech||1))}</td><td class="n">${S_(u.neto)}</td><td class="n">${S_(u.neto/(1+M.igvEf))}</td></tr>`}).join('');
-  const pol=[['Crédito hipotecario, inicial 10%',1],['Crédito hipotecario, inicial fuerte',2],['Compra al contado (40% o más)',3],['Bróker / primeras 5 unidades',5]];
   return `<div class="sect-h"><h2>Valor de venta por departamento</h2><p>Precio de lista = (área techada + área libre × factor) × precio/m² × (1 + ajuste por unidad). Incluye IGV efectivo de ${pc(M.igvEf)}.</p></div>
   <div class="panel"><div class="tw"><table><thead><tr><th>Unidad</th><th>Tipología</th><th class="n">Piso</th><th class="n">Techada</th><th class="n">Libre</th><th>Ajuste %</th><th class="n">Precio lista</th><th class="n">Lista US$</th><th class="n">S/ por m² techado</th><th class="n">Precio neto</th><th class="n">Valor sin IGV</th></tr></thead>
   <tbody>${rows}<tr><td>Est.</td><td>Estacionamientos × ${S.p.nEstac}</td><td colspan="4"></td><td class="n">${S_(S.p.nEstac*S.p.precioEstac)}</td><td class="n">US$ ${nf(S.p.nEstac*S.p.precioEstac/tc)}</td><td></td><td class="n">${S_(M.vEst)}</td><td class="n">${S_(M.vEst/(1+M.igvEf))}</td></tr>
   <tr class="tot"><td colspan="6">Total recaudación</td><td class="n">${S_(sum(M.units.map(u=>u.lista))+S.p.nEstac*S.p.precioEstac)}</td><td class="n">US$ ${nf((sum(M.units.map(u=>u.lista))+S.p.nEstac*S.p.precioEstac)/tc)}</td><td class="n">${S_(M.vDept/M.techV)}</td><td class="n">${S_(M.vDept)}</td><td class="n">${S_(M.vDept/(1+M.igvEf))}</td></tr></tbody></table></div>
   <p class="note">Ajuste % permite primas por vista, piso o dúplex. Precio neto aplica el descuento promedio de Supuestos (${nf(S.p.descProm,1)}%).${M.fases.on?` Los precios de esta tabla son ${S.p.faseAncla==='regular'?'regulares':'promedio'}; el ingreso por fase está abajo.`:''}</p></div>${fasePrecioPanel()}
-  <div class="panel"><h3>Política de descuentos (referencia de la hoja original)</h3><div class="tw"><table><thead><tr><th>Condición</th><th class="n">Descuento máx.</th><th class="n">Impacto en ventas</th><th class="n">Impacto en utilidad neta</th></tr></thead><tbody>
-  ${pol.map(([t,d])=>{const r=compute(S,{descProm:d});return `<tr><td>${t}</td><td class="n">${d}%</td><td class="n neg">${S_(r.ventas-M.ventas)}</td><td class="n neg">${S_(r.neta-M.neta)}</td></tr>`}).join('')}</tbody></table></div>
-  <p class="note">Cada punto de descuento sobre toda la venta equivale a ${S_(M.ventas/100)} de ingreso.</p></div>`;
+  ${politicaPanel()}`;
 };
 
 V.construccion=()=>{
@@ -2518,6 +2545,7 @@ async function exportXLSX(tabs,etiqueta){
 /* ---------- render ---------- */
 function render(){
   // R95 · Gastos financieros como la hoja: se agrega «Gastos financieros (banco)» 0.45% sobre el 50% de las ventas si no existe; intereses del banco por esa línea (no se duplican en el flujo).
+  if(!Array.isArray(S.p.politicaDesc))S.p.politicaDesc=JSON.parse(JSON.stringify(POL_DEF)); // R107
   if(S.p.terrenoPropio==null){const inf=/infinity/i.test(S.p.nombre||'');S.p.terrenoPropio=inf;S.p.capitalCaja=inf?220000:0;S.p.bancoGastosMin=inf?255000:0;S.p.inicialRetenida=false;try{save()}catch(_){}} // R101 · datos de Infinity (terreno propio, capital y exigencia del banco)
   if(S.p.desembolsoHip==null){S.p.desembolsoHip='minuta';S.p.minutaMeses=0;S.p.perfilPromotor=/infinity/i.test(S.p.nombre||'')?'nuevo':'experiencia';if(S.p.preventaNuevoPct==null)S.p.preventaNuevoPct=45;if(S.p.preventaNuevoUnd==null)S.p.preventaNuevoUnd=5;try{save()}catch(_){}} // R100
   if(!S.p._finBanco){if(!(S.fin||[]).some(x=>/gastos financieros \(banco\)/i.test(x.n)))(S.fin=S.fin||[]).push({n:'Gastos financieros (banco)',d:'pctVentas',pu:0.45,bp:50,igv:true,pago:'obra'});if(S.p.interesModo==null)S.p.interesModo='linea';S.p._finBanco=true;try{save()}catch(_){}}
@@ -2544,7 +2572,7 @@ document.addEventListener('click',e=>{
   if(b.dataset.fc){fcMode=b.dataset.fc;render();return}
   const a=b.dataset.act;if(!a)return;
   if(a==='undo-gen'){deshacer();return}
-  if(!/^(base-ask|base-cancel|project-drive-status|project-drive-scan|xls-|undo|sim-)/.test(a))snap();
+  if(!/^(base-ask|base-cancel|project-drive-status|project-drive-scan|xls-|undo|sim-|pol-)/.test(a))snap();
   // R80 · Con áreas fijas no se recalculan ni se agregan/eliminan unidades fuera del cuadro oficial.
   if(a==='cab-oficial-importar'||a==='cab-oficial-reimportar'){
     if(a==='cab-oficial-reimportar'){S.cab.oficial.activo=false;save();render();const d=document.getElementById('cabOficial');if(d)d.open=true;return}
