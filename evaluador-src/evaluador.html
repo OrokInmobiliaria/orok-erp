@@ -452,7 +452,7 @@ body::after{content:"";position:fixed;inset:-15%;z-index:-1;pointer-events:none;
 })();
 //MODEL-START
 const DEF = {
-  mercado:{distrito:'San Miguel',tc:3.4,descNeg:3,inclUsados:false,margenMeta:15,alcance:'radio',cuadras:7,alturaFiltro:'todas',origen:null,objetivo:{pisos:8,amen:{ascensor:true}},comps:[],fuentes:[]},
+  mercado:{distrito:'San Miguel',tc:3.4,descNeg:3,inclUsados:false,margenMeta:15,alcance:'radio',cuadras:7,alturaFiltro:'todas',alturas:{a:true,b:true,c:true,d:true,x:true},origen:null,objetivo:{pisos:8,amen:{ascensor:true}},comps:[],fuentes:[]},
   p:{ nombre:'Infinity 224', direccion:'Calle La Apacheta 224, San Miguel, Lima', uso:'Vivienda multifamiliar · 8 pisos + azotea + sótano', inicio:'2025-06',
       areaTerreno:160, precioTerrenoM2:4350, uit:5500, predAnioBase:2026, predArancel:0, predConstrExist:0, predMesDemolicion:'', predCrecArancel:0, predCrecUIT:0, predEmision:0, arbAnual:0, arbUnidad:0, arbTerreno:'', arbFuente:'', tc:3.40, autovaluo:771892.61,
       costoM2:2288.36, supervisionM2:65, comunTechada:269.79, nEstac:4, precioEstac:56000,
@@ -777,6 +777,7 @@ if(!S||!S.p)S=JSON.parse(JSON.stringify(DEF));
 for(const k in DEF)if(S[k]===undefined)S[k]=JSON.parse(JSON.stringify(DEF[k]));
 for(const k in DEF.p)if(S.p[k]===undefined)S.p[k]=DEF.p[k];
 for(const k in DEF.mercado)if(S.mercado[k]===undefined)S.mercado[k]=JSON.parse(JSON.stringify(DEF.mercado[k]));
+if(S.mercado.alturaFiltro&&S.mercado.alturaFiltro!=='todas'&&!S.mercado._altCheck){const k=S.mercado.alturaFiltro;S.mercado.alturas={a:k==='a',b:k==='b',c:k==='c',d:k==='d',x:false}}S.mercado._altCheck=true; // R88
 (S.ventas||[]).forEach(v=>{if(!ETAPAS.includes(v.estado))v.estado=ETAPA_MAP[String(v.estado||'').toLowerCase()]||'Separación'});if(!S.estr.estado)S.estr.estado='propuesta';
 if(!S.base){S.base={nombre:'Evaluación inicial · Rev9 oct-2026',fecha:'2026-10-26',snap:JSON.parse(JSON.stringify(Object.fromEntries(SNAPKEYS.map(k=>[k,DEF[k]]))))}}
 /* R80 · Deshacer general: antes de cada cambio del usuario se guarda una copia (hasta 60). Botón «↶ Deshacer» y Ctrl/⌘+Z
@@ -1995,17 +1996,19 @@ function mQ(a,p){if(!a.length)return null;const i=(a.length-1)*p,l=Math.floor(i)
 function mStats(v){const a=v.filter(x=>x!=null&&isFinite(x)).sort((x,y)=>x-y);return {n:a.length,min:a[0]??null,p25:mQ(a,.25),med:mQ(a,.5),p75:mQ(a,.75),max:a[a.length-1]??null,avg:a.length?sum(a)/a.length:null}}
 function mWQ(pairs,p){const a=pairs.filter(x=>x[0]!=null).sort((x,y)=>x[0]-y[0]),W=sum(a.map(x=>x[1]));if(!W)return null;let acc=0;for(const [v,w] of a){acc+=w;if(acc>=W*p)return v}return a[a.length-1][0]}
 const mAltKey=c=>c.pisos==null?null:c.pisos<=5?'a':c.pisos<=8?'b':c.pisos<=12?'c':'d';
+/* R88 · Alturas elegidas con casillas (varias a la vez). «x» = avisos sin dato de altura. */
+function mAltOk(c){const A=S.mercado.alturas,f=S.mercado.alturaFiltro;if(!A){if(f&&f!=='todas')return mAltKey(c)===f;return true}const k=mAltKey(c)||'x';return A[k]!==false}
 function mScopeKind(c){
-  const mk=S.mercado,alt=mk.alturaFiltro||'todas';
+  const mk=S.mercado,alt=mAltOk(c)?'todas':'__fuera__';
   if((mk.alcance||'radio')==='distrito'){
     const d=String(c.distrito||'').toLocaleLowerCase('es-PE'),want=String(mk.distrito||'').toLocaleLowerCase('es-PE');
     if(d&&want&&!d.includes(want)&&!want.includes(d))return 'distrito';
-    return alt!=='todas'&&mAltKey(c)!==alt?'altura':'dentro';
+    return alt!=='todas'?'altura':'dentro';
   }
   const q=Number(c.distCuadras!=null?c.distCuadras:(c.distM!=null?c.distM/100:NaN));
-  if(!Number.isFinite(q))return alt!=='todas'&&mAltKey(c)!==alt?'altura':'pendiente';
+  if(!Number.isFinite(q))return alt!=='todas'?'altura':'pendiente';
   if(q>Math.max(1,Number(mk.cuadras)||7))return 'radio';
-  return alt!=='todas'&&mAltKey(c)!==alt?'altura':'dentro';
+  return alt!=='todas'?'altura':'dentro';
 }
 function mComparableIncluded(c){if(c.incl===false)return false;if(c.scopeOverride===true)return true;return ['dentro','pendiente'].includes(mScopeKind(c))}
 // R33d · Una distancia escrita a mano manda: el cálculo automático no la reemplaza. Vaciar el campo la devuelve al cálculo.
@@ -2038,7 +2041,8 @@ function mercadoModel(){
   const grp=(f,keys)=>keys.map(([k,l])=>{const s=mStats(use.filter(c=>f(c)===k).map(c=>c.pm2));return {k,l,...s}});
   const dormK=c=>c.dmin!=null&&c.dmin===c.dmax?(c.dmin>=4?'4':String(c.dmin)):null;
   const byDorm=grp(dormK,[['1','1 dormitorio'],['2','2 dormitorios'],['3','3 dormitorios'],['4','4 o más']]);
-  const byAlt=grp(mAltKey,[['a','Hasta 5 pisos'],['b','6 a 8 pisos'],['c','9 a 12 pisos'],['d','13 pisos o más']]);
+  const useAlt=all.filter(c=>c.incl!==false&&c.pm2>=1500&&c.pm2<=30000&&(mk.inclUsados||c.estado!=='usado')&&(c.scopeOverride===true||['dentro','pendiente','altura'].includes(mScopeKind(c)))); // R88 · se ven todas las alturas aunque estén desmarcadas
+  const byAlt=[['a','Hasta 5 pisos'],['b','6 a 8 pisos'],['c','9 a 12 pisos'],['d','13 pisos o más'],['x','Sin dato de altura']].map(([k,l])=>({k,l,...mStats(useAlt.filter(c=>(mAltKey(c)||'x')===k).map(c=>c.pm2))}));
   const conInfo=use.filter(c=>c.amen&&c.amen.length);
   const prem=AMEN.map(([k,l])=>{if(k==='ascensor')return {k,l,nW:conInfo.filter(c=>c.amen.includes(k)).length,nWO:conInfo.filter(c=>!c.amen.includes(k)).length,medW:null,medWO:null,prem:null,share:0,info:1};const w=conInfo.filter(c=>c.amen.includes(k)).map(c=>c.pm2),wo=conInfo.filter(c=>!c.amen.includes(k)).map(c=>c.pm2);const a=mStats(w),b=mStats(wo);
     return {k,l,nW:a.n,nWO:b.n,medW:a.med,medWO:b.med,prem:a.n>=3&&b.n>=3?a.med/b.med-1:null,share:conInfo.length?a.n/conInfo.length:0}});
@@ -2094,8 +2098,8 @@ function mScatter(R){
 V.mercado=()=>{
   const mk=S.mercado,R=mercadoModel(),obj=mk.objetivo||{amen:{}};
   const cell=s=>s.n?`<td class="n">${s.n}</td><td class="n">${S_(s.med)}</td><td class="n">${S_(s.avg)}</td><td class="n">${S_(s.p25)}</td><td class="n">${S_(s.p75)}</td><td class="n">${S_(s.min)}</td><td class="n">${S_(s.max)}</td>`:`<td class="n">0</td><td colspan="6" class="mut">Sin datos</td>`;
-  const tHead=`<tr><th></th><th class="n">Avisos</th><th class="n">Mediana S//m²</th><th class="n">Promedio</th><th class="n">P25</th><th class="n">P75</th><th class="n">Mín.</th><th class="n">Máx.</th></tr>`;
-  const tHead2=t=>`<tr><th>${t}</th><th class="n">Avisos</th><th class="n">Mediana S//m²</th><th class="n">P25</th><th class="n">P75</th></tr>`;
+  const tHead=`<tr><th></th><th class="n">Avisos</th><th class="n">Mediana S/ por m²</th><th class="n">Promedio</th><th class="n">P25</th><th class="n">P75</th><th class="n">Mín.</th><th class="n">Máx.</th></tr>`;
+  const tHead2=t=>`<tr><th>${t}</th><th class="n">Avisos</th><th class="n">Mediana S/ por m²</th><th class="n">P25</th><th class="n">P75</th></tr>`;
   const cell2=s=>s.n?`<td class="n">${s.n}</td><td class="n">${S_(s.med)}</td><td class="n">${S_(s.p25)}</td><td class="n">${S_(s.p75)}</td>`:`<td class="n">0</td><td colspan="3" class="mut">Sin datos</td>`;
   const leyenda=MEST.map(([k,l])=>`<span class="row" style="gap:4px"><i style="width:10px;height:10px;border-radius:50%;background:${MCOL[k]};display:inline-block"></i>${l}</span>`).join('');
   const scopeLabel={pendiente:'Distancia pendiente de calcular',radio:`Fuera del radio de ${nf(mk.cuadras||7,0)} cuadras`,altura:'Fuera del filtro de altura',distrito:`Fuera de ${esc(mk.distrito)}`};
@@ -2143,7 +2147,7 @@ V.mercado=()=>{
    <div class="tw" style="margin-top:12px"><table><thead>${tHead}</thead><tbody>${MEST.map(([k,l])=>`<tr><td>${l}</td>${cell(R.est[k])}</tr>`).join('')}</tbody></table></div>
    ${R.sinVendidos?'<p class="note">Sin datos de <b>últimas ventas</b>: los portales muestran precios de lista. Agrega cierres reales desde un Excel (reportes de cierre, tasaciones, SUNARP) con Estado = vendido; pesan 1.5 veces en el precio sugerido.</p>':''}</div>
   <div class="grid2"><div class="panel"><h3>Por tipología</h3><div class="tw"><table><thead>${tHead2('Dormitorios')}</thead><tbody>${R.byDorm.map(g=>`<tr><td>${g.l}</td>${cell2(g)}</tr>`).join('')}</tbody></table></div><p class="note">Solo avisos con tipología única; los proyectos con rango (1 a 3 dorm.) entran en las demás vistas.</p></div>
-   <div class="panel"><div class="row" style="justify-content:space-between;align-items:end"><h3 style="margin:0">Por altura del edificio</h3><div class="f" style="min-width:190px"><label for="mAltura">Filtrar el estudio por altura</label><select id="mAltura" data-k="mercado.alturaFiltro"><option value="todas"${mk.alturaFiltro==='todas'?' selected':''}>Todas las alturas</option><option value="a"${mk.alturaFiltro==='a'?' selected':''}>Hasta 5 pisos</option><option value="b"${mk.alturaFiltro==='b'?' selected':''}>6 a 8 pisos</option><option value="c"${mk.alturaFiltro==='c'?' selected':''}>9 a 12 pisos</option><option value="d"${mk.alturaFiltro==='d'?' selected':''}>13 pisos o más</option></select></div></div><div class="tw"><table><thead>${tHead2('Edificio')}</thead><tbody>${R.byAlt.map(g=>`<tr${mk.alturaFiltro===g.k?' class="tot"':''}><td>${g.l}</td>${cell2(g)}</tr>`).join('')}</tbody></table></div><p class="note">El selector actualiza todo el estudio. Los avisos sin una altura compatible quedan debajo de la línea de exclusión y pueden incluirse manualmente.</p></div></div>
+   <div class="panel"><div class="row" style="justify-content:space-between;align-items:end;flex-wrap:wrap;gap:8px"><h3 style="margin:0">Por altura del edificio</h3><div class="row" style="gap:6px"><button class="btn x" data-act="m-alt-proyecto" title="Deja marcadas solo las alturas parecidas a tu proyecto">Solo como mi proyecto (${nf(+S.mercado.objetivo?.pisos||0,0)} pisos)</button><button class="btn x" data-act="m-alt-todas">Marcar todas</button></div></div><div class="tw"><table><thead><tr><th style="width:36px" title="Incluir en el estudio">Usar</th>${tHead2('Edificio').replace(/^<tr>|<\/tr>$/g,'')}</tr></thead><tbody>${R.byAlt.map(g=>{const on=(S.mercado.alturas||{})[g.k]!==false;return `<tr${on?'':' class="mut"'} style="${on?'':'opacity:.55'}"><td style="text-align:center"><input type="checkbox" data-k="mercado.alturas.${g.k}" id="i-mercado-alturas-${g.k}" ${on?'checked':''} aria-label="Incluir ${esc(g.l)}"></td><td>${g.l}${on?'':' <span class="chip w">fuera del cálculo</span>'}</td>${cell2(g)}</tr>`}).join('')}</tbody></table></div><p class="note">Marca solo los tipos de edificio comparables con tu proyecto. Por ejemplo, los edificios de 13 pisos o más tienen costos fijos más diluidos y pueden dar descuentos mayores, lo que baja el precio de referencia; desmárcalos si tu proyecto es de otro concepto. Las cifras de cada fila se ven aunque esté desmarcada, para que compares. Los avisos excluidos quedan debajo de la línea de exclusión y puedes incluirlos uno por uno.</p></div>
   <div class="panel"><h3>Amenidades: presencia y prima</h3><div class="tw"><table><thead><tr><th>Amenidad</th><th class="n">Con</th><th class="n">Sin</th><th class="n">% del mercado</th><th class="n">Mediana con</th><th class="n">Mediana sin</th><th class="n">Prima</th></tr></thead><tbody>
    ${prem.map(p=>`<tr><td>${p.l}</td><td class="n">${p.nW}</td><td class="n">${p.nWO}</td><td class="n">${p.info?'—':pc(p.share,0)}</td><td class="n">${S_(p.medW)}</td><td class="n">${S_(p.medWO)}</td><td class="n ${p.prem<0?'neg':''}">${p.info?'<span class="mut">solo informativa</span>':p.prem==null?'<span class="mut">pocos datos</span>':(p.prem>=0?'+':'')+pc(p.prem)}</td></tr>`).join('')}</tbody></table></div>
    <p class="note">La prima compara medianas con y sin la amenidad; no aísla ubicación ni tamaño. Se calcula solo con 3 o más avisos en cada grupo. El ascensor es casi universal en obra nueva y no lo mencionan los proyectos: queda solo como dato.</p></div>
@@ -2362,6 +2366,8 @@ document.addEventListener('click',e=>{
       S.cab.oficial={activo:true,filas};cabOficialAplicar(S)}catch(err){alert(err.message);return}}
   else if(a==='cab-oficial-off'){if(!confirm('¿Quitar el cuadro oficial? Las unidades y el área común se quedan como están.'))return;S.cab.oficial.activo=false}
   else if(a==='cab-oficial-aplicar'){if(!confirm('Las unidades y el área común volverán a tomar exactamente las áreas del cuadro oficial. ¿Continuar?'))return;cabOficialAplicar(S)}
+  else if(a==='m-alt-todas'){S.mercado.alturas={a:true,b:true,c:true,d:true,x:true}}
+  else if(a==='m-alt-proyecto'){const n=+(S.mercado.objetivo&&S.mercado.objetivo.pisos)||0,k=n<=5?'a':n<=8?'b':n<=12?'c':'d';S.mercado.alturas={a:k==='a',b:k==='b',c:k==='c',d:k==='d',x:true}}
   else if(a==='del'){getP(b.dataset.g).splice(+b.dataset.i,1)}
   else if(a==='add-venta'){const sold=new Set(S.ventas.map(v=>String(v.u)));const u=S.units.find(x=>!sold.has(String(x.id)))||S.units[0];const mu=M.units.find(x=>x.id===u.id);S.ventas.push({u:String(u.id),f:S.estr.corte,precio:Math.round(mu?mu.lista*(1-S.estr.desc/100):0),estado:'separada',canal:''})}
   else if(a==='present'){const on=!document.body.classList.contains('present');document.body.classList.toggle('present',on);try{if(on&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});else if(!on&&document.fullscreenElement)document.exitFullscreen().catch(()=>{})}catch(_){}render();return}
