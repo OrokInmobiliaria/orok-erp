@@ -399,7 +399,9 @@ function $(s){return document.querySelector(s)}
 /* ---------- KPIs ---------- */
 function renderTop(){
   $('#pname').textContent=S.p.nombre;
-  $('#pmeta').textContent=`${S.p.direccion} · ${nf(M.areaTech,2)} m² techados · ${M.nU} unidades · ${M.H+1} meses`;
+  // R90 · Duración real del proyecto (del arranque a la independización) separada del horizonte del flujo (que incluye posventa y cierre).
+  const durProy=M.indStart+M.ind,porQue=M.H+1>durProy?(M.postStart+M.postDur>=M.H?'posventa':M.finVentas+3>=M.H?'cobranza de las últimas ventas':'cierre de cuentas'):'';
+  $('#pmeta').textContent=`${S.p.direccion} · ${nf(M.areaTech,2)} m² techados · ${M.nU} unidades · proyecto ${durProy} meses (arranque → independización)${M.H+1>durProy?` · flujo de ${M.H+1} meses con ${porQue}`:''}`;
   const k=[['Ventas totales',S_(M.ventas)],['Egresos totales',S_(M.egresos)],['Utilidad neta',S_(M.neta),M.neta>=0?'good':'bad'],
     ['Margen s/ ventas',pc(M.mSv),M.mSv>=0.15?'good':'bad'],['TIR accionista',M.tirQ==null?'—':pc(M.tirQ),(M.tirQ||0)>=S.p.tasaDesc/100?'good':'bad'],['Aporte máximo',S_(M.peak)]];
   $('#kpis').innerHTML=k.map(([l,v,c])=>`<div class="kpi"><label>${l}</label><output class="${c||''}">${v}</output></div>`).join('');
