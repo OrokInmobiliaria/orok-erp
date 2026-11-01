@@ -24,3 +24,24 @@
 .orok-card tbody tr:hover{background:rgba(255,255,255,.22)!important}
 .kanban-card{background:linear-gradient(140deg,rgba(255,255,255,.55),rgba(255,255,255,.3))!important}
 @media (prefers-reduced-transparency:reduce){.orok-card .orok-card,.orok-card .bi-kpi{background:rgba(255,255,255,.96)!important}}
+/* R106 · +20% de transparencia en todo el cristal, +20% de realce al pasar el mouse y menú lateral desplegable en cristal */
+:root{--c2-fill-a:rgba(255,255,255,.42)!important;--c2-fill-b:rgba(255,255,255,.21)!important}
+.orok-card,.bi-card,.bi-kpi,.greta-stat{background-image:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,0) 38%),linear-gradient(140deg,rgba(255,255,255,.42),rgba(255,255,255,.21))!important}
+.orok-card .orok-card,.orok-card .bi-kpi,.orok-card .bi-card,.bi-card .bi-kpi,.orok-card .greta-stat{background-image:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,0) 40%),linear-gradient(140deg,rgba(255,255,255,.22),rgba(255,255,255,.065))!important}
+.orok-card .orok-input,.orok-card input,.orok-card select,.orok-card textarea,.orok-input{background:rgba(255,255,255,.32)!important}
+.orok-card thead th{background:rgba(255,255,255,.24)!important}
+.glass,.nav-menu,.tabbar,.sheet,.export-pop,.search-palette,.bi-slicers,.bi-filter-toggle,.whatsapp-panel{background:linear-gradient(135deg,rgba(255,255,255,.6),rgba(255,255,255,.4))!important}
+.kanban-col{background:linear-gradient(180deg,rgba(255,255,255,.35),rgba(255,255,255,.19))!important}
+.kanban-card{background:linear-gradient(140deg,rgba(255,255,255,.44),rgba(255,255,255,.24))!important}
+/* realce al pasar el mouse (+20%) */
+.orok-card:hover,.bi-card:hover,.bi-kpi:hover,.greta-stat:hover{border-color:#fff!important;box-shadow:inset 0 1.5px 0 #fff,inset 0 0 0 1px rgba(255,255,255,.3),0 36px 84px -28px rgba(20,8,4,.66),0 0 0 5px rgba(var(--tint-rgb),.07)!important}
+.orok-card tbody tr:hover{background:rgba(255,255,255,.27)!important}
+.kanban-card:hover{box-shadow:inset 0 1px 0 #fff,0 22px 40px -16px rgba(var(--shadow-rgb),.66)!important}
+.orok-btn:hover{box-shadow:0 10px 24px -12px rgba(var(--tint-rgb),.6),inset 0 1px 0 rgba(255,255,255,.6);border-color:#fff}
+/* menú lateral (barra de iconos y desplegado) en cristal */
+.side-nav{background:linear-gradient(180deg,rgba(255,255,255,.4),rgba(255,255,255,.2))!important;-webkit-backdrop-filter:blur(34px) saturate(190%) brightness(1.06)!important;backdrop-filter:blur(34px) saturate(190%) brightness(1.06)!important;border-right:1px solid rgba(255,255,255,.85)!important;box-shadow:inset -1px 0 0 rgba(255,255,255,.6),inset 0 1px 0 rgba(255,255,255,.9),14px 0 50px -30px rgba(20,8,4,.5)!important}
+.side-nav:hover,.side-nav:focus-within{background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,.28))!important;box-shadow:inset -1px 0 0 rgba(255,255,255,.7),18px 0 60px -24px rgba(20,8,4,.55)!important}
+.side-item:hover{background:rgba(255,255,255,.42)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 6px 16px -10px rgba(var(--shadow-rgb),.45)}
+.side-item[aria-current="page"]{background:linear-gradient(135deg,rgba(var(--tint-rgb),.24),rgba(var(--tint-rgb),.12))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 3px 0 0 var(--orok-brand)}
+.side-search{background:rgba(255,255,255,.32)!important;border:1px solid rgba(255,255,255,.75)!important}
+@media (prefers-reduced-transparency:reduce){.side-nav{background:rgba(255,255,255,.96)!important}}
