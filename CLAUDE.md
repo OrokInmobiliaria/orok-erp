@@ -12,7 +12,7 @@ Estas reglas las fijó Martín Montezuma (Gerencia ÖRÖK). Cualquier IA que pro
 - En videos o capturas que salgan del ERP: difuminar tokens y nombres de clientes.
 
 ## Diseño
-- Conservar el efecto Crystal (glass) en todo el ERP. La única pantalla sin Crystal es la de acceso (usuario y clave).
+- Conservar el efecto Crystal (glass) en todo el ERP. La única pantalla sin Crystal es la de acceso (usuario y clave). Cristal 3.0 (R103): fondo de color más oscuro (mezcla del color de marca de la paleta) para que el cristal se note; paneles esmerilados claros con borde de luz y reflejo, texto siempre legible.
 - Marca: colores #85442A, #5E2817, #B3362B, #FCFAF8, #292524; tipografía Outfit.
 - Interfaz en español, explicaciones simples: Gerencia no es desarrolladora.
 
