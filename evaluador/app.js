@@ -187,8 +187,10 @@ function saleSpeed(p){
   const base=Math.max(.05,Number(p.velocidad)||.8);
   return p.escenarioVenta==='optimista'?Math.max(.05,Number(p.velocidadOptimista)||base*1.25):p.escenarioVenta==='pesimista'?Math.max(.05,Number(p.velocidadPesimista)||base*.7):base;
 }
+/* R93 · Como el presupuesto de obra original: GG = % del costo directo; utilidad = % sobre el subtotal (subtotal = (CD + GG) / (1 − utilidad)). */
+function costFac(p){return (1+(+p.ggPct||0)/100)/(1-Math.min(90,+p.utilPct||0)/100)}
 function editPartCost(s,i,kind,value){
-  const v=Number(value),factor=1+(+s.p.ggPct||0)/100+(+s.p.utilPct||0)/100;
+  const v=Number(value),factor=costFac(s.p);
   if(!Number.isFinite(v)||v<0||!s.part[i]||(kind==='pct'&&v>100))throw Error('Ingresa un costo positivo o una incidencia entre 0 y 100.');
   const tw=sum(s.part.map(x=>+x.pct))||1,cd=Number(s.p.costoM2)/factor;
   const costs=s.part.map(x=>cd*(+x.pct||0)/tw);
@@ -248,8 +250,9 @@ function compute(s,ov){
   const H=Math.max(indStart+ind+3,finVentas+3,postStart+postDur,designEnd,lastMilestone,mesBanco);
   const anios=Math.ceil((ent+ind)/12);
   const pred=calcPredial(+p.autovaluo,+p.uit);
-  const constrSub=areaTech*p.costoM2+sum(s.units.map(u=>(+u.tech||0)*(usoCostoM2(p,u)-p.costoM2)))+libreV*(+p.costoLibreM2||0); // R81 · costo del área libre construida (balcones, terrazas)
-  const cd=constrSub/(1+p.ggPct/100+p.utilPct/100);
+  const areaConstr=areaTech+libreV; // R93 · el costo por m² se aplica al área total (techada + libre), como en el presupuesto de obra; sin cargos extra
+  const constrSub=areaConstr*p.costoM2+sum(s.units.map(u=>(+u.tech||0)*(usoCostoM2(p,u)-p.costoM2)));
+  const cd=constrSub/costFac(p);
   const curve=obraCurve(s.part,dur);
   // ventas y cobranzas
   const avg=ventas/nU, sold=new Array(H+1).fill(0), cobro=new Array(H+1).fill(0), soldCum=new Array(H+1).fill(0);
@@ -284,7 +287,7 @@ function compute(s,ov){
   const terr=p.areaTerreno*p.precioTerrenoM2;
   add('Terreno','Terreno',terr,false,'0',{q:p.areaTerreno,u:'m²',pu:p.precioTerrenoM2});
   add('Terreno','Alcabala',Math.max(0,terr-10*p.uit)*p.alcabala/100,false,'0',{q:Math.max(0,terr-10*p.uit),u:'base',pu:p.alcabala,pct:true});
-  add('Construcción','Construcción (CD + GG + utilidad)',constrSub,true,'curva',{q:areaTech,u:'m²',pu:p.costoM2,key:'constr'});
+  add('Construcción','Construcción (CD + GG + utilidad)',constrSub,true,'curva',{q:areaConstr,u:'m²',pu:p.costoM2,key:'constr'});
   add('Construcción','Supervisión de obra',areaTech*p.supervisionM2,true,'curva',{q:areaTech,u:'m²',pu:p.supervisionM2,key:'constr'});
   add('Contingencias','Manejo de vecinos y comunidad',constrSub*p.contingencia/100,true,'obra',{q:constrSub,u:'base',pu:p.contingencia,pct:true});
   const predOn=+p.predArancel>0,predPlanR=predOn?predialPlan(p,s,{io,ind,indStart,H,soldCum,obraOficial:vuObraTotal(s,s.units,areaTech,techV)}):null; // R84
@@ -338,7 +341,7 @@ function compute(s,ov){
   L.forEach(o=>{const g=groups[o.cat]||(groups[o.cat]={sub:0,igv:0,tot:0});g.sub+=o.sub;g.igv+=o.igv;g.tot+=o.tot});
   groups['Financieros'].tot+=intTot2;groups['Financieros'].sub+=intTot2;
   const igvComprasTot=sum(L.map(o=>o.igv));
-  return {p,units,nU,techV,libreV,areaTech,igvEf,vDept:vDeptR,vEst,valT,plan,ventas,ventasSin,igvVentas,io,mesBanco,dur,ent,ind,indStart,postStart,postDur,designStart,designEnd,lanz,finVentas,H,anios,pred,predPlan:predPlanR,constrSub,cd,curve,
+  return {p,units,nU,techV,libreV,areaTech,igvEf,vDept:vDeptR,vEst,valT,plan,ventas,ventasSin,igvVentas,io,mesBanco,dur,ent,ind,indStart,postStart,postDur,designStart,designEnd,lanz,finVentas,H,anios,pred,predPlan:predPlanR,constrSub,cd,curve,areaConstr,
     sold,soldCum,cobro,det,detRel,L,E,Efin,byCat,igvD,igvC,constrM,constrTot,bankLim,F,intTot:intTot2,egresos:egresosF,uai:uaiF,ir:irF,neta,econ,eq,peak,peakE:-peakE,payback,
     tirE:ie==null?null:Math.pow(1+ie,12)-1,tirQ:iq==null?null:Math.pow(1+iq,12)-1,vanE:npvM(econ,p.tasaDesc/100),vanQ:npvM(eq,p.tasaDesc/100),
     groups,igvComprasTot,igvPagado:sum(F.igvPay),creditoFinal:F.credit[H],terr,
@@ -467,7 +470,7 @@ V.cabida=()=>{
   return `<div class="sect-h"><h2>Cabida arquitectónica</h2><p>Fuente principal del modelo: áreas por unidad, área común y los valores por m². Todo lo demás se recalcula a partir de aquí.</p></div>
   <details class="panel" id="cabDatos"${S._ui&&S._ui.cabDatos?' open':''}><summary style="cursor:pointer"><h3 style="display:inline">Datos generales</h3> <span class="mut" style="font-size:12px">· ${esc(S.p.nombre||'')} · terreno ${nf(S.p.areaTerreno,2)} m² · costo S/ ${nf(S.p.costoM2,2)}/m² · venta S/ ${nf(S.p.precioM2,2)}/m² · tocar para ver o editar</span></summary><div class="fields" style="margin-top:10px">${fld('p.nombre','Proyecto')}${fld('p.direccion','Dirección')}${fld('p.uso','Uso / tipología')}${fld('p.inicio','Mes de inicio (AAAA-MM)')}
   ${fld('p.areaTerreno','Área de terreno (m²)',1)}${fld('p.precioTerrenoM2','Precio terreno (S/ por m²)',1)}${fld('p.costoM2','Costo construcción (S/ por m², sin IGV)',1)}${fld('p.precioM2','Precio de venta (S/ por m², con IGV)',1)}
-  ${fld('p.comunTechada','Área común techada incl. sótano (m²)',1)}${fld('p.factorLibre','Factor de precio del área libre vendible (0–1 · 1 = mismo precio que el techado)')}${fld('p.costoLibreM2','Costo del área libre construida: balcones, terrazas (S/ por m², sin IGV · 0 = no se cuenta)',1)}${fld('p.nEstac','Estacionamientos (und)',1)}${fld('p.precioEstac','Precio por estacionamiento (S/)',1)}</div>
+  ${fld('p.comunTechada','Área común techada incl. sótano (m²)',1)}${fld('p.factorLibre','Factor de precio del área libre vendible (0–1 · 1 = mismo precio que el techado)')}${fld('p.nEstac','Estacionamientos (und)',1)}${fld('p.precioEstac','Precio por estacionamiento (S/)',1)}</div>
   <h4 style="margin:12px 0 4px">Comercio y oficinas <span class="mut" style="font-weight:400;font-size:12px">· 0 = igual que vivienda</span></h4><div class="fields">${[['precioM2Comercial','Precio de venta comercial (S/ por m², con IGV)'],['costoM2Comercial','Costo construcción comercial (S/ por m², sin IGV)'],['precioM2Oficina','Precio de venta oficinas (S/ por m², con IGV)'],['costoM2Oficina','Costo construcción oficinas (S/ por m², sin IGV)']].map(([k,l])=>`<div class="f"><label for="i-p-${k}">${l}</label>${inp('p.'+k,+S.p[k]||0,'','number')}</div>`).join('')}</div>
   <p class="note">Los campos resaltados son los insumos de cabida y costo/m². El costo/m² incluye costo directo, gastos generales y utilidad del contratista; el IGV se suma aparte.</p></details>
   ${cabOficial()}
@@ -645,7 +648,7 @@ V.supuestos=()=>`<div class="sect-h"><h2>Supuestos del modelo</h2><p>Parámetros
   <div class="row" style="margin-top:10px"><label class="row"><input type="checkbox" data-k="p.detracOn" id="i-p-detracOn" ${S.p.detracOn?'checked':''}> Aplicar detracciones a las cobranzas</label></div></div>
   <div class="panel"><h3>Comerciales</h3><div class="fields">${fld('p.velocidad','Velocidad de venta (und/mes)')}${fld('p.inicial','Cuota inicial (%)')}${fld('p.descProm','Descuento promedio (%)')}${fld('p.tc','Tipo de cambio SUNAT · venta (automático)')}</div><p class="note" data-rate-status>${rateError||mRateNote()}</p></div>
   ${salesControls()}
-  <div class="panel"><h3>Obra</h3><div class="fields">${fld('p.supervisionM2','Supervisión (S/ por m²)')}${fld('p.contingencia','Contingencia vecinos (% construcción)')}${fld('p.ggPct','GG implícito en el costo/m² (% CD)')}${fld('p.utilPct','Utilidad contratista implícita (% CD)')}</div></div>
+  <div class="panel"><h3>Obra</h3><div class="fields">${fld('p.supervisionM2','Supervisión (S/ por m²)')}${fld('p.contingencia','Contingencia vecinos (% construcción)')}${fld('p.ggPct','GG implícito en el costo/m² (% CD)')}${fld('p.utilPct','Utilidad contratista (% sobre el subtotal, como el presupuesto de obra)')}</div></div>
   <div class="panel"><h3>Financieros</h3><div class="fields">${fld('p.financiaPct','Financiamiento banco (% de construcción)')}${fld('p.preventaMin','Preventa mínima para desembolso (%)')}${fld('p.tea','TEA línea promotor (%)')}${fld('p.tasaDesc','Tasa de descuento / COK anual (%)')}</div>
   <div class="row" style="margin-top:10px"><label class="row"><input type="checkbox" data-k="p.bancoOn" id="i-p-bancoOn" ${S.p.bancoOn?'checked':''}> Usar financiamiento bancario (crédito promotor)</label></div>
   <p class="note">Convenciones de pago en las tablas de costos: un número es el mes (0 = inicio), "a-b" reparte en partes iguales, "2:20,4:80" son hitos con porcentaje, y las palabras clave son proyecto, diseño, obra, curva, ventas, cobros, entrega, independizacion, posventa, banco y cierre.</p></div>`;
@@ -680,15 +683,15 @@ V.venta=()=>{
 };
 
 V.construccion=()=>{
-  const tw=sum(S.part.map(x=>+x.pct))||1;const m2=M.areaTech;const gg=M.cd*S.p.ggPct/100,ut=M.cd*S.p.utilPct/100;
+  const tw=sum(S.part.map(x=>+x.pct))||1;const m2=M.areaConstr;const gg=M.cd*S.p.ggPct/100,ut=M.constrSub*S.p.utilPct/100;
   // R91 · Las partidas parten del costo por m² de Datos generales (misma base que se edita); lo adicional (área libre construida, usos con otro costo) va en su propia fila.
-  const fac=1+(+S.p.ggPct||0)/100+(+S.p.utilPct||0)/100,baseM2=(+S.p.costoM2||0)/fac,extraCD=Math.max(0,M.cd-baseM2*m2);
+  const fac=costFac(S.p),baseM2=(+S.p.costoM2||0)/fac,extraCD=Math.max(0,M.cd-baseM2*m2);
   const rows=S.part.map((x,i)=>{const pm=baseM2*x.pct/tw,v=pm*m2;return `<tr><td>${inp(`part.${i}.n`,x.n,'w','text')}</td><td><input type="number" step="any" min="0" max="99.99" class="s" id="i-part-${i}-pct" data-k="part.${i}.pct" aria-label="Incidencia de ${esc(x.n)}" value="${Number((+x.pct).toFixed(3))}"></td><td class="n">${S_(v)}</td><td class="n"><input type="number" min="0" step="any" aria-label="Costo por m² de ${esc(x.n)}" data-part-cost="${i}" value="${Number(pm.toFixed(2))}"></td><td class="n">US$ ${nf(pm/S.p.tc,2)}</td><td><div class="bar"><span style="width:${(x.pct/tw*100/30*100).toFixed(1)}%;max-width:100%"></span></div></td></tr>`}).join('');
   return `<div class="sect-h"><h2>Costos de construcción</h2><p>Presupuesto por partidas derivado del costo/m² de la cabida. Las incidencias provienen del presupuesto de obra de la hoja original.</p></div>
   <div class="big"><div><label>Costo directo</label><output>${S_(M.cd)}</output><small>${S_(M.cd/m2,2)} por m²</small></div><div><label>Gastos generales</label><output>${S_(gg)}</output><small>${nf(S.p.ggPct,2)}% del CD</small></div>
-  <div><label>Utilidad contratista</label><output>${S_(ut)}</output><small>${nf(S.p.utilPct,2)}% del CD</small></div><div><label>Total con IGV</label><output>${S_(M.constrSub*(1+S.p.igv/100))}</output><small>${S_(M.constrSub/m2,2)} por m² sin IGV</small></div></div>
+  <div><label>Utilidad contratista</label><output>${S_(ut)}</output><small>${nf(S.p.utilPct,2)}% del subtotal</small></div><div><label>Total con IGV</label><output>${S_(M.constrSub*(1+S.p.igv/100))}</output><small>${S_(M.constrSub/m2,2)} por m² sin IGV</small></div></div>
   <div class="panel"><div class="fields">${fld('p.costoM2','Costo total por m² sin IGV (incluye GG y utilidad)')}</div><h3>Partidas del costo directo</h3><div class="tw"><table><thead><tr><th>Partida</th><th>Incidencia %</th><th class="n">Monto</th><th class="n">S/ por m²</th><th class="n">US$ por m²</th><th>Peso</th></tr></thead><tbody>${rows}
-  ${extraCD>0.5?`<tr><td>Adicional: área libre construida (balcones, terrazas) y usos con otro costo <small class="mut">· se edita en Datos generales</small></td><td></td><td class="n">${S_(extraCD)}</td><td class="n">${S_(extraCD/m2,2)}</td><td class="n">US$ ${nf(extraCD/m2/S.p.tc,2)}</td><td></td></tr>`:''}
+  ${extraCD>0.5?`<tr><td>Adicional: usos con otro costo (comercial / oficinas) <small class="mut">· se edita en Datos generales</small></td><td></td><td class="n">${S_(extraCD)}</td><td class="n">${S_(extraCD/m2,2)}</td><td class="n">US$ ${nf(extraCD/m2/S.p.tc,2)}</td><td></td></tr>`:''}
   <tr class="tot"><td>Costo directo</td><td class="n">${nf(tw,2)}%</td><td class="n">${S_(M.cd)}</td><td class="n">${S_(M.cd/m2,2)}</td><td class="n">US$ ${nf(M.cd/m2/S.p.tc,2)}</td><td></td></tr>
   <tr class="sub"><td>Gastos generales</td><td></td><td class="n">${S_(gg)}</td><td class="n">${S_(gg/m2,2)}</td><td></td><td></td></tr>
   <tr class="sub"><td>Utilidad</td><td></td><td class="n">${S_(ut)}</td><td class="n">${S_(ut/m2,2)}</td><td></td><td></td></tr>
@@ -816,7 +819,7 @@ V.cronograma=()=>{
   const hdr=Array.from({length:N},(_,j)=>`<th class="n">M${j+1}<br><span style="font-weight:400">${ml(M.io+j)}</span></th>`).join('');
   const rows=S.part.map((x,i)=>{const v=M.cd*x.pct/tw;return `<tr><td class="stick">${esc(x.n)}</td><td class="n">${S_(v)}</td>${pc_[i].map(w=>`<td class="n">${w>0.0001?nf(v*w):'<span class="mut">·</span>'}</td>`).join('')}</tr>`}).join('');
   const cdM=Array.from({length:N},(_,j)=>sum(S.part.map((x,i)=>M.cd*x.pct/tw*pc_[i][j])));
-  const gg=M.cd*S.p.ggPct/100,ut=M.cd*S.p.utilPct/100;
+  const gg=M.cd*S.p.ggPct/100,ut=M.constrSub*S.p.utilPct/100;
   const sub=cdM.map(v=>v+gg/N+ut*v/M.cd);let ac=0;const acum=sub.map(v=>{ac+=v*(1+S.p.igv/100);return ac});
   const r=(n,a,cls='sub')=>`<tr class="${cls}"><td class="stick">${n}</td><td class="n">${S_(sum(a))}</td>${a.map(v=>`<td class="n">${nf(v)}</td>`).join('')}</tr>`;
   return `<div class="sect-h"><h2>Cronograma valorizado de obra</h2><p>Distribución mensual de cada partida a partir de los porcentajes de avance de la hoja original, reescalada a ${N} meses de obra.</p></div>
@@ -1925,6 +1928,8 @@ async function exportXLSX(tabs,etiqueta){
 }
 /* ---------- render ---------- */
 function render(){
+  // R93 · La utilidad del contratista pasa de «% del CD» a «% sobre el subtotal» (como el presupuesto de obra). Se convierte una vez sin cambiar montos.
+  if(!S.p._utilVenta){const g=(+S.p.ggPct||0)/100,u=(+S.p.utilPct||0)/100;S.p.utilPct=Math.round(u/(1+g+u)*10000)/100;S.p._utilVenta=true;try{save()}catch(_){}}
   // R84 · HR/PU 2026 de San Miguel (Calle La Apacheta 224): terreno 160 m² × S/ 396 = S/ 63,360; construcción existente S/ 135,478.68; autovalúo S/ 198,838.68; predial 2026 S/ 863.03.
   if(/infinity/i.test(S.p.nombre||'')&&!(+S.p.predArancel>0)&&!S.p._predHR2026){S.p.predAnioBase=2026;S.p.predArancel=396;S.p.predConstrExist=135478.68;S.p.autovaluo=198838.68;S.p._predHR2026=true;try{save()}catch(_){}}
   // R85 · Recibo 2025 de San Miguel: arbitrios 2025 S/ 813.12 (12 meses); predial 2025 S/ 846.31 + emisión S/ 4.79.
