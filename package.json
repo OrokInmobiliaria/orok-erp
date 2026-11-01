@@ -1,6 +1,6 @@
 {
   "name": "orok-crm-cloud",
-  "version": "67.6.87-r100",
+  "version": "67.6.88-r101",
   "private": true,
   "engines": {
     "node": ">=22"

@@ -32,7 +32,7 @@ const DEF = {
       igv:18, baseGravada:50, prorrata:100, ir:29.5, detraccion:4, detracOn:true, alcabala:3,
       contingencia:2.5, ggPct:17.15, utilPct:10.19, libreCostoPct:100,
       mesLanz:6, velocidad:0.8, inicial:10, inicioObra:12, durObra:14, indep:3,
-      bancoOn:true, financiaPct:60, preventaMin:30, perfilPromotor:'nuevo', preventaNuevoPct:45, preventaNuevoUnd:5, desembolsoHip:'minuta', minutaMeses:0, tea:11, tasaDesc:12 },
+      bancoOn:true, financiaPct:60, preventaMin:30, perfilPromotor:'nuevo', preventaNuevoPct:45, preventaNuevoUnd:5, desembolsoHip:'minuta', minutaMeses:0, terrenoPropio:true, capitalCaja:220000, bancoGastosMin:255000, inicialRetenida:false, tea:11, tasaDesc:12 },
   units:[
     {id:'101',tipo:'Loft Garden',piso:1,tech:40.29,libre:18.91,aj:0},
     {id:'201',tipo:'Flat 3D',piso:2,tech:80.37,libre:11.30,aj:0},
@@ -293,9 +293,11 @@ function compute(s,ov){
   const preTxt=perfil==='nuevo'?`${Math.round(preUnd)} dptos. o ${+prePct.toFixed(2)}% del valor de venta`:`${+prePct.toFixed(2)}% de preventa`;
   // R100 · Saldo hipotecario (100% − inicial): «minuta» = el banco lo desembolsa 48 h después de la firma de la minuta, una vez cumplida
   // la preventa (las minutas anteriores se liberan al firmarse la última de la preventa); «entrega» = recién con la entrega e independización.
-  const ini=p.inicial/100,hipMinuta=(p.desembolsoHip||'minuta')==='minuta'&&mPre>=0;let pend=0;
-  for(let t=0;t<=H;t++){const v=valT[t];if(!v)continue;cobro[t]+=v*ini;
-    if(hipMinuta){cobro[Math.min(H,Math.max(t+minLag,mPre))]+=v*(1-ini)}
+  // R101 · el banco además pide demostrar gastos (sin terreno); el desembolso es el mes en que se cumplen ambas condiciones (p._mDes llega del 2.º cálculo).
+  const mDes=mPre<0?-1:Math.max(mPre,Number.isFinite(+p._mDes)?+p._mDes:mPre);
+  const ini=p.inicial/100,hipMinuta=(p.desembolsoHip||'minuta')==='minuta'&&mDes>=0,retIni=!!p.inicialRetenida&&mDes>=0;let pend=0;
+  for(let t=0;t<=H;t++){const v=valT[t];if(!v)continue;cobro[retIni?Math.min(H,Math.max(t,mDes)):t]+=v*ini;
+    if(hipMinuta){cobro[Math.min(H,Math.max(t+minLag,mDes))]+=v*(1-ini)}
     else if(t<ent)pend+=v*(1-ini);else cobro[Math.min(H,t+1)]+=v*(1-ini)}
   for(let k=0;k<ind;k++)cobro[Math.min(H,indStart+k)]+=pend/ind;
   const sumCobro=sum(cobro)||1;
@@ -340,6 +342,9 @@ function compute(s,ov){
   const igvD=cobro.map(v=>v*igvEf/(1+igvEf));
   const det=cobro.map(v=>p.detracOn?v*p.detraccion/100:0), detRel=new Array(H+1).fill(0);
   det.forEach((v,t)=>{detRel[Math.min(H,Math.max(t,ent+ind+1))]+=v});
+  const gastoCum=[];{let a=0;for(let t=0;t<=H;t++){a+=E[t]-(byCat.Terreno?byCat.Terreno[t]:0);gastoCum.push(a)}}
+  const gMin=+p.bancoGastosMin||0,mGas=gMin>0?gastoCum.findIndex(v=>v>=gMin-1e-6):0;
+  if(gMin>0&&mPre>=0&&p._mDes===undefined){const need=mGas<0?H:mGas;if(need>mPre)return compute(s,Object.assign({},ov||{},{_mDes:need}))} // R101
   const constrTot=sum(L.filter(o=>o.key==='constr').map(o=>o.tot));
   const bankLim=p.bancoOn?constrTot*p.financiaPct/100:0, rM=(p.interesModo||'linea')==='flujo'?Math.pow(1+p.tea/100,1/12)-1:0; // R95 · «linea»: el costo del banco va en Gastos financieros (como la hoja); «flujo»: intereses mes a mes
   const run=(irPay)=>{
@@ -352,7 +357,7 @@ function compute(s,ov){
       const it=bank*rM;R.intr[t]=it;
       cash+=cobro[t]-det[t]+detRel[t]-E[t]-pay-it-(t===H?irPay:0);
       if(bank>0&&t>=ent&&cash>0){const a=Math.min(bank,cash);bank-=a;cash-=a;R.amort[t]=a}
-      const elig=p.bancoOn&&mPre>=0&&t>=Math.max(io,mesBanco,mPre)&&t<ent;
+      const elig=p.bancoOn&&mDes>=0&&t>=Math.max(io,mesBanco,mDes)&&t<ent;
       if(elig&&bankStart===null)bankStart=t;
       if(cash<0&&elig){const d=Math.min(-cash,constrM[t],bankLim-drawn);if(d>0){bank+=d;drawn+=d;cash+=d;R.draw[t]=d}}
       if(cash<0){R.aporte[t]=-cash;cash=0}
@@ -374,6 +379,8 @@ function compute(s,ov){
   const econ=[],eq=[];
   for(let t=0;t<=H;t++){econ.push(cobro[t]-det[t]+detRel[t]-(E[t]-Efin[t])-F.igvPay[t]-(t===H?irF:0));eq.push(F.dist[t]-F.aporte[t])}
   let cum=0,peak=0;for(let t=0;t<=H;t++){cum+=F.aporte[t]-F.dist[t];peak=Math.max(peak,cum)}
+  // R101 · terreno propio = aporte en especie (no sale dinero); el resto del aporte es en efectivo.
+  const especie=p.terrenoPropio&&byCat.Terreno?sum(byCat.Terreno):0;let cumC=-especie,peakCaja=0,mCajaFalta=-1;for(let t=0;t<=H;t++){cumC+=F.aporte[t]-F.dist[t];peakCaja=Math.max(peakCaja,cumC);if(mCajaFalta<0&&+p.capitalCaja>0&&cumC>+p.capitalCaja+1)mCajaFalta=t}
   let cumE=0,peakE=0,payback=null;for(let t=0;t<=H;t++){cumE+=econ[t];peakE=Math.min(peakE,cumE);if(payback===null&&t>0&&cumE>=0&&peakE<0)payback=t}
   const rDm=Math.pow(1+(+p.tasaDesc||0)/100,1/12)-1,ie=irrSafe(econ,rDm),iq=irrSafe(eq,rDm);
   const groups={};CATS.forEach(k=>groups[k]={sub:0,igv:0,tot:0});
@@ -381,7 +388,7 @@ function compute(s,ov){
   groups['Financieros'].tot+=intTot2;groups['Financieros'].sub+=intTot2;
   const igvComprasTot=sum(L.map(o=>o.igv));
   return {p,units,nU,techV,libreV,areaTech,igvEf,vDept:vDeptR,vEst,valT,plan,ventas,ventasSin,igvVentas,io,mesBanco,dur,ent,ind,indStart,postStart,postDur,designStart,designEnd,lanz,finVentas,H,anios,pred,predPlan:predPlanR,constrSub,cd,curve,areaConstr,areaTotal,areaTech,libreV,libreF,ggTot,utilTot,cdM2,costoM2Calc,ggF:gdet.F,ggP:gdet.P,
-    sold,soldCum,cobro,mPre,preTxt,perfil,hipMinuta,det,detRel,L,E,Efin,byCat,igvD,igvC,constrM,constrTot,bankLim,F,intTot:intTot2,egresos:egresosF,uai:uaiF,ir:irF,neta,econ,eq,peak,peakE:-peakE,payback,
+    sold,soldCum,cobro,mPre,mDes,mGas,gastoCum,preTxt,perfil,hipMinuta,det,detRel,L,E,Efin,byCat,igvD,igvC,constrM,constrTot,bankLim,F,intTot:intTot2,egresos:egresosF,uai:uaiF,ir:irF,neta,econ,eq,peak,especie,peakCaja,mCajaFalta,peakE:-peakE,payback,
     tirE:ie==null?null:Math.pow(1+ie,12)-1,tirQ:iq==null?null:Math.pow(1+iq,12)-1,vanE:npvM(econ,p.tasaDesc/100),vanQ:npvM(eq,p.tasaDesc/100),
     groups,igvComprasTot,igvPagado:sum(F.igvPay),creditoFinal:F.credit[H],terr,
     mSv:uaiF/ventas,mSc:uaiF/egresosF,mN:neta/ventas,roe:F?neta/Math.max(1,peak):0,tit:terr/ventas};
@@ -450,7 +457,7 @@ function renderTop(){
   const durProy=M.indStart+M.ind,porQue=M.H+1>durProy?(M.postStart+M.postDur>=M.H?'posventa':M.finVentas+3>=M.H?'cobranza de las últimas ventas':'cierre de cuentas'):'';
   $('#pmeta').textContent=`${S.p.direccion} · ${nf(M.areaTech,2)} m² techados · ${M.nU} unidades · proyecto ${durProy} meses (del arranque y la cabida a la entrega e independización)${M.H+1>durProy?` · flujo de ${M.H+1} meses con ${porQue}`:''}`;
   const k=[['Ventas totales',S_(M.ventas)],['Egresos totales',S_(M.egresos)],['Utilidad neta',S_(M.neta),M.neta>=0?'good':'bad'],
-    ['Margen s/ ventas',pc(M.mSv),M.mSv>=0.15?'good':'bad'],['TIR accionista',M.tirQ==null?'—':pc(M.tirQ),(M.tirQ||0)>=S.p.tasaDesc/100?'good':'bad'],['Aporte máximo',S_(M.peak)]];
+    ['Margen s/ ventas',pc(M.mSv),M.mSv>=0.15?'good':'bad'],['TIR accionista',M.tirQ==null?'—':pc(M.tirQ),(M.tirQ||0)>=S.p.tasaDesc/100?'good':'bad'],(M.especie>0?['Aporte en efectivo máx.',S_(M.peakCaja),+S.p.capitalCaja>0?(M.peakCaja<=+S.p.capitalCaja?'good':'bad'):'']:['Aporte máximo',S_(M.peak)])];
   $('#kpis').innerHTML=k.map(([l,v,c])=>`<div class="kpi"><label>${l}</label><output class="${c||''}">${v}</output></div>`).join('');
 }
 
@@ -688,7 +695,7 @@ V.supuestos=()=>`<div class="sect-h"><h2>Supuestos del modelo</h2><p>Parámetros
   <div class="panel"><h3>Comerciales</h3><div class="fields">${fld('p.velocidad','Velocidad de venta (und/mes)')}${fld('p.inicial','Cuota inicial (%)')}${fld('p.descProm','Descuento promedio (%)')}${fld('p.tc','Tipo de cambio SUNAT · venta (automático)')}</div><p class="note" data-rate-status>${rateError||mRateNote()}</p></div>
   ${salesControls()}
   <div class="panel"><h3>Obra</h3><div class="fields">${fld('p.supervisionM2','Supervisión (S/ por m²)')}${fld('p.contingencia','Contingencia vecinos (% construcción)')}${fld('p.utilPct','Utilidad contratista (% sobre el subtotal, como el presupuesto de obra)')}</div></div>
-  <div class="panel"><h3>Financieros</h3><div class="fields">${fld('p.financiaPct','Financiamiento banco (% de construcción)')}<div class="f"><label for="i-p-perfilPromotor">Perfil del promotor ante el banco</label><select id="i-p-perfilPromotor" data-k="p.perfilPromotor"><option value="nuevo"${(S.p.perfilPromotor||'experiencia')==='nuevo'?' selected':''}>Nuevo (primer proyecto)</option><option value="experiencia"${(S.p.perfilPromotor||'experiencia')==='experiencia'?' selected':''}>Con experiencia</option></select></div>${(S.p.perfilPromotor||'experiencia')==='nuevo'?fld('p.preventaNuevoUnd','Preventa exigida: n.º de departamentos')+fld('p.preventaNuevoPct','…o % del valor de venta (lo que se cumpla primero)'):fld('p.preventaMin','Preventa exigida (% de ventas)')}<div class="f"><label for="i-p-desembolsoHip">Desembolso del crédito hipotecario de los compradores</label><select id="i-p-desembolsoHip" data-k="p.desembolsoHip"><option value="minuta"${(S.p.desembolsoHip||'minuta')==='minuta'?' selected':''}>48 h después de la minuta</option><option value="entrega"${(S.p.desembolsoHip||'minuta')==='entrega'?' selected':''}>Recién con la entrega</option></select></div>${fld('p.minutaMeses','Meses entre la venta y la firma de la minuta')}${fld('p.tea','TEA línea promotor (%)')}${fld('p.tasaDesc','Tasa de descuento / COK anual (%)')}</div>
+  <div class="panel"><h3>Financieros</h3><div class="fields">${fld('p.financiaPct','Financiamiento banco (% de construcción)')}<div class="f"><label for="i-p-perfilPromotor">Perfil del promotor ante el banco</label><select id="i-p-perfilPromotor" data-k="p.perfilPromotor"><option value="nuevo"${(S.p.perfilPromotor||'experiencia')==='nuevo'?' selected':''}>Nuevo (primer proyecto)</option><option value="experiencia"${(S.p.perfilPromotor||'experiencia')==='experiencia'?' selected':''}>Con experiencia</option></select></div>${(S.p.perfilPromotor||'experiencia')==='nuevo'?fld('p.preventaNuevoUnd','Preventa exigida: n.º de departamentos')+fld('p.preventaNuevoPct','…o % del valor de venta (lo que se cumpla primero)'):fld('p.preventaMin','Preventa exigida (% de ventas)')}<div class="f"><label for="i-p-desembolsoHip">Desembolso del crédito hipotecario de los compradores</label><select id="i-p-desembolsoHip" data-k="p.desembolsoHip"><option value="minuta"${(S.p.desembolsoHip||'minuta')==='minuta'?' selected':''}>48 h después de la minuta</option><option value="entrega"${(S.p.desembolsoHip||'minuta')==='entrega'?' selected':''}>Recién con la entrega</option></select></div>${fld('p.minutaMeses','Meses entre la venta y la firma de la minuta')}${fld('p.bancoGastosMin','Gastos que el banco pide demostrar antes de desembolsar (S/, sin terreno · 0 = no pide)')}<div class="f"><label for="i-p-inicialRetenida">Cuotas iniciales de los compradores</label><select id="i-p-inicialRetenida" data-k="p.inicialRetenida"><option value=""${S.p.inicialRetenida?'':' selected'}>Se pueden usar al cobrarlas</option><option value="1"${S.p.inicialRetenida?' selected':''}>El banco las retiene hasta el desembolso</option></select></div><div class="f"><label for="i-p-terrenoPropio">Terreno</label><select id="i-p-terrenoPropio" data-k="p.terrenoPropio"><option value="1"${S.p.terrenoPropio?' selected':''}>Ya es propio (aporte en especie, no sale dinero)</option><option value=""${S.p.terrenoPropio?'':' selected'}>Se compra con dinero del proyecto</option></select></div>${fld('p.capitalCaja','Capital propio disponible en efectivo (S/)')}${fld('p.tea','TEA línea promotor (%)')}${fld('p.tasaDesc','Tasa de descuento / COK anual (%)')}</div>
   <div class="f" style="margin-top:10px"><label for="i-p-interesModo">Costo del banco</label><select id="i-p-interesModo" data-k="p.interesModo"><option value="linea"${(S.p.interesModo||'linea')==='linea'?' selected':''}>Como la hoja: línea «Gastos financieros (banco)» en Gastos financieros</option><option value="flujo"${S.p.interesModo==='flujo'?' selected':''}>Intereses mes a mes según el saldo (TEA)</option></select></div><div class="row" style="margin-top:10px"><label class="row"><input type="checkbox" data-k="p.bancoOn" id="i-p-bancoOn" ${S.p.bancoOn?'checked':''}> Usar financiamiento bancario (crédito promotor)</label></div>
   <p class="note">Convenciones de pago en las tablas de costos: un número es el mes (0 = inicio), "a-b" reparte en partes iguales, "2:20,4:80" son hitos con porcentaje, y las palabras clave son proyecto, diseño, obra, curva, ventas, cobros, entrega, independizacion, posventa, banco y cierre.</p></div>`;
 
@@ -983,6 +990,8 @@ function insights(){
   out.push(M.tit<=0.2?['ok',`Incidencia del terreno sobre ventas de ${pc(M.tit)}: dentro del rango sano (≤20%).`]:['w',`Incidencia del terreno sobre ventas de ${pc(M.tit)}: alta; el terreno pesa demasiado frente al valor vendible.`]);
   CATS.forEach(c=>{const p=g[c].tot/eg*100;const [lo,hi]=BENCH[c];if(p>hi)out.push(['w',`${c} representa ${nf(p,2)}% de los egresos, sobre el rango de ${lo}–${hi}%.`])});
   const be=breakEven(S);out.push([be<S.p.precioM2*0.85?'ok':'w',`Precio de equilibrio: ${S_(be)} por m², ${pc(1-be/S.p.precioM2)} por debajo del precio actual. Es tu colchón ante una caída de precios.`]);
+  if(S.p.bancoOn&&+S.p.bancoGastosMin>0){const g=+S.p.bancoGastosMin;if(M.mGas<0)out.push(['b',`El banco pide demostrar gastos por ${S_(g)} (sin terreno) y el plan no llega a ese monto antes de la entrega.`]);else out.push([M.mGas>M.mPre?'w':'ok',`Gastos demostrados de ${S_(g)} (sin terreno): se alcanzan en ${ml(M.mGas)}${M.mGas>M.mPre?`, después de cumplir la preventa; el banco desembolsa recién en ${ml(M.mDes)}`:''}.`])}
+  if(M.especie>0&&+S.p.capitalCaja>0)out.push([M.peakCaja<=+S.p.capitalCaja?'ok':'b',`Aporte en efectivo máximo ${S_(M.peakCaja)} frente a ${S_(+S.p.capitalCaja)} de capital propio disponible${M.peakCaja<=+S.p.capitalCaja?`: alcanza (sobran ${S_(+S.p.capitalCaja-M.peakCaja)}).`:`: faltan ${S_(M.peakCaja-S.p.capitalCaja)} desde ${ml(M.mCajaFalta)}.`} El terreno propio cuenta como aporte en especie (${S_(M.especie)}).`]);
   const pm=M.mPre;
   if(S.p.bancoOn){if(pm<0||pm>=M.ent)out.push(['b',`La preventa que pide el banco (${M.preTxt}) no se alcanza durante la obra: el banco no desembolsa y toda la obra se fondea con aportes.`]);else if(pm>M.io)out.push(['w',`La preventa que pide el banco (${M.preTxt}) llega en ${ml(pm)}, ${pm-M.io} meses después del inicio de obra; esos meses se cubren con aportes. Vender antes o postergar el inicio de obra reduce el aporte.`]);else out.push(['ok',`La preventa que pide el banco (${M.preTxt}) se alcanza en ${ml(pm)}, antes del inicio de obra.`])}
   if(M.finVentas>M.ent)out.push(['w',`Al ritmo de ${S.p.velocidad} und/mes las ventas terminan en ${ml(M.finVentas)}, ${M.finVentas-M.ent} meses después de la entrega. Subir la velocidad o lanzar antes reduce el aporte.`]);
@@ -1981,6 +1990,7 @@ async function exportXLSX(tabs,etiqueta){
 /* ---------- render ---------- */
 function render(){
   // R95 · Gastos financieros como la hoja: se agrega «Gastos financieros (banco)» 0.45% sobre el 50% de las ventas si no existe; intereses del banco por esa línea (no se duplican en el flujo).
+  if(S.p.terrenoPropio==null){const inf=/infinity/i.test(S.p.nombre||'');S.p.terrenoPropio=inf;S.p.capitalCaja=inf?220000:0;S.p.bancoGastosMin=inf?255000:0;S.p.inicialRetenida=false;try{save()}catch(_){}} // R101 · datos de Infinity (terreno propio, capital y exigencia del banco)
   if(S.p.desembolsoHip==null){S.p.desembolsoHip='minuta';S.p.minutaMeses=0;S.p.perfilPromotor=/infinity/i.test(S.p.nombre||'')?'nuevo':'experiencia';if(S.p.preventaNuevoPct==null)S.p.preventaNuevoPct=45;if(S.p.preventaNuevoUnd==null)S.p.preventaNuevoUnd=5;try{save()}catch(_){}} // R100
   if(!S.p._finBanco){if(!(S.fin||[]).some(x=>/gastos financieros \(banco\)/i.test(x.n)))(S.fin=S.fin||[]).push({n:'Gastos financieros (banco)',d:'pctVentas',pu:0.45,bp:50,igv:true,pago:'obra'});if(S.p.interesModo==null)S.p.interesModo='linea';S.p._finBanco=true;try{save()}catch(_){}}
   // R93 · La utilidad del contratista pasa de «% del CD» a «% sobre el subtotal» (como el presupuesto de obra). Se convierte una vez sin cambiar montos.
