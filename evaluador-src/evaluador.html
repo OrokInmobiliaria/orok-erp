@@ -779,7 +779,7 @@ function compute(s,ov){
     even(0,H);return a};
   // partidas de egreso
   const L=[];
-  const add=(cat,n,sub,igvOn,pago,x)=>{const igv=igvOn?sub*p.igv/100:0;const o=Object.assign({cat,n,sub,igv,tot:sub+igv,pago},x||{});o.m=weights(pago).map(w=>w*o.tot);o.mi=weights(pago).map(w=>w*o.igv);L.push(o);return o};
+  const add=(cat,n,sub,igvOn,pago,x)=>{if(p._esc&&p._esc[cat]!=null)sub*=+p._esc[cat]; /* R105 · simulación por grupo */const igv=igvOn?sub*p.igv/100:0;const o=Object.assign({cat,n,sub,igv,tot:sub+igv,pago},x||{});o.m=weights(pago).map(w=>w*o.tot);o.mi=weights(pago).map(w=>w*o.igv);L.push(o);return o};
   const terr=p.areaTerreno*p.precioTerrenoM2;
   add('Terreno','Terreno',terr,false,'0',{q:p.areaTerreno,u:'m²',pu:p.precioTerrenoM2});
   add('Terreno','Alcabala',Math.max(0,terr-10*p.uit)*p.alcabala/100,false,'0',{q:Math.max(0,terr-10*p.uit),u:'base',pu:p.alcabala,pct:true});
@@ -1316,21 +1316,51 @@ V.perfil=()=>{
   <tr><td>TIR del accionista (anual)</td><td class="n">${M.tirQ==null?'—':pc(M.tirQ)}</td></tr><tr><td>VAN del accionista @ ${S.p.tasaDesc}%</td><td class="n">${S_(M.vanQ)}</td></tr></tbody></table></div></div></div>`;
 };
 
+// R105 · Simulación de la estructura de costos: ajustar el % de un grupo (solo vista) y, si convence, aplicarlo repartiendo entre sus partidas.
+let simEsc=null;
+function simModelo(){if(!simEsc)return null;const f={};for(const [c,v] of Object.entries(simEsc))if(+v)f[c]=1+(+v)/100;return Object.keys(f).length?compute(S,{_esc:f}):M}
+function simRango(cat){// busca el ajuste que deja el grupo dentro de su rango (al borde más cercano, con un pequeño margen)
+  const [lo,hi]=BENCH[cat];const pct=f=>{const m=compute(S,{_esc:Object.assign({},...Object.entries(simEsc||{}).filter(([c])=>c!==cat).map(([c,v])=>({[c]:1+(+v)/100})),{[cat]:f})});return m.groups[cat].tot/m.egresos*100};
+  const cur=pct(1);if(cur>=lo&&cur<=hi)return 0;const tgt=cur<lo?lo+(hi-lo)*0.1:hi-(hi-lo)*0.1;let a=cur<lo?1:0.01,b=cur<lo?20:1;for(let k=0;k<40;k++){const m=(a+b)/2;if(pct(m)<tgt)a=m;else b=m}return Math.round(((a+b)/2-1)*1000)/10}
+function simPalancas(cat){// qué datos se mueven al aplicar
+  if(cat==='Terreno')return 'el precio del terreno por m² (Supuestos)';if(cat==='Construcción')return 'el costo directo por m² (todas las partidas en proporción) y la supervisión';if(cat==='Contingencias')return 'el % de contingencias';
+  return 'el P.U. o % de cada línea del grupo, en proporción (Costos inmobiliarios)'}
+function simAplicarCat(cat,target){const T=JSON.parse(JSON.stringify(S));
+  const lever=(st,k)=>{const x=JSON.parse(JSON.stringify(st));if(cat==='Terreno')x.p.precioTerrenoM2=(+x.p.precioTerrenoM2)*k;else if(cat==='Construcción'){x.p.cdM2=(+x.p.cdM2||cdM2De(x))*k;x.p.supervisionM2=(+x.p.supervisionM2||0)*k}else if(cat==='Contingencias')x.p.contingencia=(+x.p.contingencia)*k;
+    else for(const g of ['inm','leg','fin','com'])x[g].forEach(it=>{const c=it.cat||GCAT[g]||'Marketing';if(c===cat&&it.d!=='predial'&&!(/arbitrio/i.test(it.n||'')&&it.d==='anios'))it.pu=(+it.pu||0)*k});return x};
+  let a=0,b=5;for(let k=0;k<45;k++){const m=(a+b)/2;if(compute(lever(T,m)).groups[cat].tot<target)a=m;else b=m}const k=(a+b)/2,x=lever(T,k);
+  if(cat==='Construcción')x.p.cdM2=Math.round(x.p.cdM2*100)/100;for(const g of ['inm','leg','fin','com'])x[g].forEach(it=>{if(typeof it.pu==='number')it.pu=Math.round(it.pu*10000)/10000});return x}
 V.estructura=()=>{
-  const eg=M.egresos;const g=M.groups;
-  const rows=CATS.map(c=>{const p=g[c].tot/eg*100;const [lo,hi]=BENCH[c];return `<tr><td>${c}</td><td class="n">${S_(g[c].tot)}</td><td class="n">${nf(p,2)}%</td><td class="n mut">${lo}% – ${hi}%</td>
-  <td><div class="bar" style="width:220px"><em style="left:${lo/70*100}%;width:${(hi-lo)/70*100}%"></em><span style="width:${Math.min(100,p/70*100)}%"></span></div></td><td>${chipR(p,lo,hi)}</td><td class="n">${pc(g[c].tot/M.ventas,2)}</td></tr>`}).join('');
-  let x=0;const W=700;const cols=['var(--accent)','var(--warn)','var(--neg)','var(--ok)','var(--muted)','var(--ink)','var(--accent)','var(--warn)','var(--neg)'];
-  const segs=CATS.map((c,i)=>{const w=g[c].tot/M.ventas*W;const s=`<rect x="${x}" y="22" width="${Math.max(0,w)}" height="30" fill="${cols[i]}" opacity="${i>5?0.55:0.9}"><title>${c}: ${pc(g[c].tot/M.ventas)}</title></rect>`;x+=w;return s}).join('');
+  const eg=M.egresos;const g=M.groups,SM=simModelo();
+  const rows=CATS.map(c=>{const p=g[c].tot/eg*100;const [lo,hi]=BENCH[c];const fuera=p<lo||p>hi;return `<tr><td>${c}</td><td class="n">${S_(g[c].tot)}</td><td class="n">${nf(p,2)}%</td><td class="n mut">${lo}% – ${hi}%</td>
+  <td><div class="bar" style="width:220px"><em style="left:${lo/70*100}%;width:${(hi-lo)/70*100}%"></em><span style="width:${Math.min(100,p/70*100)}%;background:${fuera?'var(--d1)':'var(--d4)'}"></span></div></td><td>${chipR(p,lo,hi)}${fuera?` <button class="btn" style="padding:2px 10px;font-size:11px" data-act="sim-abrir" data-cat="${esc(c)}">Simular</button>`:''}</td><td class="n">${pc(g[c].tot/M.ventas,2)}</td></tr>`}).join('');
+  let x=0;const W=700;const cols=['var(--d1)','var(--d2)','var(--d3)','var(--d4)','var(--d5)','#e87ba4','#8fb3d9','#c9a227','#7fc8a9'];
+  const segs=CATS.map((c,i)=>{const w=g[c].tot/M.ventas*W;const s=`<rect x="${x}" y="22" width="${Math.max(0,w)}" height="30" fill="${cols[i]}" stroke="#fff" stroke-width="1"><title>${c}: ${pc(g[c].tot/M.ventas)}</title></rect>`;x+=w;return s}).join('');
+  let sim='';if(simEsc){const kp=(m)=>[['Egresos',S_(m.egresos)],['Utilidad neta',S_(m.neta)],['Margen s/ ventas',pc(m.mSv)],['TIR accionista',m.tirQ==null?'—':pc(m.tirQ)],['Aporte en efectivo máx.',S_(m.especie>0?m.peakCaja:m.peak)]];const kb=kp(M),ks=kp(SM);
+    sim=`<div class="panel" id="simPanel"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Simulación · no cambia nada hasta que apliques</h3><div class="row" style="gap:8px"><button class="btn" data-act="sim-rango-sobre" title="Solo baja los grupos que gastan más que el rango">Bajar los que están sobre el rango</button><button class="btn" data-act="sim-rango-todo">Llevar todos al rango</button><button class="btn" data-act="sim-descartar">Descartar</button><button class="btn pri" data-act="sim-aplicar">Aplicar</button></div></div>
+    <p class="note">Sube o baja el % de cada grupo y mira cómo queda el proyecto. Al aplicar, el nuevo monto se reparte entre las partidas del grupo en proporción (y se puede deshacer). Ojo: estar <b>bajo</b> el rango en un costo no siempre es malo; subirlo solo para «entrar al rango» baja la utilidad.</p>
+    <div class="tw"><table><thead><tr><th>Grupo</th><th class="n">Ajuste %</th><th class="n">Hoy</th><th class="n">Simulado</th><th class="n">% egresos simulado</th><th>Estado</th><th>Al aplicar se ajusta</th></tr></thead><tbody>
+    ${CATS.map(c=>{const v=+(simEsc[c]||0),ps=SM.groups[c].tot/SM.egresos*100,[lo,hi]=BENCH[c];return `<tr><td>${c}</td><td class="n"><input type="number" step="0.5" data-sim="${esc(c)}" value="${v}" style="width:80px"> <button class="btn" style="padding:2px 8px;font-size:11px" data-act="sim-rango" data-cat="${esc(c)}" title="Calcula el ajuste para quedar dentro del rango">al rango</button></td><td class="n">${S_(g[c].tot)}</td><td class="n">${S_(SM.groups[c].tot)}</td><td class="n">${nf(ps,2)}%</td><td>${chipR(ps,lo,hi)}</td><td class="mut" style="font-size:12px">${v?simPalancas(c):''}</td></tr>`}).join('')}</tbody></table></div>
+    <div class="tw" style="margin-top:10px"><table><thead><tr><th>Resultado del proyecto</th><th class="n">Hoy</th><th class="n">Simulado</th><th class="n">Diferencia</th></tr></thead><tbody>
+    ${kb.map(([l,a],i)=>{const keys=['egresos','neta','mSv','tirQ',M.especie>0?'peakCaja':'peak'],k=keys[i],d=(SM[k]||0)-(M[k]||0),isPct=k==='mSv'||k==='tirQ';return `<tr><td>${l}</td><td class="n">${a}</td><td class="n"><b>${ks[i][1]}</b></td><td class="n ${(k==='neta'||k==='mSv'||k==='tirQ')?(d>=0?'pos':'neg'):(d<=0?'pos':'neg')}">${d>=0?'+':''}${isPct?nf(d*100,2)+' pts':S_(d)}</td></tr>`}).join('')}</tbody></table></div></div>`}
   return `<div class="sect-h"><h2>Estructura de costos</h2><p>Peso de cada grupo sobre el total de egresos frente a los rangos de referencia del mercado de Lima usados en la hoja original.</p></div>
-  <div class="panel"><h3>Composición del precio de venta</h3><svg class="chart" viewBox="0 0 ${W} 74" role="img" aria-label="Composición del precio de venta">${segs}<rect x="${x}" y="22" width="${Math.max(0,W-x)}" height="30" fill="var(--sunk)" stroke="var(--accent)" stroke-dasharray="3 3"/>
+  <div class="panel"><h3>Composición del precio de venta</h3><svg class="chart" viewBox="0 0 ${W} 74" role="img" aria-label="Composición del precio de venta">${segs}<rect x="${x}" y="22" width="${Math.max(0,W-x)}" height="30" fill="var(--sunk)" stroke="var(--d2)" stroke-dasharray="3 3"/>
   <text x="0" y="14">0%</text><text x="${W}" y="14" text-anchor="end">100% de ventas</text><text x="${Math.min(W-4,x+4)}" y="68" text-anchor="${x>W-120?'end':'start'}">utilidad e IGV neto ${pc((M.ventas-eg)/M.ventas)}</text></svg>
-  <div class="row" style="margin-top:6px;font-size:12px">${CATS.map((c,i)=>`<span class="row" style="gap:4px"><i style="width:10px;height:10px;border-radius:2px;background:${cols[i]};opacity:${i>5?0.55:0.9};display:inline-block"></i>${c}</span>`).join('')}</div></div>
-  <div class="panel"><div class="tw"><table><thead><tr><th>Grupo</th><th class="n">Total</th><th class="n">% egresos</th><th class="n">Rango</th><th>Posición</th><th>Estado</th><th class="n">% ventas</th></tr></thead><tbody>${rows}
+  <div class="row" style="margin-top:6px;font-size:12px">${CATS.map((c,i)=>`<span class="row" style="gap:4px"><i style="width:10px;height:10px;border-radius:2px;background:${cols[i]};display:inline-block"></i>${c}</span>`).join('')}</div></div>
+  <div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0">Grupos de egresos frente al rango</h3>${simEsc?'':'<button class="btn" data-act="sim-abrir">Simulación</button>'}</div><div class="tw"><table><thead><tr><th>Grupo</th><th class="n">Total</th><th class="n">% egresos</th><th class="n">Rango</th><th>Posición</th><th>Estado</th><th class="n">% ventas</th></tr></thead><tbody>${rows}
   <tr class="tot"><td>Total</td><td class="n">${S_(eg)}</td><td class="n">100%</td><td></td><td></td><td></td><td class="n">${pc(eg/M.ventas)}</td></tr></tbody></table></div>
-  <p class="note">La banda gris marca el rango de referencia; la barra, el valor del proyecto.</p></div>`;
+  <p class="note">La banda gris marca el rango de referencia; la barra, el valor del proyecto (verde dentro del rango, naranja fuera). «Simular» prueba ajustes sin cambiar el proyecto.</p></div>${sim}`;
 };
-
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act^="sim-"]');if(!b)return;const a=b.dataset.act,c=b.dataset.cat;
+  if(a==='sim-abrir'){simEsc=simEsc||{};if(c&&!(+simEsc[c]))simEsc[c]=simRango(c);render();setTimeout(()=>{const el=document.getElementById('simPanel');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})},60);return}
+  if(a==='sim-rango'){simEsc[c]=0;simEsc[c]=simRango(c);render();return}
+  if(a==='sim-rango-todo'||a==='sim-rango-sobre'){for(const k of CATS){const [lo,hi]=BENCH[k];const m=simModelo(),p=m.groups[k].tot/m.egresos*100;if(p>hi||(a==='sim-rango-todo'&&p<lo))simEsc[k]=simRango(k)}render();return}
+  if(a==='sim-descartar'){simEsc=null;render();return}
+  if(a==='sim-aplicar'){const SM=simModelo();const cats=Object.entries(simEsc).filter(([,v])=>+v).map(([k])=>k);if(!cats.length){simEsc=null;render();return}
+    if(!confirm('Aplicar la simulación: '+cats.map(k=>k+' '+(simEsc[k]>0?'+':'')+simEsc[k]+'%').join(', ')+'. Se ajustan las partidas de cada grupo en proporción. Puedes deshacerlo con «Deshacer».'))return;
+    snap();for(const k of cats){S=simAplicarCat(k,SM.groups[k].tot)}simEsc=null;save();render();const sv=document.getElementById('saved');if(sv)sv.textContent='Simulación aplicada';return}
+});
+document.addEventListener('change',e=>{const el=e.target.closest&&e.target.closest('[data-sim]');if(!el)return;e.stopPropagation();simEsc=simEsc||{};simEsc[el.dataset.sim]=parseFloat(el.value)||0;render();},true);
 V.igv=()=>{
   const d=sum(M.igvD),c=M.igvComprasTot*S.p.prorrata/100;const obra=sum(M.L.filter(o=>o.cat==='Construcción'||o.cat==='Contingencias').map(o=>o.igv));
   const sf=Math.max(0,c-d);
@@ -2504,7 +2534,7 @@ document.addEventListener('click',e=>{
   if(b.dataset.fc){fcMode=b.dataset.fc;render();return}
   const a=b.dataset.act;if(!a)return;
   if(a==='undo-gen'){deshacer();return}
-  if(!/^(base-ask|base-cancel|project-drive-status|project-drive-scan|xls-|undo)/.test(a))snap();
+  if(!/^(base-ask|base-cancel|project-drive-status|project-drive-scan|xls-|undo|sim-)/.test(a))snap();
   // R80 · Con áreas fijas no se recalculan ni se agregan/eliminan unidades fuera del cuadro oficial.
   if(a==='cab-oficial-importar'||a==='cab-oficial-reimportar'){
     if(a==='cab-oficial-reimportar'){S.cab.oficial.activo=false;save();render();const d=document.getElementById('cabOficial');if(d)d.open=true;return}
