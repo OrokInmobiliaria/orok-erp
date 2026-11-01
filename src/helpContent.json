@@ -187,15 +187,36 @@
    "id": "mora",
    "title": "Evaluador M.O.R.A",
    "roles": "gerencia",
-   "tags": "mora evaluador terreno cabida costos flujo banca inversionistas",
+   "tags": "mora evaluador terreno cabida costos flujo banca inversionistas precios fases descuentos margen minimo colchon simulacion",
    "ia": [
     "Calcula cabida, costos, flujo y rentabilidad del terreno.",
     "Prepara la carpeta para banca e inversionistas.",
-    "Responde preguntas sobre la evaluación guardada."
+    "Responde preguntas sobre la evaluación guardada.",
+    "Calcula el precio por fase de obra (preventa → demolición → casco habitable → regular) y el descuento acumulado con cada condición de compra.",
+    "Calcula el precio mínimo por m² para tu margen objetivo, el colchón de cada fase (en S/ por m², por departamento y en utilidad neta) y el tope de negociación.",
+    "Simula ajustes en la estructura de costos sin cambiar nada hasta que apliques."
    ],
    "tu": [
     "Validas los supuestos (precio de terreno, costos, ventas).",
-    "Decides comprar, negociar o descartar."
+    "Decides comprar, negociar o descartar.",
+    "Fijas el margen objetivo y los descuentos de fase y por condición.",
+    "Decides si aplicas una simulación o un cambio de precios; al «Guardar en el CRM» la política pasa a la Estrategia de precios."
+   ]
+  },
+  {
+   "id": "precios",
+   "title": "Estrategia de precios y precio especial",
+   "roles": "gerencia",
+   "tags": "precios estrategia descuento precio especial minimo margen tope negociacion fase",
+   "ia": [
+    "Propone el precio objetivo de cada unidad con la etapa, la meta y el estudio de mercado.",
+    "Marca «bajo el mínimo» cuando un precio objetivo o una solicitud de precio especial queda bajo el precio mínimo del margen objetivo del Evaluador.",
+    "Muestra los topes de negociación por fase que vienen del Evaluador."
+   ],
+   "tu": [
+    "Apruebas, observas o rechazas cada precio especial que pide Ventas.",
+    "Decides aplicar precios a las unidades.",
+    "Ajustas la política en el Evaluador (margen objetivo, descuentos de fase y por condición) y la guardas en el CRM."
    ]
   },
   {

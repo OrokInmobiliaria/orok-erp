@@ -46,13 +46,23 @@ function referenciaMercado(comps, u) {
   for (const [label, f] of niveles) { if (!label) continue; const set = comps.filter(f).map(c => c.pm2); if (set.length >= 3 || label === 'Todo el estudio') return { criterio: label, ...stats(set) }; }
   return null;
 }
+// R108 · Política de precios del Evaluador: margen objetivo, precio mínimo por m², descuentos por fase y tope de negociación por fase.
+function politicaDe(ev) {
+  const p = ev?.analysis?.politica_precios; if (!p || !(Number(p.precio_min_m2) > 0)) return null;
+  const n = v => Number.isFinite(Number(v)) ? Number(v) : null;
+  return { margen_objetivo_pct: n(p.margen_objetivo_pct), precio_min_m2: n(p.precio_min_m2), precio_equilibrio_m2: n(p.precio_equilibrio_m2), precio_regular_m2: n(p.precio_regular_m2),
+    fases: (Array.isArray(p.fases) ? p.fases : []).slice(0, 6).map(f => ({ fase: text(f.fase, 20), nombre: text(f.nombre, 60), desde: text(f.desde, 12), descuento_fase_pct: n(f.descuento_fase_pct), tope_negociacion_pct: n(f.tope_negociacion_pct), precio_lista_m2: n(f.precio_lista_m2), colchon_m2: n(f.colchon_m2), ok: f.ok === true })),
+    condiciones: (Array.isArray(p.condiciones) ? p.condiciones : []).slice(0, 12).map(c => ({ nombre: text(c.nombre, 80), descuento_max_pct: n(c.descuento_max_pct), unidades: n(c.unidades), aplica_en: text(c.aplica_en, 30) })) };
+}
+const minimoDe = (politica, area) => politica?.precio_min_m2 && area ? round100(politica.precio_min_m2 * area) : null;
 function resumenMercado(ev) {
   const comps = comparablesDe(ev?.workspace);
   const grupo = (label, f) => ({ grupo: label, ...stats(comps.filter(f).map(c => c.pm2)) });
   return { evaluacion: ev?.id || null, proyecto: ev?.project?.nombre || '', actualizado: ev?.updated_at || null, distrito: text(ev?.workspace?.mercado?.distrito, 60), comparables: comps.length,
     sugerido_m2: ev?.analysis?.mercado?.precio_sugerido_m2 ?? null, rango_m2: ev?.analysis?.mercado?.rango_m2 || null,
     por_dormitorios: [1, 2, 3, 4].map(d => grupo(d === 4 ? '4 o más dorm.' : d + ' dorm.', c => c.dorm === d)).filter(g => g.n),
-    por_tamano: [[0, 50, 'Hasta 50 m²'], [50, 65, '50–65 m²'], [65, 80, '65–80 m²'], [80, 1e9, 'Más de 80 m²']].map(([a, b, l]) => grupo(l, c => c.area >= a && c.area < b)).filter(g => g.n), comps };
+    por_tamano: [[0, 50, 'Hasta 50 m²'], [50, 65, '50–65 m²'], [65, 80, '65–80 m²'], [80, 1e9, 'Más de 80 m²']].map(([a, b, l]) => grupo(l, c => c.area >= a && c.area < b)).filter(g => g.n), comps,
+    politica: politicaDe(ev) };
 }
 
 // R49 · Ajuste manual por unidad o cochera: «pct» sobre el precio de la etapa activa (+0.03 = +3 %, −0.05 = −5 %) o «precio» fijo.
@@ -221,7 +231,8 @@ function calcular(cfg, data = {}, hoy = new Date(), mercado = null, cocherasApli
       precio_erp: erpRef, etapa_vs_erp_pct: erpRef ? pct(precioEtapa / erpRef - 1) : null, techo: techo || null,
       precios_etapas: cfg.etapas.map((e, i) => precioEn(u, i)),
       precio_actual: actual || null, precio_etapa: precioEtapa, precio_sugerido: sugerido, ratio_sugerido_m2: ratio,
-      diferencia_vs_actual: objetivo && actual ? objetivo - actual : null, estado: v ? v.estado : 'Disponible', precio_real: v ? v.precio : null, fecha: v ? String(v.fecha).slice(0, 10) : '' };
+      diferencia_vs_actual: objetivo && actual ? objetivo - actual : null, estado: v ? v.estado : 'Disponible', precio_real: v ? v.precio : null, fecha: v ? String(v.fecha).slice(0, 10) : '',
+      precio_minimo: coch ? null : minimoDe(mercado?.politica, u.area), bajo_minimo: !coch && !!objetivo && !!minimoDe(mercado?.politica, u.area) && objetivo < minimoDe(mercado?.politica, u.area) };
   });
 
   // R49 · Lectura estadística del estudio de mercado (Evaluador): dónde quedan la oferta, el ERP y el sugerido frente a p25 / mediana / p75,
@@ -243,7 +254,9 @@ function calcular(cfg, data = {}, hoy = new Date(), mercado = null, cocherasApli
   }
   if (techoTotal < cfg.meta_recaudacion) rec.push(`Aun con todo en el techo (${mercado ? 'percentil 75 del mercado' : 'precio ERP'}), se proyecta ${techoTotal.toLocaleString('es-PE')}: faltan ${(cfg.meta_recaudacion - techoTotal).toLocaleString('es-PE')} para la meta. Opciones: menos descuento o menos cupos de feria, subir de etapa antes (umbral menor) o revisar la meta.`);
   else rec.push(`El techo ${mercado ? 'del mercado' : 'ERP'} sostiene la meta: hasta ${techoTotal.toLocaleString('es-PE')} si todo se vende en el techo.`);
-  const diagnostico = { con_mercado: !!mercado, unidades_con_comparables: conMercado.length, techo_total: techoTotal, mediana_total: medianaTotal, alcanza_meta_con_techo: techoTotal >= cfg.meta_recaudacion,
+  const bajoMin = unidades.filter(u => u.estado === 'Disponible' && u.bajo_minimo);
+  if (mercado?.politica) rec.push(bajoMin.length ? `Bajo el precio mínimo del margen objetivo (${mercado.politica.margen_objetivo_pct}% · S/ ${Number(mercado.politica.precio_min_m2).toLocaleString('es-PE')} por m²) en ${lista(bajoMin)}: sube el precio objetivo o revisa la política de descuentos en el Evaluador.` : `Todos los precios objetivo están sobre el mínimo del margen objetivo (${mercado.politica.margen_objetivo_pct}%).`);
+  const diagnostico = { con_mercado: !!mercado, bajo_minimo: bajoMin.map(u => u.unidad), unidades_con_comparables: conMercado.length, techo_total: techoTotal, mediana_total: medianaTotal, alcanza_meta_con_techo: techoTotal >= cfg.meta_recaudacion,
     oferta_bajo_p25: ofertaBajoP25.map(u => u.unidad), erp_sobre_p75: erpSobreP75.map(u => u.unidad), etapa_sobre_p75: etapaSobreP75.map(u => u.unidad), recomendaciones: rec };
 
   // Curva: lo esperado por la línea base para las mismas unidades vendidas contra lo realmente recaudado, en orden de venta.
@@ -311,6 +324,8 @@ class PreciosEstrategia {
     const id = randomUUID(), at = now(), doc = { id, estado: 'pendiente', unit_id: unit.id, unidad: String(unit.unit_number), lead_id: lead.id, cliente: text(lead.name, 120), lead_number: text(lead.lead_number, 30),
       precio_lista: lista, precio_propuesto: propuesto, diferencia: Math.round((propuesto - lista) * 100) / 100, variacion_pct: pct(propuesto / lista - 1), tipo: propuesto < lista ? 'descuento' : 'incremento',
       motivo, solicitante: { id: String(user.id ?? user.name), nombre: user.name, rol: user.role }, creada: at, historial: [{ at, por: user.name, accion: 'solicitud', nota: motivo }] };
+    try { const cfgDoc = await this.config(), pol = (await this.mercado(cfgDoc?.config))?.politica, it = cfgDoc?.config && (cfgDoc.config.unidades || []).find(x => unitKey(x.unidad) === unitKey(unit.unit_number)), area = Number(it?.area) || Number(unit.area) || 0, minimo = minimoDe(pol, area);
+      if (minimo) { doc.precio_minimo = minimo; doc.bajo_minimo = propuesto < minimo; if (doc.bajo_minimo) doc.historial[0].nota += ' · Bajo el precio mínimo del margen objetivo.'; } } catch { /* sin política: la solicitud sigue igual */ }
     await this.store.db.runTransaction(async tx => { tx.set(this.sol.doc(id), doc); });
     doc.avisos = await this.avisar(doc, 'solicitud');
     return doc;
@@ -444,7 +459,9 @@ class PreciosEstrategia {
     const doc = await this.config(); if (!doc?.config) return null;
     const c = calcular(doc.config, d, new Date(), null, doc.cocheras_precios);
     return { schema: 'ventas.precios@1', etapa_activa: c.etapa_activa, avance_valor_pct: c.avance_valor_pct, recaudado: c.recaudado, proyectado: c.proyectado,
-      meta_recaudacion: c.meta_recaudacion, linea_base: c.linea_base, brecha_vs_meta: c.brecha_vs_meta, ajuste_sugerido_pct: c.ajuste_sugerido_pct, curva: c.curva };
+      meta_recaudacion: c.meta_recaudacion, linea_base: c.linea_base, brecha_vs_meta: c.brecha_vs_meta, ajuste_sugerido_pct: c.ajuste_sugerido_pct, curva: c.curva,
+      // R108 · listas de precios vigentes del CRM (las que ve Ventas) para que el Evaluador proyecte sobre ellas y no sobre su propio precio de modelo.
+      listas: c.unidades.filter(u => u.kind === 'unidad').map(u => ({ unidad: u.unidad, area: u.area, precio_vigente: u.precio_actual, precio_etapa: u.precio_etapa, precio_etapa1: u.precio_base, precio_objetivo: u.precio_objetivo, estado: u.estado })) };
   }
   async rpc(name, args, user, readData) {
     if (name === 'preciosCocheras') return this.cocheras(await readData());
