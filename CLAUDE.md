@@ -26,3 +26,14 @@ Estas reglas las fijó Martín Montezuma (Gerencia ÖRÖK). Cualquier IA que pro
 - `npm test` en verde antes de entregar; `npm run build` actualiza dist/.
 - Archivos con CRLF: editar normalizando y restaurando CRLF (no mezclar finales de línea).
 - Escrituras al store: `store.db.runTransaction(tx => tx.set/delete)`.
+
+## Evaluador inmobiliario: conceptos base (valen para TODOS los proyectos)
+- Costo de construcción: costo por m² × área total (techada + libre), como el presupuesto de obra. Sin cargos extra.
+- GG = % del costo directo; utilidad del contratista = % sobre el subtotal: subtotal = (CD + GG) / (1 − utilidad).
+- Partidas: cada una tiene su S/ por m²; cambiar su S/ por m² o su incidencia cambia esa partida y el total, no las demás.
+- Área libre (balcones, terrazas) es vendible y siempre entra al precio (precio general o diferenciado por unidad).
+- Cabida: el cálculo por piso es ayuda; el modelo usa el mix del cuadro de unidades (dúplex/tríplex, varios dptos. por piso, balcones distintos). Cuadro oficial de planos = áreas exactas, sin recalcular.
+- Predial año por año (situación al 1 de enero: casa → terreno → unidades sin vender) y arbitrios por etapa, siempre con evidencia (HR/PU, recibos, ordenanza del distrito y zona).
+- Estudio de mercado: solo obra nueva (sin segundo uso ni remodelados); alturas elegidas con casillas.
+- Calendario: inicio oficial (mes 0) y hito de aprobación bancaria; la duración del proyecto va del arranque a la entrega e independización.
+- Los datos propios de un proyecto (p. ej. HR/PU de Infinity 224) son datos, no fórmulas: nunca se copian a otro proyecto.
