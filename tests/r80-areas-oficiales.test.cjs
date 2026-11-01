@@ -14,7 +14,7 @@ test('R80: cuadro de áreas oficial fija las áreas del modelo',()=>{
 });
 test('R81: dúplex, factor libre por unidad, costo de área libre y deshacer en cada módulo',()=>{
  const r=f=>fs.readFileSync(path.join(__dirname,'..',f),'utf8'),s=r('evaluador-src/evaluador.html');
- assert.match(s,/function fLib\(u,p\)/);assert.match(s,/units\.\$\{i\}\.niveles/);assert.match(s,/costoLibreM2/);assert.match(s,/id="undoGen" data-act="undo-gen"/);assert.match(s,/CRITERIOS DE CABIDA Y MIX/);
+ assert.match(s,/function fLib\(u,p\)/);assert.match(s,/units\.\$\{i\}\.niveles/);assert.match(s,/const areaConstr=areaTech\+libreV/);assert.match(s,/function costFac\(p\)/);assert.match(s,/id="undoGen" data-act="undo-gen"/);assert.match(s,/CRITERIOS DE CABIDA Y MIX/);
  const fLib=new Function(s.slice(s.indexOf('const UNIT_USOS'),s.indexOf('function usoCostoM2'))+';return fLib')();assert.equal(fLib({fl:''},{factorLibre:1}),1);assert.equal(fLib({fl:0.5},{factorLibre:1}),0.5);assert.equal(fLib({},{factorLibre:0.8}),0.8);
  const c=r('contabilidad-src/clara-contabilidad.html');assert.match(c,/id="undoGen"/);assert.match(c,/function undoRec/);
  assert.match(r('src/App.jsx'),/<BotonDeshacer\/>/);assert.match(r('src/dataService.js'),/registrarDeshacer/);assert.match(r('src/Greta.jsx'),/registrarDeshacer/);
