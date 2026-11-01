@@ -26,6 +26,6 @@ test('el modelo financiero usa el precio y el costo por m² del uso (ventas y co
  const vm=require('node:vm'),c={};vm.createContext(c);vm.runInContext(src.split('//MODEL-START')[1].split('//MODEL-END')[0]+';this.S=JSON.parse(JSON.stringify(DEF));',c);
  const s=c.S,base=c.compute(s),u=s.units[0],t=+u.tech;
  u.uso='comercial';const igual=c.compute(s);assert.equal(igual.vDept,base.vDept,'0 = igual que vivienda');assert.equal(igual.constrSub,base.constrSub);
- s.p.precioM2Comercial=s.p.precioM2+1000;s.p.costoM2Comercial=s.p.costoM2+500;const m=c.compute(s);
+ s.p.precioM2Comercial=s.p.precioM2+1000;s.p.costoM2Comercial=base.costoM2Calc+500;const m=c.compute(s);
  assert.ok(m.vDept>base.vDept,'sube la venta del local');assert.ok(Math.abs(m.constrSub-base.constrSub-t*500)<1e-6,'construcción: + techada × diferencia de costo');
 });

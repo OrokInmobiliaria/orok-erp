@@ -29,7 +29,7 @@ Estas reglas las fijó Martín Montezuma (Gerencia ÖRÖK). Cualquier IA que pro
 
 ## Evaluador inmobiliario: conceptos base (valen para TODOS los proyectos)
 - Costo de construcción: costo por m² × área total (techada + libre), como el presupuesto de obra. Sin cargos extra.
-- GG = % del costo directo; utilidad del contratista = % sobre el subtotal: subtotal = (CD + GG) / (1 − utilidad).
+- Costo directo = partidas (S/ por m² × área total). GG = total del detalle de «Gastos generales» (fijos + % sobre el presupuesto); utilidad = % sobre el subtotal: subtotal = (CD + GG) / (1 − utilidad). El costo total por m² se deriva.
 - Partidas: cada una tiene su S/ por m²; cambiar su S/ por m² o su incidencia cambia esa partida y el total, no las demás.
 - Área libre (balcones, terrazas) es vendible y siempre entra al precio (precio general o diferenciado por unidad).
 - Cabida: el cálculo por piso es ayuda; el modelo usa el mix del cuadro de unidades (dúplex/tríplex, varios dptos. por piso, balcones distintos). Cuadro oficial de planos = áreas exactas, sin recalcular.
