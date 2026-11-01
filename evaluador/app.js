@@ -26,7 +26,7 @@
 const DEF = {
   mercado:{distrito:'San Miguel',tc:3.4,descNeg:3,inclUsados:false,margenMeta:15,alcance:'radio',cuadras:7,alturaFiltro:'todas',alturas:{a:true,b:true,c:true,d:true,x:true},origen:null,objetivo:{pisos:8,amen:{ascensor:true}},comps:[],fuentes:[]},
   p:{ nombre:'Infinity 224', direccion:'Calle La Apacheta 224, San Miguel, Lima', uso:'Vivienda multifamiliar · 8 pisos + azotea + sótano', inicio:'2025-06',
-      areaTerreno:160, precioTerrenoM2:4350, uit:5500, predAnioBase:2026, predArancel:0, predConstrExist:0, predMesDemolicion:'', predCrecArancel:0, predCrecUIT:0, predEmision:0, arbAnual:0, arbUnidad:0, arbTerreno:'', arbFuente:'', tc:3.40, autovaluo:771892.61,
+      areaTerreno:160, precioTerrenoM2:4350, uit:5500, predAnioBase:2026, predArancel:0, predConstrExist:0, predMesDemolicion:'', predCrecArancel:0, predCrecUIT:0, predEmision:0, arbAnual:0, arbUnidad:0, predAniosUnidades:1, predDesdeInicio:false, interesModo:'linea', arbTerreno:'', arbFuente:'', tc:3.40, autovaluo:771892.61,
       costoM2:2288.36, supervisionM2:65, comunTechada:269.79, nEstac:4, precioEstac:56000,
       precioM2:6590.34, factorLibre:1, descProm:0,
       igv:18, baseGravada:50, prorrata:100, ir:29.5, detraccion:4, detracOn:true, alcabala:3,
@@ -80,11 +80,13 @@ const DEF = {
     {n:'Comisión de estructuración',d:'pctVentas',pu:0.20,igv:true,pago:'banco'},
     {n:'Supervisión bancaria',d:'pctVentas',pu:0.60,igv:true,pago:'obra'},
     {n:'Gastos bancarios',d:'global',pu:2000,igv:true,pago:'obra'},
-    {n:'Gastos notariales de banca',d:'pctVentas',pu:0.32,igv:true,pago:'banco'}
+    {n:'Gastos notariales de banca',d:'pctVentas',pu:0.32,igv:true,pago:'banco'},
+    {n:'Gastos financieros (banco)',d:'pctVentas',pu:0.45,bp:50,igv:true,pago:'obra'}
   ],
   com:[
     {cat:'Marketing',n:'Publicidad y marketing',d:'pctVentas',pu:3.2,igv:true,pago:'ventas'},
-    {cat:'Ventas',n:'Comisiones y equipo de ventas',d:'pctVentas',pu:4.05,igv:true,pago:'cobros'},
+    {cat:'Ventas',n:'Gastos de ventas (primera mitad)',d:'pctVentas',pu:4.10,bp:50,igv:true,pago:'cobros'},
+    {cat:'Ventas',n:'Gastos de ventas (segunda mitad)',d:'pctVentas',pu:4.00,bp:50,igv:true,pago:'cobros'},
     {cat:'Posventa',n:'Implementación de posventa',d:'pctVentas',pu:0.45,igv:true,pago:'entrega'},
     {cat:'Posventa',n:'Atención posventa',d:'pctVentas',pu:0.45,igv:true,pago:'posventa'}
   ],
@@ -150,13 +152,18 @@ function vuObraTotal(s,units,areaTech,techV){const sc=sum((s.vu&&s.vu.cat||[]).m
 function predialPlan(p,s,o){
   const [y0,m0]=String(p.inicio||'2026-01').split('-').map(Number),base=+p.predAnioBase||y0,gA=(+p.predCrecArancel||0)/100,gU=(+p.predCrecUIT||0)/100;
   const indDone=o.indStart+o.ind,demol=Number.isFinite(+p.predMesDemolicion)&&p.predMesDemolicion!==''&&p.predMesDemolicion!=null?+p.predMesDemolicion:o.io,anios=[];
-  for(let Y=y0;;Y++){const j=(Y-y0)*12-(m0-1);if(j>o.H)break;const k=Math.max(0,j),fa=Math.pow(1+gA,Math.max(0,Y-base)),uit=(+p.uit||0)*Math.pow(1+gU,Math.max(0,Y-base));
+  // R95 · Criterio de Gerencia: antes de la obra el predial y los arbitrios los paga el propietario (no la empresa); durante la obra
+  // se paga como terreno; al terminar la obra la empresa conserva las unidades unos meses (≈6), por lo que se carga UN año de
+  // predial y arbitrios de las unidades. Luego los pagan los compradores.
+  const desdeObra=p.predDesdeInicio?0:o.io;let unidadesCargadas=0;
+  for(let Y=y0;;Y++){const j=(Y-y0)*12-(m0-1);if(j>o.H+12)break;if(j<desdeObra)continue;const k=Math.max(0,Math.min(o.H,j)),fa=Math.pow(1+gA,Math.max(0,Y-base)),uit=(+p.uit||0)*Math.pow(1+gU,Math.max(0,Y-base));
     const terr=(+p.areaTerreno||0)*(+p.predArancel||0)*fa;let av,etapa,frac=1;
     if(j<demol){av=terr+(+p.predConstrExist||0);etapa='Terreno + casa existente'}
-    else if(j<indDone){av=terr;etapa='Solo terreno (obra en curso)'}
-    else{frac=Math.max(0,1-(o.soldCum[Math.min(o.H,k)]||0));if(frac<=1e-6)break;av=frac*(terr+o.obraOficial);etapa='Unidades sin vender ('+Math.round(frac*100)+'%)'}
-    const c=calcPredial(av,uit),anual=av>0?Math.max(c.total,0.006*uit)+(+p.predEmision||0):0,cuotas=j<0?[2,5,8,11].filter(q=>q>=m0).length:4,imp=anual*cuotas/4;
-    const meses=j<0?13-m0:12,nUnsold=Math.round(frac*(s.units||[]).length),arbObra=p.arbTerreno!==''&&p.arbTerreno!=null&&isFinite(+p.arbTerreno)?+p.arbTerreno:(+p.arbAnual||0),arbAnual=etapa.startsWith('Unidades')?((+p.arbUnidad||0)>0?nUnsold*(+p.arbUnidad):frac*arbObra):etapa.startsWith('Solo terreno')?arbObra:(+p.arbAnual||0),arb=arbAnual*meses/12;if(cuotas)anios.push({arb,anio:Y,mes:j,pagoMes:j<0?Math.max(0,[2,5,8,11].find(q=>q>=m0)-m0):j+1,etapa:etapa+(cuotas<4?' · '+cuotas+' de 4 cuotas trimestrales (el proyecto empieza en el mes '+m0+')':''),av,uit,imp,anual,frac,minimo:av>0&&c.total<0.006*uit})}
+    else if(j<o.ent){av=terr;etapa='Solo terreno (obra en curso)'}
+    else{if(unidadesCargadas>=Math.max(0,Math.round(p.predAniosUnidades??1)))break;unidadesCargadas++;av=terr+o.obraOficial;etapa='Unidades terminadas (la empresa las conserva tras la obra)'}
+    const c=calcPredial(av,uit),anual=av>0?Math.max(c.total,0.006*uit)+(+p.predEmision||0):0,cuotas=4,imp=anual;
+    const meses=12,nUnsold=(s.units||[]).length,arbObra=p.arbTerreno!==''&&p.arbTerreno!=null&&isFinite(+p.arbTerreno)?+p.arbTerreno:(+p.arbAnual||0),arbAnual=etapa.startsWith('Unidades')?((+p.arbUnidad||0)>0?nUnsold*(+p.arbUnidad):arbObra):etapa.startsWith('Solo terreno')?arbObra:(+p.arbAnual||0),arb=arbAnual*meses/12;
+    anios.push({arb,anio:Y,mes:j,pagoMes:Math.min(o.H,j+1),etapa,av,uit,imp,anual,frac,minimo:av>0&&c.total<0.006*uit})}
   const total=anios.reduce((a,x)=>a+x.imp,0),arbTotal=anios.reduce((a,x)=>a+x.arb,0);
   return {anios,total,arbTotal,arbPago:anios.filter(x=>x.arb>0).map(x=>Math.max(0,Math.min(o.H,x.pagoMes))+':'+(x.arb/(arbTotal||1)*100).toFixed(4)).join(','),pago:anios.filter(x=>x.imp>0).map(x=>Math.max(0,Math.min(o.H,x.pagoMes))+':'+(x.imp/(total||1)*100).toFixed(4)).join(',')};
 }
@@ -297,11 +304,11 @@ function compute(s,ov){
   add('Construcción','Construcción (CD + GG + utilidad)',constrSub,true,'curva',{q:areaConstr,u:'m²',pu:p.costoM2,key:'constr'});
   add('Construcción','Supervisión de obra',areaTech*p.supervisionM2,true,'curva',{q:areaTech,u:'m²',pu:p.supervisionM2,key:'constr'});
   add('Contingencias','Manejo de vecinos y comunidad',constrSub*p.contingencia/100,true,'obra',{q:constrSub,u:'base',pu:p.contingencia,pct:true});
-  const predOn=+p.predArancel>0,predPlanR=predOn?predialPlan(p,s,{io,ind,indStart,H,soldCum,obraOficial:vuObraTotal(s,s.units,areaTech,techV)}):null; // R84
-  const qty=(it)=>({m2terreno:p.areaTerreno,m2techada:areaTech,unidades:nU,mesesObra:dur,mesesProyecto:ent+ind,global:1,anios,pctVentas:ventas,pctConstr:constrSub,predial:predOn?Math.max(1,predPlanR.anios.length):anios,manual:+it.q||0})[it.d]??1;
+  const predOn=+p.predArancel>0,predPlanR=predOn?predialPlan(p,s,{io,ent,ind,indStart,H,soldCum,obraOficial:vuObraTotal(s,s.units,areaTech,techV)}):null; // R84
+  const qty=(it)=>({m2terreno:p.areaTerreno,m2techada:areaTech,unidades:nU,mesesObra:dur,mesesProyecto:ent+ind,global:1,anios,pctVentas:ventas*(it.bp!=null&&it.bp!==''&&isFinite(+it.bp)?+it.bp:100)/100,pctConstr:constrSub*(it.bp!=null&&it.bp!==''&&isFinite(+it.bp)?+it.bp:100)/100,predial:predOn?Math.max(1,predPlanR.anios.length):anios,manual:+it.q||0})[it.d]??1;
   for(const g of ['inm','leg','fin','com'])s[g].forEach((it,i)=>{const q=qty(it);const pct=String(it.d).startsWith('pct');const pu=it.d==='predial'?(predOn?predPlanR.total/Math.max(1,predPlanR.anios.length):pred.total):+it.pu||0;
-    if(predOn&&+p.arbAnual>0&&/arbitrio/i.test(it.n)&&it.d==='anios'){const n=Math.max(1,predPlanR.anios.length),t=predPlanR.arbTotal;add(it.cat||GCAT[g],it.n,t,!!it.igv,String(it.pago||'proyecto')==='proyecto'&&predPlanR.arbPago?predPlanR.arbPago:it.pago,{q:n,u:'años',pu:t/n,pct:false,g,i,auto:'arbitrios'});return} // R85 · arbitrios año por año
-    add(it.cat||GCAT[g],it.n,pct?q*pu/100:q*pu,!!it.igv,it.d==='predial'&&predOn&&String(it.pago||'proyecto')==='proyecto'&&predPlanR.pago?predPlanR.pago:it.pago,{q,u:DRV[it.d],pu,pct,g,i})});
+    if(predOn&&+p.arbAnual>0&&/arbitrio/i.test(it.n)&&it.d==='anios'){const n=Math.max(1,predPlanR.anios.length),t=predPlanR.arbTotal;add(it.cat||GCAT[g],it.n,t,false,String(it.pago||'proyecto')==='proyecto'&&predPlanR.arbPago?predPlanR.arbPago:it.pago,{q:n,u:'años',pu:t/n,pct:false,g,i,auto:'arbitrios'});return} // R85 · arbitrios año por año
+    add(it.cat||GCAT[g],it.n,pct?q*pu/100:q*pu,it.d==='predial'?false:!!it.igv,it.d==='predial'&&predOn&&String(it.pago||'proyecto')==='proyecto'&&predPlanR.pago?predPlanR.pago:it.pago,{q,u:DRV[it.d],pu,pct,g,i})});
   const E=new Array(H+1).fill(0),Efin=new Array(H+1).fill(0),igvC=new Array(H+1).fill(0),constrM=new Array(H+1).fill(0);
   const byCat={};CATS.forEach(k=>byCat[k]=new Array(H+1).fill(0));
   for(const o of L){for(let t=0;t<=H;t++){E[t]+=o.m[t];igvC[t]+=o.mi[t]*p.prorrata/100;(byCat[o.cat]||(byCat[o.cat]=new Array(H+1).fill(0)))[t]+=o.m[t];if(o.cat==='Financieros')Efin[t]+=o.m[t];if(o.key==='constr')constrM[t]+=o.m[t]}}
@@ -309,7 +316,7 @@ function compute(s,ov){
   const det=cobro.map(v=>p.detracOn?v*p.detraccion/100:0), detRel=new Array(H+1).fill(0);
   det.forEach((v,t)=>{detRel[Math.min(H,Math.max(t,ent+ind+1))]+=v});
   const constrTot=sum(L.filter(o=>o.key==='constr').map(o=>o.tot));
-  const bankLim=p.bancoOn?constrTot*p.financiaPct/100:0, rM=Math.pow(1+p.tea/100,1/12)-1;
+  const bankLim=p.bancoOn?constrTot*p.financiaPct/100:0, rM=(p.interesModo||'linea')==='flujo'?Math.pow(1+p.tea/100,1/12)-1:0; // R95 · «linea»: el costo del banco va en Gastos financieros (como la hoja); «flujo»: intereses mes a mes
   const run=(irPay)=>{
     const R={aporte:[],dist:[],draw:[],amort:[],intr:[],igvPay:[],bankBal:[],cash:[],credit:[]};
     for(const k in R)R[k]=new Array(H+1).fill(0);
@@ -657,7 +664,7 @@ V.supuestos=()=>`<div class="sect-h"><h2>Supuestos del modelo</h2><p>Parámetros
   ${salesControls()}
   <div class="panel"><h3>Obra</h3><div class="fields">${fld('p.supervisionM2','Supervisión (S/ por m²)')}${fld('p.contingencia','Contingencia vecinos (% construcción)')}${fld('p.utilPct','Utilidad contratista (% sobre el subtotal, como el presupuesto de obra)')}</div></div>
   <div class="panel"><h3>Financieros</h3><div class="fields">${fld('p.financiaPct','Financiamiento banco (% de construcción)')}${fld('p.preventaMin','Preventa mínima para desembolso (%)')}${fld('p.tea','TEA línea promotor (%)')}${fld('p.tasaDesc','Tasa de descuento / COK anual (%)')}</div>
-  <div class="row" style="margin-top:10px"><label class="row"><input type="checkbox" data-k="p.bancoOn" id="i-p-bancoOn" ${S.p.bancoOn?'checked':''}> Usar financiamiento bancario (crédito promotor)</label></div>
+  <div class="f" style="margin-top:10px"><label for="i-p-interesModo">Costo del banco</label><select id="i-p-interesModo" data-k="p.interesModo"><option value="linea"${(S.p.interesModo||'linea')==='linea'?' selected':''}>Como la hoja: línea «Gastos financieros (banco)» en Gastos financieros</option><option value="flujo"${S.p.interesModo==='flujo'?' selected':''}>Intereses mes a mes según el saldo (TEA)</option></select></div><div class="row" style="margin-top:10px"><label class="row"><input type="checkbox" data-k="p.bancoOn" id="i-p-bancoOn" ${S.p.bancoOn?'checked':''}> Usar financiamiento bancario (crédito promotor)</label></div>
   <p class="note">Convenciones de pago en las tablas de costos: un número es el mes (0 = inicio), "a-b" reparte en partes iguales, "2:20,4:80" son hitos con porcentaje, y las palabras clave son proyecto, diseño, obra, curva, ventas, cobros, entrega, independizacion, posventa, banco y cierre.</p></div>`;
 
 V.valores=()=>{
@@ -720,26 +727,26 @@ V.gg=()=>{
   <p class="note">Las partidas en % se calculan sobre el presupuesto de obra sin IGV (${S_(base)}). Las mensuales enlazadas toman la duración de obra de Supuestos.</p></div>`;
 };
 
-function costTable(g,title){
-  const items=S[g];const lines=M.L.filter(o=>o.g===g);const eg=M.egresos;
-  const rows=items.map((it,i)=>{const o=lines.find(l=>l.i===i)||{q:0,sub:0,igv:0,tot:0};const pct=String(it.d).startsWith('pct');
+function costTable(g,title,catF){
+  const items=S[g];const lines=M.L.filter(o=>o.g===g&&(!catF||(items[o.i]&&(items[o.i].cat||'Marketing')===catF)));const eg=M.egresos;
+  const rows=items.map((it,i)=>{if(catF&&(it.cat||'Marketing')!==catF)return '';const o=lines.find(l=>l.i===i)||{q:0,sub:0,igv:0,tot:0};const pct=String(it.d).startsWith('pct');
     return `<tr><td>${g==='com'?`<div class="cat-concepto"><select data-k="${g}.${i}.cat" id="i-${g}-${i}-cat" aria-label="Categoría">${['Marketing','Ventas','Posventa'].map(c=>`<option ${c===it.cat?'selected':''}>${c}</option>`).join('')}</select>${inp(`${g}.${i}.n`,it.n,'w','text')}</div>`:inp(`${g}.${i}.n`,it.n,'w','text')}</td>
     <td><select data-k="${g}.${i}.d" id="i-${g}-${i}-d">${Object.entries(DRV).map(([k,l])=>`<option value="${k}" ${k===it.d?'selected':''}>${l}</option>`).join('')}</select></td>
-    <td>${it.d==='manual'?inp(`${g}.${i}.q`,it.q,'xs'):`<span class="n mut" style="font-family:var(--f-mono)">${pct?S_(o.q):nf(o.q,2)}</span>`}</td>
+    <td>${it.d==='manual'?inp(`${g}.${i}.q`,it.q,'xs'):pct?`<div style="display:flex;flex-direction:column;gap:2px"><span class="n mut" style="font-family:var(--f-mono)">${S_(o.q)}</span><label class="mut" style="font-size:11px;display:flex;align-items:center;gap:4px" title="Qué parte de la base se usa (por ejemplo 50% de las ventas)">sobre ${inp(`${g}.${i}.bp`,it.bp??100,'xs')}% ${it.d==='pctVentas'?'de ventas':'de construcción'}</label></div>`:`<span class="n mut" style="font-family:var(--f-mono)">${nf(o.q,2)}</span>`}</td>
     <td>${it.d==='predial'?`<span class="mut">${M.predPlan?'año por año · prom. '+S_(o.pu||0,2):S_(M.pred.total,2)+'/año'}</span>`:o.auto==='arbitrios'?`<span class="mut">año por año · prom. ${S_(o.pu||0,2)}</span>`:inp(`${g}.${i}.pu`,it.pu,'s')}</td>
     <td style="text-align:center"><input type="checkbox" data-k="${g}.${i}.igv" id="i-${g}-${i}-igv" ${it.igv?'checked':''} aria-label="Afecto a IGV"></td>
     <td>${inp(`${g}.${i}.pago`,it.pago,'s','text')}</td><td class="n">${S_(o.sub)}</td><td class="n">${S_(o.igv)}</td><td class="n">${S_(o.tot)}</td><td class="n">${pc(o.tot/eg,2)}</td>
     <td><button class="btn x" data-act="del" data-g="${g}" data-i="${i}" aria-label="Eliminar">✕</button></td></tr>`}).join('');
   const t=lines.reduce((a,o)=>({s:a.s+o.sub,i:a.i+o.igv,t:a.t+o.tot}),{s:0,i:0,t:0});
-  return `<div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">${title}</h3><button class="btn" data-act="add" data-g="${g}">+ Agregar</button></div>
+  return `<div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">${title}</h3><button class="btn" data-act="add" data-g="${g}"${catF?` data-cat="${catF}"`:''}>+ Agregar</button></div>
   <div class="tw"><table><thead><tr><th>Concepto</th><th>Base de cálculo</th><th>Cantidad</th><th>P.U. / %</th><th>IGV</th><th>Pago</th><th class="n">Subtotal</th><th class="n">IGV</th><th class="n">Total</th><th class="n">% egresos</th><th></th></tr></thead>
   <tbody>${rows}<tr class="tot"><td colspan="6">Total</td><td class="n">${S_(t.s)}</td><td class="n">${S_(t.i)}</td><td class="n">${S_(t.t)}</td><td class="n">${pc(t.t/eg,2)}</td><td></td></tr></tbody></table></div></div>`;
 }
 V.inmobiliarios=()=>{
   const pr=M.pred;
   return `<div class="sect-h"><h2>Costos inmobiliarios, legales, financieros y comerciales</h2><p>Cada concepto se calcula desde su base (m² de terreno, m² techados, unidades, meses o % de ventas) y se programa en el flujo según su forma de pago.</p></div>
-  ${costTable('inm','Costos inmobiliarios')}${costTable('leg','Gastos legales')}${costTable('fin','Gastos financieros fijos')}${costTable('com','Marketing, ventas y posventa')}
-  ${M.predPlan?`<div class="panel"><h3>Impuesto predial año por año</h3><p class="note" style="margin-top:0">Según la situación al 1 de enero: casa existente → solo terreno durante la obra → unidades aún no vendidas tras la independización (lo vendido lo paga el comprador). Tramos sobre la suma de predios; mínimo 0.6% de la UIT; incluye el derecho de emisión. Arbitrios: monto del recibo con la casa; durante la obra, el monto que indiques para el terreno; luego solo por las unidades no vendidas. Cada distrito y cada zona cobra distinto: usa siempre la evidencia (recibo, HR/PU u ordenanza). Se paga en febrero de cada año (o según la forma de pago que elijas).${S.p.arbFuente?' <b>Evidencia:</b> '+esc(S.p.arbFuente):' <span class="chip w">sin evidencia registrada</span>'}</p>
+  ${costTable('inm','Costos inmobiliarios')}${costTable('leg','Gastos legales')}${costTable('fin','Gastos financieros fijos')}${costTable('com','Gastos de marketing','Marketing')}${costTable('com','Gastos de ventas','Ventas')}${costTable('com','Gastos de posventa','Posventa')}
+  ${M.predPlan?`<div class="panel"><h3>Impuesto predial año por año</h3><p class="note" style="margin-top:0">Antes de la obra lo paga el propietario del terreno (no la empresa). Durante la obra se paga como terreno y, al terminar, un año de las unidades (la empresa las conserva unos meses hasta independizar y entregar); luego lo pagan los compradores. Tramos sobre la suma de predios; mínimo 0.6% de la UIT; incluye el derecho de emisión. Arbitrios: monto del recibo con la casa; durante la obra, el monto que indiques para el terreno; luego solo por las unidades no vendidas. Cada distrito y cada zona cobra distinto: usa siempre la evidencia (recibo, HR/PU u ordenanza). Se paga en febrero de cada año (o según la forma de pago que elijas).${S.p.arbFuente?' <b>Evidencia:</b> '+esc(S.p.arbFuente):' <span class="chip w">sin evidencia registrada</span>'}</p>
   <div class="tw"><table><thead><tr><th>Año</th><th>Situación al 1 de enero</th><th class="n">Autovalúo</th><th class="n">UIT</th><th class="n">Predial</th><th class="n">Arbitrios</th></tr></thead><tbody>${M.predPlan.anios.map(x=>`<tr><td>${x.anio}</td><td>${esc(x.etapa)}</td><td class="n">${S_(x.av,2)}</td><td class="n">${S_(x.uit,0)}</td><td class="n">${S_(x.imp,2)}${x.minimo?' <span class="chip w">mínimo</span>':''}</td><td class="n">${S_(x.arb,2)}</td></tr>`).join('')}
   <tr class="tot"><td colspan="4">Total del proyecto</td><td class="n">${S_(M.predPlan.total,2)}</td><td class="n">${+S.p.arbAnual>0?S_(M.predPlan.arbTotal,2):'<span class="mut">línea fija</span>'}</td></tr></tbody></table></div></div>`:''}
   <div class="grid2"><div class="panel"><h3>Impuesto predial anual${M.predPlan?' (referencia: autovalúo actual)':''}</h3><div class="tw"><table><thead><tr><th>Tramo de autovalúo</th><th class="n">Base</th><th class="n">Alícuota</th><th class="n">Impuesto</th></tr></thead><tbody>
@@ -1934,6 +1941,8 @@ async function exportXLSX(tabs,etiqueta){
 }
 /* ---------- render ---------- */
 function render(){
+  // R95 · Gastos financieros como la hoja: se agrega «Gastos financieros (banco)» 0.45% sobre el 50% de las ventas si no existe; intereses del banco por esa línea (no se duplican en el flujo).
+  if(!S.p._finBanco){if(!(S.fin||[]).some(x=>/gastos financieros \(banco\)/i.test(x.n)))(S.fin=S.fin||[]).push({n:'Gastos financieros (banco)',d:'pctVentas',pu:0.45,bp:50,igv:true,pago:'obra'});if(S.p.interesModo==null)S.p.interesModo='linea';S.p._finBanco=true;try{save()}catch(_){}}
   // R93 · La utilidad del contratista pasa de «% del CD» a «% sobre el subtotal» (como el presupuesto de obra). Se convierte una vez sin cambiar montos.
   if(!S.p._utilVenta){const g=(+S.p.ggPct||0)/100,u=(+S.p.utilPct||0)/100;S.p.utilPct=Math.round(u/(1+g+u)*10000)/100;S.p._utilVenta=true;try{save()}catch(_){}}
   // R94 · Costo directo por m² como insumo base (partidas); el costo total por m² se deriva con GG del detalle y utilidad.
@@ -2004,7 +2013,7 @@ document.addEventListener('click',e=>{
   else if(a==='add-unit'){S.units.push({id:String(900+S.units.length),tipo:'Flat 1D',piso:1,tech:45,libre:0,aj:0})}
   else if(a==='add-gg'){S.gg.push({n:'Nueva partida',u:'mes',link:true,q:M.dur,ded:1,pu:1000})}
   else if(a==='add-inv'){S.inv.push({n:'Nuevo tramo',monto:30000,tasa:10,plazo:18})}
-  else if(a==='add'){const g=b.dataset.g;S[g].push(g==='com'?{cat:'Marketing',n:'Nuevo concepto',d:'pctVentas',pu:0.5,igv:true,pago:'ventas'}:{n:'Nuevo concepto',d:'global',pu:1000,igv:true,pago:'proyecto'})}
+  else if(a==='add'){const g=b.dataset.g;S[g].push(g==='com'?{cat:b.dataset.cat||'Marketing',n:'Nuevo concepto',d:'pctVentas',pu:0.5,igv:true,pago:'ventas'}:{n:'Nuevo concepto',d:'global',pu:1000,igv:true,pago:'proyecto'})}
   else if(a==='reset'){S=JSON.parse(JSON.stringify(DEF));S.base={nombre:'Evaluación inicial · Rev9 oct-2026',fecha:'2026-10-26',snap:JSON.parse(JSON.stringify(Object.fromEntries(SNAPKEYS.map(k=>[k,DEF[k]]))))}}
   else if(a==='m-paste'){try{const t=$('#mPaste').value;mAdd(mParseTable(t),'Tabla pegada','Google Sheets o Excel')}catch(err){mMsg(err.message,true)}return}
   else if(a==='m-ai'){mLeer('texto');return}
