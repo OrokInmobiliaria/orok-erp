@@ -477,6 +477,27 @@ aside{border-radius:17px 0 0 17px;background:var(--bar-grad);color:var(--ink);bo
 @media(prefers-reduced-transparency:reduce){aside,.panel,.big>div,.kpis,.tw,.modal-in,.ai{background:var(--solid);backdrop-filter:none;-webkit-backdrop-filter:none}}
 @supports not (backdrop-filter:blur(1px)){aside,.panel,.big>div,.kpis,.tw,.modal-in,.ai{background:var(--solid)}}
 
+/* ===== R87 · Cristal 2.0 (igual que el ERP): más transparente, desenfoque real, borde de luz, brillo y fondo en movimiento ===== */
+@media not (prefers-color-scheme: dark){:root:not([data-theme="dark"]){--glass-grad:linear-gradient(140deg,rgba(255,255,255,.5),rgba(255,255,255,.18));--glass-strong:linear-gradient(140deg,rgba(255,255,255,.58),rgba(255,255,255,.3));--glass-soft:rgba(255,255,255,.4);--glass-border:rgba(255,255,255,.8);--orb-op:1;--solid-sunk:rgba(246,238,232,.62);--bar-grad:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.34))}}
+:root[data-theme="light"]{--glass-grad:linear-gradient(140deg,rgba(255,255,255,.5),rgba(255,255,255,.18));--glass-strong:linear-gradient(140deg,rgba(255,255,255,.58),rgba(255,255,255,.3));--glass-soft:rgba(255,255,255,.4);--glass-border:rgba(255,255,255,.8);--orb-op:1;--solid-sunk:rgba(246,238,232,.62);--bar-grad:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.34))}
+body::before{animation:c2-deriva 46s ease-in-out infinite alternate;filter:blur(18px) saturate(140%)!important}
+body::after{content:"";position:fixed;inset:-15%;z-index:-1;pointer-events:none;opacity:calc(var(--orb-op) * .5);filter:blur(30px) saturate(130%);
+ background:radial-gradient(26vmax 22vmax at 62% 38%,var(--orb-1),transparent 62%),radial-gradient(22vmax 22vmax at 35% 62%,var(--orb-4),transparent 60%),radial-gradient(18vmax 16vmax at 48% 20%,var(--orb-3),transparent 62%),radial-gradient(16vmax 14vmax at 80% 70%,var(--orb-2),transparent 60%);
+ animation:c2-deriva2 60s ease-in-out infinite alternate}
+@keyframes c2-deriva{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-3%,2%,0) scale(1.06)}100%{transform:translate3d(2%,-2%,0) scale(1.03)}}
+@keyframes c2-deriva2{0%{transform:translate3d(0,0,0) rotate(0)}100%{transform:translate3d(4%,-3%,0) rotate(8deg)}}
+.panel,.kpis,.hero>div,.big div,.risks>div,.scen>div{position:relative;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -12px 24px -18px color-mix(in srgb,var(--accent) 22%,transparent),0 24px 60px -30px rgba(70,35,20,.5);transition:box-shadow .35s ease,border-color .35s ease}
+.panel::before,.kpis::before,.hero>div::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;-webkit-backdrop-filter:blur(30px) saturate(190%) brightness(1.04);backdrop-filter:blur(30px) saturate(190%) brightness(1.04)}
+.panel::after,.hero>div::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.35) 45%,transparent 60%) no-repeat;background-size:250% 100%;background-position:150% 0;opacity:0;transition:opacity .4s ease}
+.panel:hover,.hero>div:hover{border-color:rgba(255,255,255,.95)}
+.panel:hover::after,.hero>div:hover::after{opacity:1;animation:c2-brillo 1.4s ease}
+@keyframes c2-brillo{from{background-position:150% 0}to{background-position:-60% 0}}
+.tw{background:linear-gradient(140deg,rgba(255,255,255,.42),rgba(255,255,255,.18))}
+.panel,.hero>div{animation:c2-entrar .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes c2-entrar{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){body::before,body::after,.panel,.hero>div,.panel:hover::after{animation:none!important}}
+@media (prefers-reduced-transparency:reduce){.panel::before,.kpis::before,.hero>div::before{display:none}.panel,.tw{background:var(--solid)!important}}
+@media print{body::after,.panel::before,.panel::after{display:none}.panel{animation:none!important}}
 </style>
 <div class="app" id="app">
   <aside id="nav"></aside>

@@ -20,3 +20,10 @@ test('R85: arbitrios y emisión año por año',()=>{
  const r2=X.predialPlan({...p,arbUnidad:300},{units:[1,2,3,4]},{io:12,ind:3,indStart:20,H:40,soldCum:new Array(41).fill(0).map((_,t)=>t<30?0.5:1),obraOficial:0});assert.equal(r2.anios[2].arb,600);
  assert.match(s,/arbAnual=813\.12/);
 });
+test('R87: arbitrios durante la obra editables, evidencia y cristal en Evaluador y Contabilidad',()=>{
+ const p={inicio:'2026-01',predAnioBase:2026,areaTerreno:160,predArancel:396,predConstrExist:1,uit:5500,arbAnual:813.12,arbTerreno:300};
+ const r=X.predialPlan(p,{units:[1]},{io:12,ind:3,indStart:20,H:30,soldCum:new Array(31).fill(1),obraOficial:0});assert.equal(r.anios[0].arb,813.12);assert.equal(r.anios[1].arb,300);
+ const r2=X.predialPlan({...p,arbTerreno:''},{units:[1]},{io:12,ind:3,indStart:20,H:30,soldCum:new Array(31).fill(1),obraOficial:0});assert.equal(r2.anios[1].arb,813.12);
+ assert.match(s,/TRIBUTOS MUNICIPALES \(R87/);assert.match(s,/p\.arbFuente/);
+ for(const f of ['evaluador-src/evaluador.html','contabilidad-src/clara-contabilidad.html'])assert.match(fs.readFileSync(path.join(__dirname,'..',f),'utf8'),/R87 · Cristal 2\.0/);
+});
