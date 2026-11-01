@@ -617,16 +617,20 @@ function saleSpeed(p){
 }
 /* R93 · Como el presupuesto de obra original: GG = % del costo directo; utilidad = % sobre el subtotal (subtotal = (CD + GG) / (1 − utilidad)). */
 function costFac(p){return (1+(+p.ggPct||0)/100)/(1-Math.min(90,+p.utilPct||0)/100)}
+/* R94 · Gastos generales tomados del detalle de «07 · Gastos generales»: F = montos fijos (mensuales y globales), P = suma de los % sobre el presupuesto de obra.
+   Subtotal = (CD + GG) / (1 − utilidad), con GG = F + P × subtotal  ⇒  subtotal = (CD + F) / (1 − utilidad − P). */
+function ggDet(s,dur){let F=0,P=0;for(const g of (s.gg||[])){if(g.u==='%')P+=(+g.q||0)/100;else if(g.u==='mes')F+=(g.link?dur:+g.q||0)*(+g.ded||0)*(+g.pu||0);else F+=(+g.q||0)*(+g.pu||0)}return {F,P}}
+function cdM2De(s){return +s.p.cdM2>0?+s.p.cdM2:(+s.p.costoM2||0)/costFac(s.p)}
 function editPartCost(s,i,kind,value){
   const v=Number(value),factor=costFac(s.p);
   if(!Number.isFinite(v)||v<0||!s.part[i]||(kind==='pct'&&v>100))throw Error('Ingresa un costo positivo o una incidencia entre 0 y 100.');
-  const tw=sum(s.part.map(x=>+x.pct))||1,cd=Number(s.p.costoM2)/factor;
+  const tw=sum(s.part.map(x=>+x.pct))||1,cd=cdM2De(s);
   const costs=s.part.map(x=>cd*(+x.pct||0)/tw);
   // R91 · Cada partida tiene su propio S/ por m². Cambiar el S/ por m² o la incidencia de una partida cambia el costo de ESA partida
   // (las demás conservan su S/ por m²); el costo total por m² y las incidencias se recalculan.
   if(kind==='pct'){if(v>=100)throw Error('La incidencia debe ser menor a 100%.');const other=sum(costs.filter((_,j)=>j!==i));if(other<=0)throw Error('Agrega costo a otras partidas primero.');costs[i]=v/(100-v)*other}
   else costs[i]=v;
-  const total=sum(costs);if(total<=0)throw Error('El costo directo debe ser mayor que cero.');s.p.costoM2=Math.round(total*factor*100)/100;s.part.forEach((x,j)=>x.pct=100*costs[j]/total)
+  const total=sum(costs);if(total<=0)throw Error('El costo directo debe ser mayor que cero.');s.p.cdM2=Math.round(total*10000)/10000;s.part.forEach((x,j)=>x.pct=100*costs[j]/total)
 }
 function monthOffset(start,date){if(!/^\d{4}-\d{2}$/.test(date))throw Error('Selecciona un mes válido.');const [y,m]=date.split('-').map(Number),[sy,sm]=start.split('-').map(Number);const n=(y-sy)*12+m-sm;if(m<1||m>12||n<0||n>600)throw Error('La fecha debe estar dentro de los 50 años posteriores al inicio.');return n}
 function editSchedule(s,key,value){
@@ -679,8 +683,11 @@ function compute(s,ov){
   const anios=Math.ceil((ent+ind)/12);
   const pred=calcPredial(+p.autovaluo,+p.uit);
   const areaConstr=areaTech+libreV; // R93 · el costo por m² se aplica al área total (techada + libre), como en el presupuesto de obra; sin cargos extra
-  const constrSub=areaConstr*p.costoM2+sum(s.units.map(u=>(+u.tech||0)*(usoCostoM2(p,u)-p.costoM2)));
-  const cd=constrSub/costFac(p);
+  let cdM2=cdM2De(s);if(ov&&ov.costoM2!=null&&+s.p.costoM2>0)cdM2*=(+ov.costoM2)/(+s.p.costoM2); // escenarios de costo ±%
+  const gdet=ggDet(s,dur),uPct=Math.min(.9,(+p.utilPct||0)/100),cdBase=cdM2*areaConstr,subBase=(cdBase+gdet.F)/Math.max(.05,1-uPct-gdet.P);
+  const ggTot=gdet.F+gdet.P*subBase,utilTot=uPct*subBase,costoM2Calc=areaConstr?subBase/areaConstr:0;p.costoM2=costoM2Calc;
+  const constrSub=subBase+sum(s.units.map(u=>(+u.tech||0)*(usoCostoM2(p,u)-p.costoM2)));
+  const cd=cdBase*(subBase?constrSub/subBase:1);
   const curve=obraCurve(s.part,dur);
   // ventas y cobranzas
   const avg=ventas/nU, sold=new Array(H+1).fill(0), cobro=new Array(H+1).fill(0), soldCum=new Array(H+1).fill(0);
@@ -769,7 +776,7 @@ function compute(s,ov){
   L.forEach(o=>{const g=groups[o.cat]||(groups[o.cat]={sub:0,igv:0,tot:0});g.sub+=o.sub;g.igv+=o.igv;g.tot+=o.tot});
   groups['Financieros'].tot+=intTot2;groups['Financieros'].sub+=intTot2;
   const igvComprasTot=sum(L.map(o=>o.igv));
-  return {p,units,nU,techV,libreV,areaTech,igvEf,vDept:vDeptR,vEst,valT,plan,ventas,ventasSin,igvVentas,io,mesBanco,dur,ent,ind,indStart,postStart,postDur,designStart,designEnd,lanz,finVentas,H,anios,pred,predPlan:predPlanR,constrSub,cd,curve,areaConstr,
+  return {p,units,nU,techV,libreV,areaTech,igvEf,vDept:vDeptR,vEst,valT,plan,ventas,ventasSin,igvVentas,io,mesBanco,dur,ent,ind,indStart,postStart,postDur,designStart,designEnd,lanz,finVentas,H,anios,pred,predPlan:predPlanR,constrSub,cd,curve,areaConstr,ggTot,utilTot,cdM2,costoM2Calc,ggF:gdet.F,ggP:gdet.P,
     sold,soldCum,cobro,det,detRel,L,E,Efin,byCat,igvD,igvC,constrM,constrTot,bankLim,F,intTot:intTot2,egresos:egresosF,uai:uaiF,ir:irF,neta,econ,eq,peak,peakE:-peakE,payback,
     tirE:ie==null?null:Math.pow(1+ie,12)-1,tirQ:iq==null?null:Math.pow(1+iq,12)-1,vanE:npvM(econ,p.tasaDesc/100),vanQ:npvM(eq,p.tasaDesc/100),
     groups,igvComprasTot,igvPagado:sum(F.igvPay),creditoFinal:F.credit[H],terr,
@@ -1076,7 +1083,7 @@ V.supuestos=()=>`<div class="sect-h"><h2>Supuestos del modelo</h2><p>Parámetros
   <div class="row" style="margin-top:10px"><label class="row"><input type="checkbox" data-k="p.detracOn" id="i-p-detracOn" ${S.p.detracOn?'checked':''}> Aplicar detracciones a las cobranzas</label></div></div>
   <div class="panel"><h3>Comerciales</h3><div class="fields">${fld('p.velocidad','Velocidad de venta (und/mes)')}${fld('p.inicial','Cuota inicial (%)')}${fld('p.descProm','Descuento promedio (%)')}${fld('p.tc','Tipo de cambio SUNAT · venta (automático)')}</div><p class="note" data-rate-status>${rateError||mRateNote()}</p></div>
   ${salesControls()}
-  <div class="panel"><h3>Obra</h3><div class="fields">${fld('p.supervisionM2','Supervisión (S/ por m²)')}${fld('p.contingencia','Contingencia vecinos (% construcción)')}${fld('p.ggPct','GG implícito en el costo/m² (% CD)')}${fld('p.utilPct','Utilidad contratista (% sobre el subtotal, como el presupuesto de obra)')}</div></div>
+  <div class="panel"><h3>Obra</h3><div class="fields">${fld('p.supervisionM2','Supervisión (S/ por m²)')}${fld('p.contingencia','Contingencia vecinos (% construcción)')}${fld('p.utilPct','Utilidad contratista (% sobre el subtotal, como el presupuesto de obra)')}</div></div>
   <div class="panel"><h3>Financieros</h3><div class="fields">${fld('p.financiaPct','Financiamiento banco (% de construcción)')}${fld('p.preventaMin','Preventa mínima para desembolso (%)')}${fld('p.tea','TEA línea promotor (%)')}${fld('p.tasaDesc','Tasa de descuento / COK anual (%)')}</div>
   <div class="row" style="margin-top:10px"><label class="row"><input type="checkbox" data-k="p.bancoOn" id="i-p-bancoOn" ${S.p.bancoOn?'checked':''}> Usar financiamiento bancario (crédito promotor)</label></div>
   <p class="note">Convenciones de pago en las tablas de costos: un número es el mes (0 = inicio), "a-b" reparte en partes iguales, "2:20,4:80" son hitos con porcentaje, y las palabras clave son proyecto, diseño, obra, curva, ventas, cobros, entrega, independizacion, posventa, banco y cierre.</p></div>`;
@@ -1111,14 +1118,14 @@ V.venta=()=>{
 };
 
 V.construccion=()=>{
-  const tw=sum(S.part.map(x=>+x.pct))||1;const m2=M.areaConstr;const gg=M.cd*S.p.ggPct/100,ut=M.constrSub*S.p.utilPct/100;
+  const tw=sum(S.part.map(x=>+x.pct))||1;const m2=M.areaConstr;const gg=M.ggTot,ut=M.utilTot;
   // R91 · Las partidas parten del costo por m² de Datos generales (misma base que se edita); lo adicional (área libre construida, usos con otro costo) va en su propia fila.
-  const fac=costFac(S.p),baseM2=(+S.p.costoM2||0)/fac,extraCD=Math.max(0,M.cd-baseM2*m2);
+  const baseM2=M.cdM2,extraCD=Math.max(0,M.cd-baseM2*m2);
   const rows=S.part.map((x,i)=>{const pm=baseM2*x.pct/tw,v=pm*m2;return `<tr><td>${inp(`part.${i}.n`,x.n,'w','text')}</td><td><input type="number" step="any" min="0" max="99.99" class="s" id="i-part-${i}-pct" data-k="part.${i}.pct" aria-label="Incidencia de ${esc(x.n)}" value="${Number((+x.pct).toFixed(3))}"></td><td class="n">${S_(v)}</td><td class="n"><input type="number" min="0" step="any" aria-label="Costo por m² de ${esc(x.n)}" data-part-cost="${i}" value="${Number(pm.toFixed(2))}"></td><td class="n">US$ ${nf(pm/S.p.tc,2)}</td><td><div class="bar"><span style="width:${(x.pct/tw*100/30*100).toFixed(1)}%;max-width:100%"></span></div></td></tr>`}).join('');
   return `<div class="sect-h"><h2>Costos de construcción</h2><p>Presupuesto por partidas derivado del costo/m² de la cabida. Las incidencias provienen del presupuesto de obra de la hoja original.</p></div>
-  <div class="big"><div><label>Costo directo</label><output>${S_(M.cd)}</output><small>${S_(M.cd/m2,2)} por m²</small></div><div><label>Gastos generales</label><output>${S_(gg)}</output><small>${nf(S.p.ggPct,2)}% del CD</small></div>
+  <div class="big"><div><label>Costo directo</label><output>${S_(M.cd)}</output><small>${S_(M.cd/m2,2)} por m²</small></div><div><label>Gastos generales</label><output>${S_(gg)}</output><small>del detalle de Gastos generales · ${pc(gg/M.cd)} del CD</small></div>
   <div><label>Utilidad contratista</label><output>${S_(ut)}</output><small>${nf(S.p.utilPct,2)}% del subtotal</small></div><div><label>Total con IGV</label><output>${S_(M.constrSub*(1+S.p.igv/100))}</output><small>${S_(M.constrSub/m2,2)} por m² sin IGV</small></div></div>
-  <div class="panel"><div class="fields">${fld('p.costoM2','Costo total por m² sin IGV (incluye GG y utilidad)')}</div><h3>Partidas del costo directo</h3><div class="tw"><table><thead><tr><th>Partida</th><th>Incidencia %</th><th class="n">Monto</th><th class="n">S/ por m²</th><th class="n">US$ por m²</th><th>Peso</th></tr></thead><tbody>${rows}
+  <div class="panel"><div class="fields">${fld('p.costoM2','Costo total por m² sin IGV (incluye GG del detalle y utilidad)')}</div><h3>Partidas del costo directo</h3><div class="tw"><table><thead><tr><th>Partida</th><th>Incidencia %</th><th class="n">Monto</th><th class="n">S/ por m²</th><th class="n">US$ por m²</th><th>Peso</th></tr></thead><tbody>${rows}
   ${extraCD>0.5?`<tr><td>Adicional: usos con otro costo (comercial / oficinas) <small class="mut">· se edita en Datos generales</small></td><td></td><td class="n">${S_(extraCD)}</td><td class="n">${S_(extraCD/m2,2)}</td><td class="n">US$ ${nf(extraCD/m2/S.p.tc,2)}</td><td></td></tr>`:''}
   <tr class="tot"><td>Costo directo</td><td class="n">${nf(tw,2)}%</td><td class="n">${S_(M.cd)}</td><td class="n">${S_(M.cd/m2,2)}</td><td class="n">US$ ${nf(M.cd/m2/S.p.tc,2)}</td><td></td></tr>
   <tr class="sub"><td>Gastos generales</td><td></td><td class="n">${S_(gg)}</td><td class="n">${S_(gg/m2,2)}</td><td></td><td></td></tr>
@@ -1130,13 +1137,12 @@ V.construccion=()=>{
 };
 
 V.gg=()=>{
-  const base=M.constrSub;const dur=M.dur;let tot=0;
+  const base=M.constrSub;const dur=M.dur;let tot=0; // R94 · este total entra directo al costo de construcción
   const rows=S.gg.map((g,i)=>{let v=0,q=g.link?dur:+g.q;if(g.u==='%')v=base*g.q/100;else if(g.u==='mes')v=q*(+g.ded)*(+g.pu);else v=(+g.q)*(+g.pu);tot+=v;
     return `<tr><td>${inp(`gg.${i}.n`,g.n,'w','text')}</td><td>${g.u==='%'?'% obra':g.u}</td><td>${g.u==='mes'&&g.link?`<span class="mut">${dur} (obra)</span>`:inp(`gg.${i}.q`,g.q,'xs')}</td><td>${g.u==='mes'?inp(`gg.${i}.ded`,g.ded,'xs'):'<span class="mut">—</span>'}</td><td>${g.u==='%'?'<span class="mut">—</span>':inp(`gg.${i}.pu`,g.pu,'s')}</td><td class="n">${S_(v)}</td><td><button class="btn x" data-act="del" data-g="gg" data-i="${i}" aria-label="Eliminar">✕</button></td></tr>`}).join('');
-  const impl=M.cd*S.p.ggPct/100;const d=tot-impl;
-  return `<div class="sect-h"><h2>Gastos generales de obra</h2><p>Detalle de gastos fijos y variables. Se concilia con el GG implícito en el costo/m² para validar el insumo de la cabida.</p></div>
-  <div class="big"><div><label>GG detallado</label><output>${S_(tot)}</output><small>${pc(tot/M.cd)} del CD</small></div><div><label>GG implícito en costo/m²</label><output>${S_(impl)}</output><small>${nf(S.p.ggPct,2)}% del CD</small></div>
-  <div><label>Diferencia</label><output class="${d>0?'neg':'pos'}">${S_(d)}</output><small>${d>0?'el costo/m² está subestimado':'holgura dentro del costo/m²'}</small></div><div><label>GG mensual</label><output>${S_(tot/dur)}</output><small>${dur} meses de obra</small></div></div>
+  const impl=M.ggTot;const d=tot-impl;
+  return `<div class="sect-h"><h2>Gastos generales de obra</h2><p>Detalle de gastos fijos y variables. Este total entra directo al costo de construcción: subtotal = (CD + GG) / (1 − utilidad).</p></div>
+  <div class="big"><div><label>GG detallado</label><output>${S_(tot)}</output><small>${pc(tot/M.cd)} del CD</small></div><div><label>Se usa en el costo de construcción</label><output>${S_(impl)}</output><small>${pc(impl/M.cd)} del CD · 06 · Costos de construcción</small></div><div><label>GG mensual</label><output>${S_(tot/dur)}</output><small>${dur} meses de obra</small></div></div>
   <div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">Partidas de gastos generales</h3><button class="btn" data-act="add-gg">+ Agregar</button></div>
   <div class="tw"><table><thead><tr><th>Descripción</th><th>Und</th><th>Cantidad / %</th><th>Dedicación</th><th>P.U. (S/)</th><th class="n">Total</th><th></th></tr></thead><tbody>${rows}<tr class="tot"><td colspan="5">Total gastos generales</td><td class="n">${S_(tot)}</td><td></td></tr></tbody></table></div>
   <p class="note">Las partidas en % se calculan sobre el presupuesto de obra sin IGV (${S_(base)}). Las mensuales enlazadas toman la duración de obra de Supuestos.</p></div>`;
@@ -1247,7 +1253,7 @@ V.cronograma=()=>{
   const hdr=Array.from({length:N},(_,j)=>`<th class="n">M${j+1}<br><span style="font-weight:400">${ml(M.io+j)}</span></th>`).join('');
   const rows=S.part.map((x,i)=>{const v=M.cd*x.pct/tw;return `<tr><td class="stick">${esc(x.n)}</td><td class="n">${S_(v)}</td>${pc_[i].map(w=>`<td class="n">${w>0.0001?nf(v*w):'<span class="mut">·</span>'}</td>`).join('')}</tr>`}).join('');
   const cdM=Array.from({length:N},(_,j)=>sum(S.part.map((x,i)=>M.cd*x.pct/tw*pc_[i][j])));
-  const gg=M.cd*S.p.ggPct/100,ut=M.constrSub*S.p.utilPct/100;
+  const gg=M.ggTot,ut=M.utilTot;
   const sub=cdM.map(v=>v+gg/N+ut*v/M.cd);let ac=0;const acum=sub.map(v=>{ac+=v*(1+S.p.igv/100);return ac});
   const r=(n,a,cls='sub')=>`<tr class="${cls}"><td class="stick">${n}</td><td class="n">${S_(sum(a))}</td>${a.map(v=>`<td class="n">${nf(v)}</td>`).join('')}</tr>`;
   return `<div class="sect-h"><h2>Cronograma valorizado de obra</h2><p>Distribución mensual de cada partida a partir de los porcentajes de avance de la hoja original, reescalada a ${N} meses de obra.</p></div>
@@ -2358,12 +2364,15 @@ async function exportXLSX(tabs,etiqueta){
 function render(){
   // R93 · La utilidad del contratista pasa de «% del CD» a «% sobre el subtotal» (como el presupuesto de obra). Se convierte una vez sin cambiar montos.
   if(!S.p._utilVenta){const g=(+S.p.ggPct||0)/100,u=(+S.p.utilPct||0)/100;S.p.utilPct=Math.round(u/(1+g+u)*10000)/100;S.p._utilVenta=true;try{save()}catch(_){}}
+  // R94 · Costo directo por m² como insumo base (partidas); el costo total por m² se deriva con GG del detalle y utilidad.
+  if(!(+S.p.cdM2>0)){S.p.cdM2=(+S.p.costoM2||0)/costFac(S.p);try{save()}catch(_){}}
   // R84 · HR/PU 2026 de San Miguel (Calle La Apacheta 224): terreno 160 m² × S/ 396 = S/ 63,360; construcción existente S/ 135,478.68; autovalúo S/ 198,838.68; predial 2026 S/ 863.03.
   if(/infinity/i.test(S.p.nombre||'')&&!(+S.p.predArancel>0)&&!S.p._predHR2026){S.p.predAnioBase=2026;S.p.predArancel=396;S.p.predConstrExist=135478.68;S.p.autovaluo=198838.68;S.p._predHR2026=true;try{save()}catch(_){}}
   // R85 · Recibo 2025 de San Miguel: arbitrios 2025 S/ 813.12 (12 meses); predial 2025 S/ 846.31 + emisión S/ 4.79.
   if(/infinity/i.test(S.p.nombre||'')&&!S.p._arb2025){S.p.arbAnual=813.12;S.p.predEmision=4.79;if(!S.p.arbFuente)S.p.arbFuente='Recibo 041487-2025 de San Miguel (27/03/2025): arbitrios 2025 S/ 813.12; HR/PU 2026: autovalúo S/ 198,838.68, predial S/ 863.03';S.p._arb2025=true;try{save()}catch(_){}}
   const calendarWasOpen=cur===render.last&&!!document.getElementById('calendarAdjust')?.open;
-  M=compute(S);renderNav();renderTop();
+  M=compute(S);if(Math.abs((+S.p.costoM2||0)-M.costoM2Calc)>0.005){S.p.costoM2=Math.round(M.costoM2Calc*100)/100;try{save()}catch(_){}} // R94 · sincroniza el costo total por m²
+  renderNav();renderTop();
   const prevTab=render.last;render.last=cur;
   $('#view').innerHTML=(V[cur]||V.indicadores)();
   if(calendarWasOpen&&document.getElementById('calendarAdjust'))document.getElementById('calendarAdjust').open=true;
@@ -2458,6 +2467,7 @@ document.addEventListener('change',e=>{
   {const m=k.match(/^units\.(\d+)\.(fl|pl)$/);if(m&&String(el.value).trim()===''&&S.units[+m[1]]){delete S.units[+m[1]][m[2]];save();render();return}} // R81/R82 · vacío = valor general
   if(/^part\.\d+\.pct$/.test(k)){try{editPartCost(S,Number(k.split('.')[1]),'pct',el.value);save();render()}catch(err){el.setCustomValidity(err.message);el.reportValidity();el.addEventListener('input',()=>el.setCustomValidity(''),{once:true})}return}
   if(k==='p.tc'||k==='mercado.tc')return;
+  if(k==='p.costoM2'&&Number(el.value)>0){const m=compute(S),u=Math.min(.9,(+S.p.utilPct||0)/100);S.p.cdM2=Math.max(0,(Number(el.value)*m.areaConstr*(1-u-m.ggP)-m.ggF)/(m.areaConstr||1));S.p.costoM2=Number(el.value);save();render();return} // R94 · el costo total por m² ajusta el costo directo
   if(['p.velocidad','p.velocidadOptimista','p.velocidadPesimista','p.costoM2'].includes(k)&&(!Number.isFinite(Number(el.value))||Number(el.value)<.05)){el.setCustomValidity('Ingresa un valor mayor o igual a 0.05.');el.reportValidity();el.addEventListener('input',()=>el.setCustomValidity(''),{once:true});return}
   if(k==='p.inicio'&&!/^\d{4}-\d{2}$/.test(el.value))return;
   {const m=k.match(/^cab\.pisos\.(\d+)\.(circ|muros|comun)M2$/);if(m){const f=S.cab.pisos[+m[1]],v=parseFloat(el.value);if(f&&isFinite(v)&&+f.tech>0){f[m[2]]=Math.round(Math.max(0,Math.min(100,v/f.tech*100))*100)/100;save();const id=el.id;render();const n=document.getElementById(id);if(n)n.focus({preventScroll:true})}return}}
