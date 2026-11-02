@@ -2299,8 +2299,11 @@ function crmFill(){
   const remote=crmList.find(e=>e.id===cur);
   if(remote&&S._crm.revision&&remote.revision>S._crm.revision)crmMsg('Hay una revisión más nueva en el CRM (rev. '+remote.revision+'). Usa «Cargar del CRM» para traerla.',true);
 }
+// R110 · huella del trabajo para saber si hay cambios locales sin guardar en el CRM
+function crmHuella(){try{const x=JSON.parse(JSON.stringify(S));delete x._crm;const j=JSON.stringify(x);let h=5381;for(let i=0;i<j.length;i++)h=((h<<5)+h+j.charCodeAt(i))|0;return String(h)}catch(_){return ''}}
+function crmCambiosLocales(){return !!(S._crm&&S._crm.h&&S._crm.h!==crmHuella())}
 async function crmRefresh(){try{crmList=await crmRpc('getMoraEvaluations')||[];crmFill()}catch(e){crmMsg(e.message,true)}}
-async function crmLoad(id){
+async function crmLoad(id,auto){
   crmMsg('Cargando…');
   try{const ev=await crmRpc('getMoraEvaluation',id);
     try{localStorage.setItem(KEY+'-anterior',JSON.stringify(S))}catch(_){}
@@ -2309,7 +2312,7 @@ async function crmLoad(id){
       if(ev.analysis&&ev.analysis.estrategia)S.estr=Object.assign(S.estr,ev.analysis.estrategia);
       S.base={nombre:(ev.analysis&&ev.analysis.baseline&&ev.analysis.baseline.nombre)||'Línea base del CRM',fecha:(ev.analysis&&ev.analysis.baseline&&ev.analysis.baseline.fecha)||String(ev.created_at||'').slice(0,10),snap:JSON.parse(JSON.stringify(Object.fromEntries(SNAPKEYS.map(k=>[k,S[k]]))))};}
     S._crm={id:ev.id,revision:ev.revision,thread:S._crm&&S._crm.id===ev.id?S._crm.thread:null,drive:ev.drive||null};
-    crmNormalize();save();render();mSunat();crmFill();crmMsg('Revisión '+ev.revision+' cargada del CRM. El borrador anterior quedó respaldado en este equipo.');
+    crmNormalize();S._crm.h=crmHuella();save();render();mSunat();crmFill();crmMsg('Revisión '+ev.revision+' cargada del CRM'+(auto?' automáticamente (la más reciente)':'')+'. El borrador anterior quedó respaldado en este equipo.');
   }catch(e){crmMsg(e.message,true);crmFill()}
 }
 async function crmSave(){
@@ -2321,7 +2324,7 @@ async function crmSave(){
     const payload=moraEvalPayload();if(S._crm&&S._crm.id)payload.id=S._crm.id;
     const ws=JSON.parse(JSON.stringify(S));delete ws._crm;payload.workspace=ws;
     const out=await crmRpc('saveMoraEvaluation',payload);
-    S._crm={id:out.id,revision:out.revision,thread:S._crm&&S._crm.id===out.id?S._crm.thread:null,drive:out.drive||null};save();
+    S._crm={id:out.id,revision:out.revision,thread:S._crm&&S._crm.id===out.id?S._crm.thread:null,drive:out.drive||null};S._crm.h=crmHuella();save();
     await crmRefresh();crmMsg('Guardado en el CRM · revisión '+out.revision+(out.drive?(out.drive.state==='ready'?' · carpetas vinculadas':out.drive.state==='error'?' · '+out.drive.reason:' · carpetas pendientes de preparar'):''));if(cur==='datosProyecto')render();
   }catch(e){crmMsg(e.message,true)}
 }
@@ -2366,5 +2369,11 @@ function crmBoot(){
   document.head.append(st);
   crmBar();crmAi=true;aiState='on';aiLogEl().innerHTML='';aiSync();
   const t=document.getElementById('saved');if(t)t.title='Borrador en este equipo. Usa «Guardar en el CRM» para compartirlo con Gerencia.';
-  crmRefresh().then(()=>{if(!SIN_BORRADOR||!OROK_PROY||OROK_PROY==='principal')return;const ult=crmList.slice().sort((a,b)=>String(b.updated_at||'').localeCompare(String(a.updated_at||'')))[0];if(ult)return crmLoad(ult.id);delete S._crm;S.p.nombre=(document.querySelector('meta[name="orok-proyecto-nombre"]')||{}).content||'';S.p.direccion='';S.ventas=[];if(S.mercado)S.mercado.comps=[];save();render();crmFill();crmMsg('Proyecto sin evaluación todavía: completa sus datos (el modelo de referencia es solo una plantilla).');});mSunat(); // R55 · al abrir un proyecto sin borrador se trae su última evaluación
+  // R110 · al abrir (en cualquier equipo, también el celular) se muestra la última revisión del CRM: si no hay borrador vinculado se carga sola;
+  // si el CRM tiene una revisión más nueva y aquí no hay cambios sin guardar, también se carga sola; si hay cambios, se avisa.
+  crmRefresh().then(()=>{const norm=v=>String(v||'').toLowerCase().replace(/[^a-z0-9]/g,''),pn=(document.querySelector('meta[name="orok-proyecto-nombre"]')||{}).content||'';
+    const lista=crmList.slice().sort((a,b)=>String(b.updated_at||'').localeCompare(String(a.updated_at||''))),mismo=lista.filter(e=>pn&&(norm(e.project&&e.project.nombre).includes(norm(pn))||norm(pn).includes(norm(e.project&&e.project.nombre)))),ult=mismo[0]||(!OROK_PROY||OROK_PROY==='principal'?lista[0]:null);
+    if(S&&S._crm&&S._crm.id){const r=crmList.find(e=>e.id===S._crm.id);if(r&&r.revision>(S._crm.revision||0)){if(!crmCambiosLocales())return crmLoad(r.id,true);crmMsg('El CRM tiene la revisión '+r.revision+' y aquí hay cambios sin guardar: guárdalos o usa «Cargar del CRM».',true)}return}
+    if(ult)return crmLoad(ult.id,true);
+    if(!SIN_BORRADOR||!OROK_PROY||OROK_PROY==='principal'){crmMsg('Este equipo muestra un borrador sin evaluación guardada en el CRM.',true);return}delete S._crm;S.p.nombre=(document.querySelector('meta[name="orok-proyecto-nombre"]')||{}).content||'';S.p.direccion='';S.ventas=[];if(S.mercado)S.mercado.comps=[];save();render();crmFill();crmMsg('Proyecto sin evaluación todavía: completa sus datos (el modelo de referencia es solo una plantilla).');});mSunat(); // R55 · al abrir un proyecto sin borrador se trae su última evaluación
 }
