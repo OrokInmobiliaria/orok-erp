@@ -1,8 +1,8 @@
 // R36 · ERP ÖRÖK instalable (PC, Mac, celular) y siempre actualizado.
-// Versión: 67.6.95-r108-54ff2cd512 (se reemplaza al compilar; cada versión nueva cambia este archivo y el navegador la detecta).
+// Versión: 67.6.96-r109-d68294611f (se reemplaza al compilar; cada versión nueva cambia este archivo y el navegador la detecta).
 // Reglas: nunca guarda en caché datos ni API (/api, /files, medios), ni las apps /evaluador y /contabilidad.
 // Solo guarda la «cáscara» de la app para abrir rápido y mostrar un aviso si no hay internet.
-const VERSION = '67.6.95-r108-54ff2cd512', SHELL = 'erp-orok-shell-' + VERSION, ASSETS = 'erp-orok-assets-' + VERSION;
+const VERSION = '67.6.96-r109-d68294611f', SHELL = 'erp-orok-shell-' + VERSION, ASSETS = 'erp-orok-assets-' + VERSION;
 const PASAR = /^\/(api|files|campaign-media|whatsapp-media|evaluador|contabilidad)(\/|$)/;
 self.addEventListener('install', e => { e.waitUntil(caches.open(SHELL).then(c => c.addAll(['/', '/manifest.webmanifest', '/icons/icon-192.png']).catch(() => {}))); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(k => Promise.all(k.filter(n => n.startsWith('erp-orok-') && n !== SHELL && n !== ASSETS).map(n => caches.delete(n)))).then(() => self.clients.claim())); });

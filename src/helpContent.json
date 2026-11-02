@@ -189,6 +189,7 @@
    "roles": "gerencia",
    "tags": "mora evaluador terreno cabida costos flujo banca inversionistas precios fases descuentos margen minimo colchon simulacion",
    "ia": [
+    "Propone la lista de precios: parte del estudio de mercado (tipología por dormitorios) y de la prima por piso, y la escala para sumar exactamente el monto de recaudación del proyecto; marca qué unidades quedan fuera del rango del mercado.",
     "Calcula cabida, costos, flujo y rentabilidad del terreno.",
     "Prepara la carpeta para banca e inversionistas.",
     "Responde preguntas sobre la evaluación guardada.",
@@ -197,6 +198,7 @@
     "Simula ajustes en la estructura de costos sin cambiar nada hasta que apliques."
    ],
    "tu": [
+    "Defines el monto de recaudación del proyecto, la tolerancia (±%) y la prima por piso; decides si aplicas la lista propuesta o usas la lista vigente del CRM.",
     "Validas los supuestos (precio de terreno, costos, ventas).",
     "Decides comprar, negociar o descartar.",
     "Fijas el margen objetivo y los descuentos de fase y por condición.",
@@ -211,7 +213,8 @@
    "ia": [
     "Propone el precio objetivo de cada unidad con la etapa, la meta y el estudio de mercado.",
     "Marca «bajo el mínimo» cuando un precio objetivo o una solicitud de precio especial queda bajo el precio mínimo del margen objetivo del Evaluador.",
-    "Muestra los topes de negociación por fase que vienen del Evaluador."
+    "Muestra los topes de negociación por fase que vienen del Evaluador.",
+    "Muestra junto a cada unidad el precio de la lista propuesta por el Evaluador para comparar con la lista vigente."
    ],
    "tu": [
     "Apruebas, observas o rechazas cada precio especial que pide Ventas.",
