@@ -62,7 +62,9 @@ function resumenMercado(ev) {
     sugerido_m2: ev?.analysis?.mercado?.precio_sugerido_m2 ?? null, rango_m2: ev?.analysis?.mercado?.rango_m2 || null,
     por_dormitorios: [1, 2, 3, 4].map(d => grupo(d === 4 ? '4 o más dorm.' : d + ' dorm.', c => c.dorm === d)).filter(g => g.n),
     por_tamano: [[0, 50, 'Hasta 50 m²'], [50, 65, '50–65 m²'], [65, 80, '65–80 m²'], [80, 1e9, 'Más de 80 m²']].map(([a, b, l]) => grupo(l, c => c.area >= a && c.area < b)).filter(g => g.n), comps,
-    politica: politicaDe(ev) };
+    politica: politicaDe(ev),
+    // R109 · lista propuesta del Evaluador (mercado → monto de recaudación), para compararla y usarla de base
+    lista: Object.fromEntries((ev?.analysis?.lista_evaluador?.unidades || []).filter(x => Number(x.precio) > 0).map(x => [unitKey(x.unidad), Number(x.precio)])), lista_origen: text(ev?.analysis?.lista_evaluador?.origen, 20) || null, lista_meta: Number(ev?.analysis?.lista_evaluador?.meta) || null };
 }
 
 // R49 · Ajuste manual por unidad o cochera: «pct» sobre el precio de la etapa activa (+0.03 = +3 %, −0.05 = −5 %) o «precio» fijo.
@@ -232,6 +234,7 @@ function calcular(cfg, data = {}, hoy = new Date(), mercado = null, cocherasApli
       precios_etapas: cfg.etapas.map((e, i) => precioEn(u, i)),
       precio_actual: actual || null, precio_etapa: precioEtapa, precio_sugerido: sugerido, ratio_sugerido_m2: ratio,
       diferencia_vs_actual: objetivo && actual ? objetivo - actual : null, estado: v ? v.estado : 'Disponible', precio_real: v ? v.precio : null, fecha: v ? String(v.fecha).slice(0, 10) : '',
+      precio_evaluador: coch ? null : (mercado?.lista?.[unitKey(u.unidad)] ?? null),
       precio_minimo: coch ? null : minimoDe(mercado?.politica, u.area), bajo_minimo: !coch && !!objetivo && !!minimoDe(mercado?.politica, u.area) && objetivo < minimoDe(mercado?.politica, u.area) };
   });
 

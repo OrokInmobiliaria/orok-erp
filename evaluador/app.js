@@ -31,7 +31,7 @@ const DEF = {
       precioM2:6590.34, factorLibre:1, descProm:0,
       igv:18, baseGravada:50, prorrata:100, ir:29.5, detraccion:4, detracOn:true, alcabala:3,
       contingencia:2.5, ggPct:17.15, utilPct:10.19, libreCostoPct:100,
-      mesLanz:6, margenObjetivo:15, fasesOn:true, faseAncla:'promedio', durDemol:1, mesCasco:'', durObs:1, descPreventa:10, descMedio:6, descBajo:3, velocidad:0.8, inicial:10, inicioObra:12, durObra:14, indep:3,
+      mesLanz:6, margenObjetivo:15, metaRecaudacion:'', metaTol:3, primaPiso:1, tipoMercado:true, fasesOn:true, faseAncla:'promedio', durDemol:1, mesCasco:'', durObs:1, descPreventa:10, descMedio:6, descBajo:3, velocidad:0.8, inicial:10, inicioObra:12, durObra:14, indep:3,
       bancoOn:true, financiaPct:60, preventaMin:30, perfilPromotor:'nuevo', preventaNuevoPct:45, preventaNuevoUnd:5, desembolsoHip:'minuta', minutaMeses:0, terrenoPropio:true, capitalCaja:220000, bancoGastosMin:255000, gastosRealizados:0, inicialRetenida:false, tea:11, tasaDesc:12 },
   units:[
     {id:'101',tipo:'Loft Garden',piso:1,tech:40.29,libre:18.91,aj:0},
@@ -771,6 +771,35 @@ function politicaDatos(){const pol=S.p.politicaDesc||POL_DEF,F=M.fases,regM2=M.p
     return {fase:k,nombre:FASE_N[k],desde_mes:rango[k][0],desde:ml(rango[k][0]),descuento_fase_pct:dF[k],condicion_max_pct:c,descuento_total_pct:+(tot*100).toFixed(2),precio_final_m2:Math.round(pm2),precio_lista_m2:Math.round(regM2*(1-dF[k]/100)),
       colchon_m2:Math.round(pm2-pmin),colchon_dpto:Math.round((pm2-pmin)*m2Prom),colchon_dpto_neta:Math.round((pm2-pmin)*m2Prom*kU),tope_negociacion_pct:+(topeCond*100).toFixed(2),ok:pm2>=pmin}});
   return {margen_objetivo_pct:+(mo*100).toFixed(2),precio_min_m2:Math.round(pmin),precio_equilibrio_m2:Math.round(be),precio_regular_m2:Math.round(regM2),m2_promedio:+m2Prom.toFixed(2),utilidad_por_sol:+kU.toFixed(3),fases,condiciones:pol.map(x=>({nombre:x.n,descuento_max_pct:+x.d||0,unidades:+x.u||0,aplica_en:x.en==='preventa'?'preventa':'cualquier fase'}))}}
+// R109 · Lista propuesta: parte del mercado (tipología por dormitorios del estudio) y de la prima por piso, y se escala para
+// llegar EXACTAMENTE al monto de recaudación del proyecto (no se toma el monto y luego se le suma la altura).
+const dormDeTipo=t=>{t=String(t||'');const m=t.match(/(\d)\s*D(?:orm|\b)/i);if(m)return Math.min(4,+m[1]);if(/loft|estudio|monoambiente/i.test(t))return 1;return null};
+function listaPropuesta(){
+  const p=S.p,est=(+p.nEstac||0)*(+p.precioEstac||0),meta=+p.metaRecaudacion>0?+p.metaRecaudacion:sum(M.units.map(u=>u.lista))+est,T=meta-est;let R0=null;try{R0=mercadoModel()}catch(_){}
+  const all=R0?mStats(R0.use.map(c=>c.pm2)):null,byD=R0?Object.fromEntries(R0.byDorm.map(g=>[g.k,g])):{};
+  const rows=M.units.map((u,i)=>{const su=S.units[i]||u,eq=(+u.tech||0)+(+u.libre||0)*fLib(su,p),d=dormDeTipo(u.tipo),g=d?byD[d>=4?'4':String(d)]:null,piso=Math.max(1,+u.piso||1);
+    const wp=1+(+p.primaPiso||0)/100*(piso-1),cred=g&&g.n?Math.min(1,g.n/5):0,wt=p.tipoMercado&&g&&g.n&&all&&all.med?1+Math.max(-.15,Math.min(.15,g.med/all.med-1))*cred:1;
+    return {i,id:u.id,tipo:u.tipo,piso,eq,d,g,wp,wt,w:wp*wt,lista:u.lista,viv:unitUso(su)==='Vivienda'||!USO_SUF[unitUso(su)]}});
+  const sw=sum(rows.map(r=>r.eq*r.w))||1;rows.forEach(r=>{r.precio=T*r.eq*r.w/sw;r.pm2=r.eq?r.precio/r.eq:0;const g=r.g&&r.g.n>=3?r.g:all;r.ref=g;r.pos=!g||!g.med?null:r.pm2>(g.p75||g.med)?'sobre':r.pm2<(g.p25||g.med)?'bajo':'en'});
+  const totLista=sum(M.units.map(u=>u.lista))+est,dif=(totLista-meta)/meta,tol=(+p.metaTol||0)/100;
+  const techo=all?sum(rows.map(r=>r.eq*((r.ref&&r.ref.p75)||all.p75||0)))+est:null;
+  return {meta,T,est,rows,sw,totLista,dif,tol,ok:Math.abs(dif)<=tol,techo,all,R0}}
+function listaPanel(){const L=listaPropuesta(),p=S.p,crm=S.crmListas&&S.crmListas.por&&Object.keys(S.crmListas.por).length;
+  const chip=r=>r.pos==='sobre'?`<span class="chip w">sobre P75</span>`:r.pos==='bajo'?`<span class="chip w">bajo P25</span>`:r.pos==='en'?'<span class="chip ok">en rango</span>':'<span class="mut">sin datos</span>';
+  const rows=L.rows.map(r=>{const v=crm&&S.crmListas.por[String(r.id)];return `<tr><td>${esc(r.id)}</td><td>${esc(r.tipo)}</td><td class="n">${r.piso}</td><td class="n">${nf(r.eq,2)}</td><td class="n" style="white-space:nowrap">${r.wp>=1?'+':''}${nf((r.wp-1)*100,1)}% piso<br><small class="mut">${r.wt>=1?'+':''}${nf((r.wt-1)*100,1)}% tipología</small></td><td class="n"><b>${S_(r.precio)}</b></td><td class="n">${S_(r.pm2)}</td><td class="n mut" style="white-space:nowrap">${r.ref&&r.ref.med?nf(r.ref.p25,0)+' – '+nf(r.ref.p75,0):'—'}${r.g&&r.g.n<3?'<br><small>(todo el mercado)</small>':''}</td><td>${chip(r)}</td><td class="n">${S_(r.lista)}</td><td class="n">${v?S_(v.vigente):'<span class="mut">—</span>'}</td></tr>`}).join('');
+  const ia=[];const sob=L.rows.filter(r=>r.pos==='sobre'),baj=L.rows.filter(r=>r.pos==='bajo');
+  if(L.techo!=null)ia.push(L.techo>=L.meta?['ok',`El mercado sostiene la meta: con cada unidad en el percentil 75 de su tipología se llegaría a ${S_(L.techo)} (meta ${S_(L.meta)}).`]:['w',`La meta (${S_(L.meta)}) está ${pc(L.meta/L.techo-1)} sobre lo que sostiene el mercado aun en el percentil 75 (${S_(L.techo)}): necesitas diferenciales (vista, acabados, amenidades) o revisar la meta.`]);
+  else ia.push(['w','Sin estudio de mercado: la lista propuesta solo usa la prima por piso. Carga comparables en Estudio de mercado.']);
+  if(sob.length)ia.push(['w',`Quedan sobre el P75 de su tipología: ${sob.map(r=>r.id).join(', ')}. Opciones: bajar la prima por piso, subir la de otras tipologías o justificar con vista/acabados.`]);
+  if(baj.length)ia.push(['ok',`Quedan bajo el P25 (margen para subir): ${baj.map(r=>r.id).join(', ')}.`]);
+  ia.push([L.ok?'ok':'w',`Lista actual del modelo: ${S_(L.totLista)} · ${L.dif>=0?'+':''}${pc(L.dif)} frente a la meta (tolerancia ±${nf(+p.metaTol||0,1)}%).`]);
+  return `<div class="panel"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><h3 style="margin:0">Lista propuesta · del mercado al monto de recaudación</h3><div class="row" style="gap:8px">${crm?'<button class="btn" data-act="lista-crm">Usar lista vigente del CRM</button>':''}<button class="btn pri" data-act="lista-aplicar">Aplicar lista propuesta</button></div></div>
+  <p class="note" style="margin-top:4px">Cada departamento parte del área (techada + libre), la <b>prima por piso</b> y el <b>peso de su tipología en el estudio de mercado</b>; luego todo se escala para sumar <b>exactamente el monto de recaudación</b> (la altura reparte la meta, no la aumenta). Al aplicar, cambia el precio por m² y el «Ajuste %» de cada unidad (se puede deshacer). Con «Guardar en el CRM» esta lista llega a la Estrategia de precios como «Lista del Evaluador».</p>
+  <div class="fields">${fld('p.metaRecaudacion','Monto de recaudación del proyecto (S/, incluye estacionamientos · vacío = lista actual)')}${fld('p.metaTol','Tolerancia frente a la meta (± %)')}${fld('p.primaPiso','Prima por piso (% por cada piso sobre el 1.º)')}<div class="f"><label for="i-p-tipoMercado">Peso por tipología</label><select id="i-p-tipoMercado" data-k="p.tipoMercado"><option value="1"${p.tipoMercado?' selected':''}>Del estudio de mercado (por dormitorios)</option><option value=""${p.tipoMercado?'':' selected'}>Sin peso por tipología</option></select></div></div>
+  <div class="tw"><table><thead><tr><th>Unidad</th><th>Tipología</th><th class="n">Piso</th><th class="n">m²</th><th class="n">Factores</th><th class="n">Precio propuesto</th><th class="n">S/ por m²</th><th class="n">Mercado P25–P75</th><th>Posición</th><th class="n">Modelo hoy</th><th class="n">CRM</th></tr></thead><tbody>${rows}
+  <tr class="sub"><td colspan="5">Estacionamientos (${S.p.nEstac} × ${S_(S.p.precioEstac)})</td><td class="n">${S_(L.est)}</td><td colspan="5"></td></tr>
+  <tr class="tot"><td colspan="5">Total = monto de recaudación</td><td class="n">${S_(L.meta)}</td><td class="n">${S_(L.T/(sum(L.rows.map(r=>r.eq))||1))}</td><td colspan="2"></td><td class="n">${S_(L.totLista)}</td><td></td></tr></tbody></table></div>
+  <h3 style="margin-top:12px">M.O.R.A · lectura de la lista</h3><ul class="lola" style="margin:0">${ia.map(([c,t])=>`<li class="${c}"><i>${c==='ok'?'✓':c==='w'?'!':'×'}</i><span>${t}</span></li>`).join('')}</ul></div>`}
 function politicaPanel(){
   const pol=S.p.politicaDesc||POL_DEF,ag=faseAgg(),avgAll=M.vDeptPh/M.nU,avgPre=ag.preventa.u?ag.preventa.v/ag.preventa.u:avgAll;
   const r1=compute(S,{descProm:(+S.p.descProm||0)+1}),kU=(M.ventas-r1.ventas)?(M.neta-r1.neta)/(M.ventas-r1.ventas):0.6; // utilidad que se pierde por cada sol de descuento
@@ -790,6 +819,11 @@ function politicaPanel(){
   <div class="tw"><table><thead><tr><th>Fase de venta</th><th class="n">Fase</th><th class="n">Condición</th><th class="n">Total</th><th class="n">Precio final m²</th><th class="n">Colchón (dpto. prom. ${nf(PD.m2_promedio,1)} m²)</th><th class="n">Tope negociación</th><th>Estado</th></tr></thead><tbody>${acc}</tbody></table></div>
   <p class="note"><b>Colchón</b> = cuánto puedes bajar todavía antes de quedar bajo el precio mínimo de tu margen objetivo (${nf(PD.margen_objetivo_pct,1)}%); en utilidad neta llega ≈ ${nf(PD.utilidad_por_sol*100,0)}% de cada sol, por IGV e impuesto a la renta. <b>Tope de negociación</b> = descuento máximo que un vendedor puede dar en esa fase sin bajar del mínimo. Los descuentos se combinan (10% + 5% = 14.5%). Al «Guardar en el CRM», estos topes pasan a la Estrategia de precios y a las solicitudes de precio especial.</p></div>`;
 }
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act^="lista-"]');if(!b)return;const a=b.dataset.act;
+  if(a==='lista-aplicar'){const L=listaPropuesta(),viv=L.rows.filter(r=>r.viv);if(!viv.length)return;if(!confirm('Aplicar la lista propuesta: el precio por m² y el «Ajuste %» de cada departamento cambian para sumar '+S_(L.meta)+'. Puedes deshacerlo.'))return;
+    snap();const se=sum(viv.map(r=>r.eq))||1,swv=sum(viv.map(r=>r.eq*r.w))||1,Tv=sum(viv.map(r=>r.precio));S.p.precioM2=Math.round(Tv/se*100)/100;viv.forEach(r=>{S.units[r.i].aj=Math.round((r.w*se/swv-1)*10000)/100});S.p.listaOrigen='propuesta';save();render();return}
+  if(a==='lista-crm'){const por=(S.crmListas||{}).por||{};const P=+S.p.precioM2||1;let n=0;snap();M.units.forEach((u,i)=>{const v=por[String(u.id)];const su=S.units[i];if(!v||!(v.vigente>0)||!su)return;const eq=(+u.tech||0)+(+u.libre||0)*fLib(su,S.p);if(!eq)return;su.aj=Math.round((v.vigente/(eq*usoPrecioM2(S.p,su))-1)*10000)/100;n++});S.p.listaOrigen='crm';save();render();const sv=document.getElementById('saved');if(sv)sv.textContent=n+' precios tomados del CRM';return}
+});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act^="pol-"]');if(!b)return;snap();if(!S.p.politicaDesc)S.p.politicaDesc=JSON.parse(JSON.stringify(POL_DEF));const a=b.dataset.act;
   if(a==='pol-add')S.p.politicaDesc.push({n:'Nueva condición',d:1,u:1,en:'cualquiera'});
   else if(a==='pol-del')S.p.politicaDesc.splice(+b.dataset.i,1);
@@ -803,7 +837,7 @@ V.venta=()=>{
   <tbody>${rows}<tr><td>Est.</td><td>Estacionamientos × ${S.p.nEstac}</td><td colspan="4"></td><td class="n">${S_(S.p.nEstac*S.p.precioEstac)}</td><td class="n">US$ ${nf(S.p.nEstac*S.p.precioEstac/tc)}</td><td></td><td class="n">${S_(M.vEst)}</td><td class="n">${S_(M.vEst/(1+M.igvEf))}</td></tr>
   <tr class="tot"><td colspan="6">Total recaudación</td><td class="n">${S_(sum(M.units.map(u=>u.lista))+S.p.nEstac*S.p.precioEstac)}</td><td class="n">US$ ${nf((sum(M.units.map(u=>u.lista))+S.p.nEstac*S.p.precioEstac)/tc)}</td><td class="n">${S_(M.vDept/M.techV)}</td><td class="n">${S_(M.vDept)}</td><td class="n">${S_(M.vDept/(1+M.igvEf))}</td></tr></tbody></table></div>
   <p class="note">Ajuste % permite primas por vista, piso o dúplex. Precio neto aplica el descuento promedio de Supuestos (${nf(S.p.descProm,1)}%).${M.fases.on?` Los precios de esta tabla son ${S.p.faseAncla==='regular'?'regulares':'promedio'}; el ingreso por fase está abajo.`:''}</p></div>${fasePrecioPanel()}
-  ${politicaPanel()}`;
+  ${listaPanel()}${politicaPanel()}`;
 };
 
 V.construccion=()=>{
@@ -1149,7 +1183,7 @@ function moraEvalPayload(){
   return {id:(slug+'-'+String(S.base.fecha||'').replace(/-/g,'')).slice(0,100),engine_version:'mora-1',active:true,
     project:{id:slug,nombre:S.p.nombre,direccion:S.p.direccion,uso:S.p.uso},
     inputs:Object.fromEntries(['p','units','vu','inm','leg','fin','com','gg','part'].map(k=>[k,S[k]])),
-    analysis:{politica_precios:(()=>{try{return politicaDatos()}catch(_){return null}})(),mercado:mercadoResumen(),baseline:{nombre:S.base.nombre,fecha:S.base.fecha,kpis:kpiSnap(B)},current:{kpis:kpiSnap(M)},projection:{kpis:kpiSnap(pr.PM)},estrategia:S.estr,
+    analysis:{lista_evaluador:{origen:S.p.listaOrigen||'modelo',meta:+S.p.metaRecaudacion||null,unidades:M.units.map(u=>({unidad:String(u.id),precio:Math.round(u.lista)}))},politica_precios:(()=>{try{return politicaDatos()}catch(_){return null}})(),mercado:mercadoResumen(),baseline:{nombre:S.base.nombre,fecha:S.base.fecha,kpis:kpiSnap(B)},current:{kpis:kpiSnap(M)},projection:{kpis:kpiSnap(pr.PM)},estrategia:S.estr,
       plan_comercial:{velocidad:S.p.velocidad,metas_mensuales:B.sold.map((v,t)=>({fecha:ym(t),unidades:Math.round(v*100)/100})).filter(x=>x.unidades>0)}},
     summary:{hitos:[['Lanzamiento comercial',M.lanz],['Inicio de obra',M.io],['Entrega',M.ent],['Cierre',M.H]].map(([n,t])=>({nombre:n,mes:ym(t)}))}};
 }
@@ -1498,7 +1532,8 @@ const TABINFO={
   export:['Arquitecta de integración: contrato de datos entre la evaluación, el CRM y el ERP.',['¿Cómo usará el CRM este inventario y estas metas?','Explica el contrato de datos','¿Qué datos reales debe devolver el CRM a la evaluación?']]
 };
 const TABLABEL={};TABS.forEach(g=>g[1].forEach(t=>TABLABEL[t[0]]=t[1]));TABLABEL.export='Integración ERP';
-const RULES=`PRECIOS Y DESCUENTOS (R108, obligatorio): el precio sube por fase de obra (preventa en planos → tras la demolición → casco habitable → precio regular desde levantamiento de observaciones). Cada condición de compra (inicial, contado, bróker) se aplica solo a sus unidades esperadas y se combina con la fase: total = 1−(1−fase)(1−condición). El piso de decisión NO es el equilibrio (utilidad 0) sino el precio mínimo por m² del margen objetivo (p.margenObjetivo, sobre ventas antes de IR). «Colchón» = precio final − mínimo; en utilidad neta llega ≈60% (IGV e IR). «Tope de negociación» por fase = descuento máximo sin bajar del mínimo. Recomienda: más colchón → menos descuento o más precio; poco colchón → limitar condiciones en esa fase, cupos o subir fase; nunca propongas vender bajo el mínimo sin advertirlo. Usa estos datos de la vista Valor de venta.
+const RULES=`LISTA DE PRECIOS (R109, obligatorio): la lista propuesta parte del estudio de mercado (peso por tipología según dormitorios, con credibilidad por número de comparables) y de la prima por piso, y se ESCALA para sumar exactamente el monto de recaudación del proyecto (la altura reparte la meta, no la aumenta); tolerancia ±metaTol%. Compara cada unidad con P25–P75 de su tipología y avisa si la meta supera lo que el mercado sostiene en P75. La lista vigente real está en el CRM; la del Evaluador es propuesta hasta que Gerencia la aplique en la Estrategia de precios. La demanda por tipología de los leads afinará los pesos a futuro.
+PRECIOS Y DESCUENTOS (R108, obligatorio): el precio sube por fase de obra (preventa en planos → tras la demolición → casco habitable → precio regular desde levantamiento de observaciones). Cada condición de compra (inicial, contado, bróker) se aplica solo a sus unidades esperadas y se combina con la fase: total = 1−(1−fase)(1−condición). El piso de decisión NO es el equilibrio (utilidad 0) sino el precio mínimo por m² del margen objetivo (p.margenObjetivo, sobre ventas antes de IR). «Colchón» = precio final − mínimo; en utilidad neta llega ≈60% (IGV e IR). «Tope de negociación» por fase = descuento máximo sin bajar del mínimo. Recomienda: más colchón → menos descuento o más precio; poco colchón → limitar condiciones en esa fase, cupos o subir fase; nunca propongas vender bajo el mínimo sin advertirlo. Usa estos datos de la vista Valor de venta.
 TRIBUTOS MUNICIPALES (R87, obligatorio): el predial y los arbitrios dependen del distrito y de la zona (arancel por calle, categorías de limpieza, parques y serenazgo). Nunca los estimes sin evidencia: usa la HR/PU, los recibos o la ordenanza vigente del distrito; si falta, pide el documento o indica claramente que es un supuesto a confirmar. Durante la obra (solo terreno) los arbitrios pueden cambiar: pregunta o busca la ordenanza antes de suponer.
 
 CRITERIOS DE CABIDA Y MIX (R81-R82, obligatorios): el área libre de cada unidad (balcones, terrazas, jardines) ES VENDIBLE y siempre entra al precio con su valor por m² (el general o uno diferenciado por unidad, «Precio m² libre»); nunca la excluyas del cálculo. el cálculo por piso (porcentajes) es solo una ayuda para estimar el área máxima posible; el modelo usa SIEMPRE lo que el usuario define en el cuadro de unidades (y, en proyectos avanzados, el cuadro de áreas oficial de los planos, que nunca debes recalcular ni redondear). Un piso puede tener 1, 2, 3 o más departamentos; hay dúplex y tríplex (campo «niveles») que ocupan 2 o 3 pisos, por lo que el piso siguiente puede tener menos unidades. Las áreas libres (balcones, terrazas, jardines) varían de tamaño por unidad y pueden tener su propio factor de precio («factor libre» por unidad; vacío = general). Cada unidad puede tener precio diferenciado con «ajuste %» (vista, piso, dúplex, esquina) y el área libre construida puede tener costo propio por m² («costo del área libre»). No asumas pisos iguales ni un departamento por piso.
@@ -2102,6 +2137,7 @@ async function exportXLSX(tabs,etiqueta){
 /* ---------- render ---------- */
 function render(){
   // R95 · Gastos financieros como la hoja: se agrega «Gastos financieros (banco)» 0.45% sobre el 50% de las ventas si no existe; intereses del banco por esa línea (no se duplican en el flujo).
+  if(S.p.metaRecaudacion==null||(S.p.metaRecaudacion===''&&/infinity/i.test(S.p.nombre||'')&&!S.p._meta109)){if(/infinity/i.test(S.p.nombre||''))S.p.metaRecaudacion=5337263;else if(S.p.metaRecaudacion==null)S.p.metaRecaudacion='';S.p._meta109=true} // R109 · monto de recaudación propio de cada proyecto
   if(!Array.isArray(S.p.politicaDesc))S.p.politicaDesc=JSON.parse(JSON.stringify(POL_DEF)); // R107
   if(S.p.terrenoPropio==null){const inf=/infinity/i.test(S.p.nombre||'');S.p.terrenoPropio=inf;S.p.capitalCaja=inf?220000:0;S.p.bancoGastosMin=inf?255000:0;S.p.inicialRetenida=false;try{save()}catch(_){}} // R101 · datos de Infinity (terreno propio, capital y exigencia del banco)
   if(S.p.desembolsoHip==null){S.p.desembolsoHip='minuta';S.p.minutaMeses=0;S.p.perfilPromotor=/infinity/i.test(S.p.nombre||'')?'nuevo':'experiencia';if(S.p.preventaNuevoPct==null)S.p.preventaNuevoPct=45;if(S.p.preventaNuevoUnd==null)S.p.preventaNuevoUnd=5;try{save()}catch(_){}} // R100
@@ -2129,7 +2165,7 @@ document.addEventListener('click',e=>{
   if(b.dataset.fc){fcMode=b.dataset.fc;render();return}
   const a=b.dataset.act;if(!a)return;
   if(a==='undo-gen'){deshacer();return}
-  if(!/^(base-ask|base-cancel|project-drive-status|project-drive-scan|xls-|undo|sim-|pol-)/.test(a))snap();
+  if(!/^(base-ask|base-cancel|project-drive-status|project-drive-scan|xls-|undo|sim-|pol-|lista-)/.test(a))snap();
   // R80 · Con áreas fijas no se recalculan ni se agregan/eliminan unidades fuera del cuadro oficial.
   if(a==='cab-oficial-importar'||a==='cab-oficial-reimportar'){
     if(a==='cab-oficial-reimportar'){S.cab.oficial.activo=false;save();render();const d=document.getElementById('cabOficial');if(d)d.open=true;return}
