@@ -122,7 +122,7 @@ test('R55 · Evaluador y Contabilidad saben qué proyecto está abierto (borrado
   h=await get('/evaluador/');assert.ok(h.includes('<meta name="orok-proyecto" content="'+c.proyecto.id+'"><meta name="orok-proyecto-nombre" content="Ventura">'));
   h=await get('/contabilidad/');assert.ok(h.includes('content="'+c.proyecto.id+'"'));
   const ev=fs.readFileSync(path.join(__dirname,'..','evaluador','app.js'),'utf8'),ct=fs.readFileSync(path.join(__dirname,'..','contabilidad','app.js'),'utf8');
-  assert.match(ev,/const KEY=CRM\?'orok-evaluador-crm-v1'\+\(OROK_PROY&&OROK_PROY!=='principal'\?'::'\+OROK_PROY:''\)/);assert.match(ev,/const SIN_BORRADOR=!S;/);assert.match(ev,/if\(ult\)return crmLoad\(ult\.id\)/);
+  assert.match(ev,/const KEY=CRM\?'orok-evaluador-crm-v1'\+\(OROK_PROY&&OROK_PROY!=='principal'\?'::'\+OROK_PROY:''\)/);assert.match(ev,/const SIN_BORRADOR=!S;/);assert.match(ev,/if\(ult\)return crmLoad\(ult\.id(,true)?\)/);
   assert.match(ct,/LKEY=CRM\?'orok-contab-crm-v1'\+\(OROK_PROY&&OROK_PROY!=='principal'\?'::'\+OROK_PROY:''\)/);
  }finally{await s.close();}
 });
